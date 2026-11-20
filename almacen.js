@@ -21,9 +21,16 @@
    primera para cinco llamadas.
    ============================================================================ */
 var SUPABASE = {
-  url: '',   // https://xxxxxxxxxxxx.supabase.co
-  key: ''    // la clave anon. Es publica por diseño: va dentro de la pagina y
-             // cualquiera la ve. Lo que protege son las reglas de la tabla.
+  url: 'https://ifmrqbnnvlmnrfbseonr.supabase.co',
+  /* La clave anon. Es publica por diseño: va dentro de la pagina y cualquiera
+     la ve, asi que no es un secreto y no pasa nada por tenerla aqui escrita.
+     Lo que protege son las reglas de la tabla (supabase-setup.sql): con esta
+     clave sola se puede LEER lo publicado y nada mas.
+
+     Se usa la clave `anon` de siempre y no la `sb_publishable_...` nueva
+     porque esta es un JWT con el rol dentro, y es lo que entienden tanto la
+     API de datos como la de entrada sin ninguna duda. */
+  key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmbXJxYm5udmxtbnJmYnNlb25yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxODAzNTQsImV4cCI6MjExMDc1NjM1NH0.b1Zn5xpkgnYDf2PuueiT-pcwrBuW6RUZJP0OwErJ1jo'
 };
 
 var ALMACEN = (function () {

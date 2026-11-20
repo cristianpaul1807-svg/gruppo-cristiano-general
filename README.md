@@ -141,10 +141,38 @@ todo lo demás junto para «chiesa evangelica + ciudad».
 
 ---
 
-## Despliegue
+## Despliegue en Easypanel
 
-Easypanel, construyendo desde el `Dockerfile`. **Puerto 80, environment
-vacío.** Se despliega empujando a `main` y pulsando redesplegar.
+Es un repositorio aparte de Digitatex, así que **app aparte** — no una ruta
+dentro de la web de Digitatex. Eso es lo que hace que la mudanza a su dominio
+sea después solo un cambio de DNS.
+
+**Project:** `gruppocristiano` (nuevo, no el de Digitatex)
+**Service → App**, nombre `web`
+
+| Pestaña | Campo | Valor |
+|---|---|---|
+| Source | Type | **GitHub** |
+| | Owner / Repo | `cristianpaul1807-svg` / `gruppo-cristiano-general` |
+| | Branch | `main` |
+| | Build path | `/` |
+| Build | Type | **Dockerfile** |
+| | File | `Dockerfile` |
+| Environment | — | **vacío** |
+| Domains | Port | **80** |
+| | Host | `gruppocristiano.digitatex.com` |
+| | HTTPS | sí (Let's Encrypt) |
+
+El repositorio es privado: Easypanel necesita su token de GitHub con acceso a
+él. Si el deploy dice «Cannot find public repository and your Github token is
+invalid», es eso y no el nombre del repo.
+
+Antes del primer deploy, en el DNS de `digitatex.com`: un registro **A** de
+`gruppocristiano` apuntando a la IP del servidor.
+
+Después, cada cambio es empujar a `main` y pulsar **Deploy**. El HTML, el panel
+y los `.js` no se cachean a propósito, así que un cambio se ve al recargar; las
+imágenes de `media/` sí, una semana.
 
 ---
 
