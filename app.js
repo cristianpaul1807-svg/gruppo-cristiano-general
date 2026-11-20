@@ -21,18 +21,68 @@ var WA_MENSAJE = 'Ciao, scrivo dal sito del Gruppo Cristiano.';
 var reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var $ = function (s) { return document.querySelector(s); };
 
-/* --- aparicion al bajar ---------------------------------------------------- */
+/* --- movimiento al bajar ----------------------------------------------------
+   Entrar al llegar, salir hacia el lado al irse por arriba, y volver a entrar
+   si se sube. La "pantalla" que se vigila es un poco mas baja por arriba
+   (-10 %): asi la salida empieza cuando la pieza aun se ve, y se nota.
+
+   Las direcciones se reparten aqui y no en el HTML: una lista de "esta pieza
+   entra por aqui", facil de cambiar sin tocar diez archivos. */
 var observarReveal;
 (function () {
+  var DIRECCION = [
+    ['.sec-head', 'izq'],
+    ['.trova > .reveal:first-child', 'izq'], ['.regione', 'der'],
+    ['.storia', 'izq'], ['.fondatori-h', 'izq'],
+    ['.fondatore.d1', 'izq'], ['.fondatore.d2', 'der'], ['.fondatori-pie', 'zoom'],
+    ['.predica > .reveal:first-child', 'izq'], ['.predica .acciones', 'der'],
+    ['.faq', 'der'], ['.fede', 'der']
+  ];
+  /* Piezas que no llevaban movimiento y se lo damos: el mapa y la ficha de
+     la pagina de cada iglesia, cada una desde su lado. */
+  var NUEVAS = [['.sp-mappa', 'der'], ['.sp-info', 'izq']];
+
+  function repartir(raiz) {
+    NUEVAS.forEach(function (n) {
+      raiz.querySelectorAll(n[0]).forEach(function (el) { el.classList.add('reveal', n[1]); });
+    });
+    DIRECCION.forEach(function (d) {
+      raiz.querySelectorAll(d[0]).forEach(function (el) {
+        if (el.classList.contains('reveal') && !/\b(izq|der|zoom)\b/.test(el.className)) el.classList.add(d[1]);
+      });
+    });
+    /* Los puntos de la vision: uno de cada lado, alternando. */
+    raiz.querySelectorAll('.lista-num .punto.reveal').forEach(function (el, i) {
+      if (!/\b(izq|der)\b/.test(el.className)) el.classList.add(i % 2 ? 'der' : 'izq');
+    });
+  }
+
+  if (!('IntersectionObserver' in window)) {
+    observarReveal = function () {};
+    document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
+    return;
+  }
   var io = new IntersectionObserver(function (ent) {
     ent.forEach(function (e) {
-      if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      var el = e.target, top = e.rootBounds ? e.rootBounds.top : 0;
+      if (e.isIntersecting) {
+        el.classList.remove('sale'); el.classList.add('in');
+      } else if (e.boundingClientRect.bottom <= top) {
+        /* se ha ido por arriba: sale hacia su lado */
+        el.classList.remove('in'); el.classList.add('sale');
+      } else {
+        /* esta por debajo (se ha subido): queda lista para volver a entrar */
+        el.classList.remove('in', 'sale');
+      }
     });
-  }, { threshold: 0.16, rootMargin: '0px 0px -8% 0px' });
+  }, { threshold: 0, rootMargin: '-10% 0px -6% 0px' });
+
+  repartir(document);
   document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
-  /* Las fichas se crean despues y se vuelven a crear al cambiar de idioma.
-     Sin esto nacerian con opacidad 0 y no apareceria nada. */
+  /* Las fichas y la galeria se crean despues (y las fichas se vuelven a crear
+     al cambiar de idioma). Sin esto nacerian invisibles. */
   observarReveal = function (raiz) {
+    repartir(raiz);
     raiz.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
   };
 })();
@@ -769,9 +819,11 @@ function MAPA_DE(sede) {
         var cap = document.createElement('figcaption'); cap.textContent = f.testo;
         fig.appendChild(cap);
       }
+      fig.className = 'reveal zoom d' + Math.min(i % 4 + 1, 4);
       cont.appendChild(fig);
     });
     sec.hidden = false;
+    if (observarReveal) observarReveal(cont);
   });
 })();
 

@@ -59,7 +59,7 @@ em{font-style:italic;color:var(--blu-texto);}
 [hidden]{display:none !important;}
 
 .wrap{--gutter:clamp(20px,5vw,48px);max-width:var(--max);margin:0 auto;padding-inline:var(--gutter);}
-section{padding-block:clamp(72px,11vh,124px);scroll-margin-top:64px;}
+section{padding-block:clamp(72px,11vh,124px);scroll-margin-top:64px;overflow-x:clip;}
 
 .eyebrow{display:flex;align-items:center;gap:12px;font-size:11px;font-weight:600;
   letter-spacing:0.22em;text-transform:uppercase;color:var(--oro-texto);}
@@ -428,12 +428,29 @@ footer .pie-panel a:hover{color:#fff;}
   letter-spacing:0.1em;text-transform:uppercase;}
 body{padding-bottom:38px;}
 
-/* --- aparicion al bajar ------------------------------------------------------ */
-.reveal{opacity:0;transform:translateY(22px);
-  transition:opacity .8s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1);}
+/* --- movimiento al bajar ------------------------------------------------------
+   Cada pieza ENTRA desvanecida (desde abajo, desde un lado, o creciendo) cuando
+   llega a la pantalla, y SALE hacia su lado cuando se va por arriba. Si se
+   vuelve a subir, vuelve a entrar. Las direcciones las reparte app.js por
+   tipo de pieza: titulares desde la izquierda, mapas y fotos desde la
+   derecha, tarjetas desde abajo y en cascada, fotos de la galeria creciendo.
+   Solo se animan opacidad y transform: es lo que el movil mueve sin esfuerzo. */
+.reveal{--rx:0px;--ry:34px;--rs:1;opacity:0;
+  transform:translate3d(var(--rx),var(--ry),0) scale(var(--rs));
+  transition:opacity .9s cubic-bezier(.22,1,.36,1),transform 1s cubic-bezier(.22,1,.36,1);
+  transition-delay:var(--rd,0s);}
+.reveal.izq{--rx:-64px;--ry:0px;}
+.reveal.der{--rx:64px;--ry:0px;}
+.reveal.zoom{--ry:18px;--rs:.92;}
 .reveal.in{opacity:1;transform:none;}
-.d1{transition-delay:.09s;} .d2{transition-delay:.18s;} .d3{transition-delay:.27s;}
-@media (prefers-reduced-motion:reduce){ .reveal{opacity:1;transform:none;transition:none;} }
+/* la salida: por arriba, hacia su lado y algo mas lejos, sin retraso */
+.reveal.sale{opacity:0;transition-delay:0s;transition-duration:.6s,.7s;
+  transform:translate3d(calc(var(--rx) * 1.2),calc(var(--ry) * -0.8),0) scale(var(--rs));}
+.reveal.sale:not(.izq):not(.der){transform:translate3d(0,-28px,0) scale(var(--rs));}
+.d1{--rd:.1s;} .d2{--rd:.2s;} .d3{--rd:.3s;} .d4{--rd:.4s;}
+@media (prefers-reduced-motion:reduce){
+  .reveal,.reveal.sale{opacity:1;transform:none;transition:none;}
+}
 
 /* ============================================================================
    LA PAGINA DE UNA IGLESIA  —  /parma/, /fidenza/...
