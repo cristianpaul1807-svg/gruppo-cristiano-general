@@ -117,7 +117,7 @@
 }
 </script>
 
-<link rel="stylesheet" href="estilo.css">
+<link rel="stylesheet" href="estilo.css?v=2">
 </head>
 <body>
 
@@ -193,13 +193,15 @@
       </div>
     </div>
 
-    <!-- El final del efecto: todo azul marino y el logo en medio. Debajo, las
-         ciudades, que pone app.js con las comunidades publicadas. -->
+    <!-- El final del efecto: la foto oscurecida —se sigue viendo debajo— y en
+         medio el logo en blanco, solo, sin nada debajo. El blanco sale del
+         oficial (herramientas: logo-bianco); los continentes son huecos, asi
+         que a traves del globo se ve la foto. -->
     <div class="hero-final" aria-hidden="true">
-      <div>
-        <img src="media/logo.png" width="900" height="606" alt="">
-        <p id="hero-citta"></p>
-      </div>
+      <picture>
+        <source type="image/webp" srcset="media/logo-bianco.webp">
+        <img src="media/logo-bianco.png" width="894" height="599" alt="">
+      </picture>
     </div>
 
     <div class="cue" id="cue"><span data-i18n="cue">Scorri</span><i></i></div>

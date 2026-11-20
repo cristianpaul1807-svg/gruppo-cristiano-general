@@ -62,9 +62,9 @@ var observarReveal;
    cuanto se ha bajado (p, de 0 a 1):
 
      0.00 – 1.00   la foto se acerca un 14 %
-     0.10 – 0.42   el titular y los botones se van hacia arriba
-     0.32 – 0.80   todo se oscurece hacia el azul marino
-     0.55 – 0.88   aparece el logo, con las ciudades debajo
+     0.08 – 0.36   el titular y los botones se van hacia arriba
+     0.30 – 0.78   la foto se oscurece (se sigue viendo debajo)
+     0.34 – 0.70   aparece el logo en blanco, solo
 
    Con "reducir movimiento" no hay nada de esto: el CSS deja la portada de una
    pantalla y se ve el texto.
@@ -118,16 +118,16 @@ var observarReveal;
 
     medio.style.transform = 'scale(' + (1 + 0.14 * suave(p)) + ')';
 
-    var t = suave(tramo(p, 0.10, 0.42));
+    var t = suave(tramo(p, 0.08, 0.36));
     contenido.style.opacity = String(1 - t);
     contenido.style.transform = 'translateY(' + (-40 * t) + 'px)';
     /* Sin esto, los botones ya invisibles seguirian recibiendo toques encima
        del logo. */
     contenido.style.pointerEvents = t > 0.6 ? 'none' : '';
 
-    oscuro.style.opacity = String(0.9 * suave(tramo(p, 0.32, 0.80)));
+    oscuro.style.opacity = String(suave(tramo(p, 0.30, 0.78)));
 
-    var l = suave(tramo(p, 0.55, 0.88));
+    var l = suave(tramo(p, 0.34, 0.70));
     final.style.opacity = String(l);
     final.firstElementChild.style.transform = 'scale(' + (0.94 + 0.06 * l) + ')';
 
