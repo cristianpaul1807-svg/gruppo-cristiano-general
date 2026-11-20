@@ -135,19 +135,22 @@ var ALMACEN = (function () {
      Supabase solo sabe de correo + contrasena (entrar por telefono exige
      contratar SMS). Asi que un numero se convierte en una direccion interna,
      siempre la misma para el mismo numero, que nunca recibe correo:
-       "340 083 7962" -> "393400837962@tel.gruppocristiano.it"
-     Quien entra escribe su numero como quiera; el panel lo ensena como numero. */
-  var DOM_TEL = 'tel.gruppocristiano.it';
+       "340 083 7962" -> "tel.393400837962@gruppocristiano.it"
+     Va en el dominio principal porque Supabase rechaza direcciones de un
+     dominio sin servidor de correo; no se manda nada porque "Confirm email"
+     esta apagado. Quien entra escribe su numero como quiera; el panel lo
+     ensena como numero. */
+  var DOM_TEL = 'gruppocristiano.it';
   function cuenta(entrada) {
     var t = String(entrada || '').trim().toLowerCase();
     if (t.indexOf('@') >= 0) return t;
     var d = t.replace(/[^0-9]/g, '');
     if (d.indexOf('00') === 0) d = d.slice(2);
     if (d.length === 10 && d.charAt(0) === '3') d = '39' + d;
-    return d.length >= 8 ? d + '@' + DOM_TEL : t;
+    return d.length >= 8 ? 'tel.' + d + '@' + DOM_TEL : t;
   }
   function mostrar(email) {
-    var m = new RegExp('^(\\d+)@' + DOM_TEL.replace(/\./g, '\\.') + '$').exec(String(email || ''));
+    var m = /^tel\.(\d+)@gruppocristiano\.it$/.exec(String(email || ''));
     if (!m) return email || '';
     var d = m[1];
     return d.indexOf('39') === 0 && d.length === 12
