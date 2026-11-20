@@ -382,12 +382,27 @@ create policy "media: ver"
   on storage.objects for select to authenticated
   using (bucket_id = 'media');
 
+-- EL TOPE: 6 archivos por carpeta. Una iglesia usa dos (portada y logo) y
+-- el panel borra solo las viejas; el margen es para cambiar las dos a la vez
+-- y para algun resto si se corta la red. Con 3 MB por archivo como mucho, una
+-- iglesia no pasa de 18 MB aunque alguien se salte el panel; en la practica,
+-- con las fotos achicadas, son unos 0,5 MB por iglesia.
+create or replace function public.fotos_en_cartella(c text)
+returns integer language sql stable security definer set search_path = ''
+as $$
+  select count(*)::integer from storage.objects o
+  where o.bucket_id = 'media' and (storage.foldername(o.name))[1] = c;
+$$;
+grant execute on function public.fotos_en_cartella(text) to authenticated;
+
 -- (storage.foldername(name))[1] es la primera carpeta de la ruta:
 -- para "parma/copertina-1732.jpg" es "parma". Cada carpeta, con la misma
--- regla que su ficha (puo_cartella, arriba).
+-- regla que su ficha (puo_cartella, arriba), y con el tope.
 create policy "media: subir lo suyo"
   on storage.objects for insert to authenticated
-  with check (bucket_id = 'media' and public.puo_cartella((storage.foldername(name))[1]));
+  with check (bucket_id = 'media'
+    and public.puo_cartella((storage.foldername(name))[1])
+    and public.fotos_en_cartella((storage.foldername(name))[1]) < 6);
 
 create policy "media: cambiar lo suyo"
   on storage.objects for update to authenticated

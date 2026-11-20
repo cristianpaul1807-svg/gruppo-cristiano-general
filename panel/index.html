@@ -1154,6 +1154,9 @@ function subirFotos(sede) {
       return ALMACEN.subirImagen(sede.id, tipo, p).then(function (url) { sede[tipo] = url; });
     });
   }, Promise.resolve()).catch(function (e) {
+    if (/row-level security|403|Unauthorized/i.test(e.message || ''))
+      throw new Error('il magazzino ha rifiutato la foto. Ogni chiesa può tenere al massimo '
+        + '6 foto: riprova, le vecchie si tolgono da sole.');
     throw new Error('la foto non si è caricata (' + e.message + ')');
   });
 }
@@ -1203,13 +1206,15 @@ function cargarSito() {
     var b = $('#sito-salva'), vieja = SITO.copertina;
     if (!SITO_PENDIENTE) return;
     b.disabled = true; b.textContent = 'Carico…';
-    var paso = SITO_PENDIENTE === 'quitar'
-      ? Promise.resolve('')
-      : ALMACEN.subirImagen('generale', 'copertina', SITO_PENDIENTE);
-    paso.then(function (url) {
+    var pendiente = SITO_PENDIENTE;
+    function paso() {
+      return pendiente === 'quitar' ? Promise.resolve('')
+        : ALMACEN.subirImagen('generale', 'copertina', pendiente);
+    }
+    ALMACEN.limpiarCarpeta('generale', [vieja]).then(paso).then(function (url) {
       return ALMACEN.guardarSito({ copertina: url }).then(function () { return url; });
     }).then(function (url) {
-      if (vieja && vieja !== url) ALMACEN.borrarImagen(vieja);
+      ALMACEN.limpiarCarpeta('generale', [url]);
       avisar(url ? 'Foto del sito salvata.' : 'Il sito torna alla foto di serie.');
       cargarSito();
     }).catch(function (e) {
@@ -1413,12 +1418,17 @@ $('#f-sede').addEventListener('submit', function (e) {
   if (FOTOS_PENDIENTES.copertina instanceof Blob || FOTOS_PENDIENTES.logo instanceof Blob) {
     botonGuardar.textContent = 'Carico le foto…';
   }
-  subirFotos(sede).then(function () {
+  /* Antes de subir, se limpian los restos de la carpeta (dejando las fotos
+     que la ficha usa ahora): asi nunca se choca con el tope de 6 archivos.
+     Despues de guardar, otra vez, y se van las que acaban de quedar viejas. */
+  var hayFotos = FOTOS_PENDIENTES.copertina instanceof Blob || FOTOS_PENDIENTES.logo instanceof Blob;
+  (hayFotos && !eraNueva ? ALMACEN.limpiarCarpeta(sede.id, [viejas.copertina, viejas.logo]) : Promise.resolve())
+  .then(function () { return subirFotos(sede); }).then(function () {
     return ALMACEN.guardar(sede);
   }).then(function () {
-    ['copertina', 'logo'].forEach(function (t) {
-      if (viejas[t] && viejas[t] !== sede[t]) ALMACEN.borrarImagen(viejas[t]);
-    });
+    if (hayFotos || viejas.copertina !== sede.copertina || viejas.logo !== sede.logo) {
+      ALMACEN.limpiarCarpeta(sede.id, [sede.copertina, sede.logo]);
+    }
     cerrarEditor(); pintarLista();
     avisar(eraNueva ? 'Chiesa creata. La sua pagina: /' + sede.id + '/' : 'Scheda salvata.');
   }).catch(function (err) {

@@ -399,6 +399,35 @@ var ALMACEN = (function () {
       }).catch(function () {});
     },
 
+    /* Deja en la carpeta de una iglesia SOLO las fotos que usa su ficha, y
+       borra el resto: las viejas que no se borraron al cambiarlas (sin red
+       justo en ese momento, por ejemplo) o subidas a medias. Asi la carpeta
+       nunca crece: como mucho, su portada y su logo.
+
+       Importa por el tope de la base de datos: 6 archivos por carpeta. Sin
+       limpiar, una carpeta con restos acabaria rechazando la foto nueva. */
+    limpiarCarpeta: function (carpeta, enUso) {
+      if (!conBase) return Promise.resolve(0);
+      var s = sesion();
+      if (!viva(s)) return Promise.resolve(0);
+      var h = { 'apikey': SUPABASE.key, 'Authorization': 'Bearer ' + s.access_token, 'Content-Type': 'application/json' };
+      var pre = SUPABASE.url + '/storage/v1/object/public/media/';
+      var usados = (enUso || []).filter(Boolean).map(function (u) {
+        return u.indexOf(pre) === 0 ? decodeURIComponent(u.slice(pre.length)) : '';
+      });
+      return fetch(SUPABASE.url + '/storage/v1/object/list/media', {
+        method: 'POST', headers: h,
+        body: JSON.stringify({ prefix: carpeta + '/', limit: 100 })
+      }).then(function (r) { return r.ok ? r.json() : []; }).then(function (lista) {
+        var sobran = (lista || []).map(function (o) { return carpeta + '/' + o.name; })
+          .filter(function (n) { return usados.indexOf(n) < 0 && !/\/\.emptyFolderPlaceholder$/.test(n); });
+        if (!sobran.length) return 0;
+        return fetch(SUPABASE.url + '/storage/v1/object/media', {
+          method: 'DELETE', headers: h, body: JSON.stringify({ prefixes: sobran })
+        }).then(function () { return sobran.length; });
+      }).catch(function () { return 0; });
+    },
+
     /* ======================================================================
        LA WEB DEL GRUPO — lo que sube el general (por ahora, la portada)
        ====================================================================== */

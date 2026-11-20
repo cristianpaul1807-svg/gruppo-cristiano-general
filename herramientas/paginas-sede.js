@@ -53,9 +53,9 @@ function leerSedi() {
 const COORD = {
   'fidenza':       [44.859535, 10.087606],
   'parma':         [44.807452, 10.293616],
-  'reggio-emilia': [44.706067, 10.607343]
-  /* Massa-Carrara, cuando entre aqui: [44.041434, 10.032270] — el 45 de Via
-     Venezia en OpenStreetMap, a 30 m de la chincheta de su ficha de Google. */
+  'reggio-emilia': [44.706067, 10.607343],
+  /* el 45 de Via Venezia en OpenStreetMap, a 30 m de su ficha de Google */
+  'massa-carrara': [44.041434, 10.032270]
 };
 
 /* --- escapar -----------------------------------------------------------------

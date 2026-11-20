@@ -174,17 +174,48 @@ var SEDI_BASE = [
     apple: '',
     publicada: true
   }
-  /* MASSA-CARRARA NO esta aqui a proposito: la crean ellos desde el panel, que
-     es como van a trabajar, y asi se prueba el camino entero. Sus datos estan
-     en su documento y comprobados (Via Venezia 45, Marina di Carrara: su
-     chincheta de Google cae a 30 m del 45 en OpenStreetMap, en la esquina con
-     Via Marzabotto). Estan listos para copiar en el guion de la reunion.
+  ,
+  {
+    /* De su documento: "Via Venezia 45, Marina di Carrara". La chincheta de
+       su ficha de Google cae a 30 m del 45 en OpenStreetMap, en la esquina
+       con Via Marzabotto: el mismo sitio.
 
-     BOLOGNA no es del grupo: su propio documento cuenta la historia entera
+       Dan DOS numeros: 340 829 2483 y 348 4567 606. En la web cabe uno por
+       iglesia (WhatsApp y llamar): va el primero, que es el que ponen
+       delante. Si el de WhatsApp es el otro, se cambia desde el panel.
+
+       Instagram traia un codigo de seguimiento detras (?hvrq=...): fuera.
+       Erratas de su documento corregidas: "Dominica", "Lunedl", "Venerdl". */
+    id: 'massa-carrara',
+    lat: 44.041434, lon: 10.032270,
+    citta: 'Massa-Carrara',
+    via: 'Via Venezia 45',
+    cap: '54033 Marina di Carrara (MS)',
+    web: '',
+    testo: '',
+    logo: '',
+    whatsapp: '+39 340 829 2483',
+    email: 'gruppocristianomc@gmail.com',
+    pastori: [['Leonel Caceres', ''], ['Maribel Caceres', '']],
+    social: {
+      instagram: 'https://www.instagram.com/gruppocristianomc',
+      facebook: 'https://www.facebook.com/share/1WrMxCXBH5/'
+    },
+    orari: [
+      ['Culto di adorazione', 'Domenica 10:30'],
+      ['Scuola biblica', 'Domenica 9:30'],
+      ['Studio biblico', 'Mercoledì 19:00'],
+      ['Preghiera online', 'Lunedì e venerdì 19:30']
+    ],
+    lingue: '',
+    apple: '',
+    publicada: true
+  }
+  /* BOLOGNA no es del grupo: su propio documento cuenta la historia entera
      —Parma en 2003, despues Fidenza, Reggio Emilia y Marina di Carrara— y no
      la nombra.
 
-     Una iglesia creada desde el panel tiene su pagina al momento, en
+     UNA IGLESIA NUEVA se crea desde el panel y tiene su pagina al momento, en
      /su-ciudad/, sin desplegar nada: la sirve _sede.html, la pagina comodin.
      Lo unico que le falta respecto a las de aqui es la vista previa propia al
      pegar el enlace en WhatsApp. Para eso se anade aqui y se regenera:

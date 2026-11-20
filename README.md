@@ -81,10 +81,11 @@ presentaría a una hora que ya no es.
 ### Añadir una iglesia
 
 **Lo normal: desde el panel**, y la crea el administrador general. Es como van
-a trabajar ellos, y por eso Massa-Carrara no está en `sedi.js`: la crean ellos.
+a trabajar ellos. Las cuatro de su documento (Parma, Fidenza, Reggio Emilia y
+Massa-Carrara) vienen de serie en `sedi.js`; las que se abran después, desde el panel.
 
 Se escribe la ciudad —el panel enseña **antes de guardar** la dirección que va
-a tener su página, `/massa-carrara/`, porque después no cambia— y se pega el
+a tener su página, `/su-ciudad/`, porque después no cambia— y se pega el
 enlace de Apple Maps o Google Maps: salen solas las coordenadas, la calle y el
 código postal. «Genera la mappa» construye la imagen en el propio móvil.
 
@@ -149,6 +150,11 @@ Los dos papeles que ellos mismos dibujaron en su mapa conceptual:
 | Foto de portada de la web del grupo | sí | no |
 | Dar y quitar accesos | sí | no |
 | Ver todas | sí | sí |
+
+**Las fotos tienen tope.** Cada iglesia usa dos (portada y logo), achicadas en
+el móvil: ~0,5 MB por iglesia. El panel borra solas las viejas al cambiarlas, y
+la base de datos no deja pasar de **6 archivos por carpeta** aunque alguien se
+salte el panel. Con 1 GB del plan gratuito sobra para cientos de iglesias.
 
 **Cada uno en lo suyo.** En cuanto una iglesia tiene un responsable con el
 acceso activo, es de esa persona: el general ya no puede cambiarla, ni subir
@@ -340,8 +346,8 @@ Nada aquí está inventado. Lo que no se sabe lleva un aviso amarillo.
 | Horarios de Parma | Consiglio delle Chiese Cristiane di Parma — **sin confirmar por la iglesia** |
 | Día de Fidenza | sus propios vídeos de YouTube; la hora no aparece |
 | Visión y puntos de fe | su PDF, transcrito literal |
-| Dirección de Reggio Emilia | Apple Maps — **sin confirmar**, por eso en borrador |
-| Massa-Carrara | **la crean ellos desde el panel** — no está en `sedi.js` |
+| Dirección de Reggio Emilia | su documento, y su ficha de Google a 0 m |
+| Massa-Carrara | su documento; dan dos números, va el primero (340 829 2483) |
 | Bologna | **no aparece en su mapa conceptual.** Fuera hasta que se aclare |
 | Mapas | teselas de OpenStreetMap, con su atribución en cada ficha |
 
