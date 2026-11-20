@@ -279,6 +279,11 @@ body{padding-bottom:38px;}
 .d1{transition-delay:.09s;} .d2{transition-delay:.18s;} .d3{transition-delay:.27s;}
 @media (prefers-reduced-motion:reduce){ .reveal{opacity:1;transform:none;transition:none;} }
 
+/* `hidden` gana siempre. Sin esto, un bloque con hidden y display:flex —las
+   filas de botones, por ejemplo— se seguiria viendo, porque el display de la
+   clase pisa al hidden del navegador. */
+[hidden]{display:none !important;}
+
 /* ============================================================================
    LA PAGINA DE UNA IGLESIA  —  /parma/, /fidenza/...
 

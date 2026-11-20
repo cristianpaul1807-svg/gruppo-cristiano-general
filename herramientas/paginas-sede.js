@@ -185,14 +185,78 @@ const plantilla = fs.readFileSync(path.join(__dirname, 'plantilla-sede.html'), '
 const elPie = pie();
 const sedi = leerSedi();
 
+/* La frase que llevan dentro todas las paginas que hace este generador. Sirve
+   para reconocer las suyas: solo se borra lo que el generador sabe que ha
+   escrito el. */
+const MARCA = 'NO SE EDITA ESTE ARCHIVO POR SEDE';
+
 sedi.forEach(function (s) {
   if (!s.id) { console.log('  (saltada: una sede sin id)'); return; }
   const carpeta = path.join(RAIZ, s.id);
+  const archivo = path.join(carpeta, 'index.html');
+
+  /* UN BORRADOR NO TIENE PAGINA. Si la tuviese, se podria abrir escribiendo
+     su direccion a mano aunque no salga en la portada — y un borrador suele
+     llevar justo lo que no esta confirmado, como la direccion de Reggio
+     Emilia. Si la publican desde el panel, la sirve la pagina comodin al
+     momento; la propia llega en la siguiente generacion.
+
+     Si una iglesia PASA a borrador y tenia pagina, se quita: pero solo si es
+     una pagina hecha por este generador y no hay nada mas en la carpeta. Lo
+     que haya puesto alguien a mano no se toca. */
+  if (s.publicada === false) {
+    if (fs.existsSync(archivo)) {
+      const contenido = fs.readFileSync(archivo, 'utf8');
+      const solo = fs.readdirSync(carpeta).length === 1;
+      if (contenido.includes(MARCA) && solo) {
+        fs.rmSync(carpeta, { recursive: true });
+        console.log('  ' + s.id + '/   QUITADA — esta en borrador');
+      } else {
+        console.log('  ¡OJO! ' + s.id + '/ esta en borrador pero su carpeta tiene cosas que no son mias. Revisala a mano.');
+      }
+    } else {
+      console.log('  ' + s.id + '   (borrador: sin pagina)');
+    }
+    return;
+  }
+
   fs.mkdirSync(carpeta, { recursive: true });
-  fs.writeFileSync(path.join(carpeta, 'index.html'), pagina(plantilla, s, elPie), 'utf8');
-  console.log('  ' + s.id + '/index.html   ' + s.citta
-    + (s.publicada === false ? '   (in bozza: non esce in portada)' : ''));
+  fs.writeFileSync(archivo, pagina(plantilla, s, elPie), 'utf8');
+  console.log('  ' + s.id + '/index.html   ' + s.citta);
 });
+
+/* --- la pagina comodin ---------------------------------------------------------
+   _sede.html sirve a cualquier iglesia que NO tenga pagina generada: las que
+   se crean desde el panel. nginx la entrega cuando alguien abre /su-ciudad/ y
+   esa carpeta no existe. Lleva la plantilla tal cual, con lo generico donde
+   las demas llevan lo suyo; sede.js la rellena leyendo la ciudad de la
+   direccion y los datos de la base de datos.
+
+   Lo unico que no puede tener es la vista previa propia en WhatsApp: WhatsApp
+   no ejecuta JavaScript y ve "Gruppo Cristiano" a secas. Para eso hay que
+   anadir la iglesia a sedi.js y regenerar. */
+const comodin = plantilla.replace(/\{\{([A-Z_]+)\}\}/g, function (todo, clave) {
+  const v = {
+    ID: '',                     // vacio: lo pone el script del principio del body
+    CITTA: '',
+    VIA_HTML: '',
+    TITOLO: 'Gruppo Cristiano Latino Americano',
+    OG_TITOLO: 'Gruppo Cristiano',
+    DESC: 'Una delle chiese del Gruppo Cristiano Latino Americano in Italia.',
+    URL: DOMINIO + '/',
+    OG_IMG: DOMINIO + '/media/logo-ufficiale.png',
+    JSONLD: JSON.stringify({
+      '@context': 'https://schema.org', '@type': 'Church',
+      name: 'Gruppo Cristiano Latino Americano', url: DOMINIO + '/'
+    }, null, 2),
+    META: 'null',               // lo rellena sede.js cuando sabe que iglesia es
+    FOOTER: elPie
+  };
+  if (!(clave in v)) throw new Error('la plantilla pide {{' + clave + '}} y el comodin no lo tiene');
+  return v[clave];
+});
+fs.writeFileSync(path.join(RAIZ, '_sede.html'), comodin, 'utf8');
+console.log('  _sede.html   (comodin para las creadas desde el panel)');
 
 /* Una pagina que sobra es peor que una que falta: queda viva, en Google, con
    una iglesia que ya no esta. Se avisa de las carpetas de sedes que ya no
@@ -210,4 +274,5 @@ fs.readdirSync(RAIZ, { withFileTypes: true })
     console.log('  ¡OJO! la carpeta ' + e.name + '/ ya no esta en sedi.js. Borrala a mano.');
   });
 
-console.log('\n' + sedi.length + ' paginas escritas.');
+console.log('\n' + sedi.filter(function (s) { return s.publicada !== false; }).length
+  + ' paginas escritas, mas el comodin.');

@@ -406,6 +406,10 @@ a.btn{text-decoration:none;}
       <div class="campo">
         <label for="citta">Città *</label>
         <input type="text" id="citta" required placeholder="Fidenza">
+        <!-- Solo al crear: la direccion que tendra su pagina. Se ensena antes de
+             guardar porque despues no cambia — es el enlace que van a mandar
+             por WhatsApp. -->
+        <p class="pista" id="url-nueva" hidden></p>
       </div>
       <div class="campo">
         <label for="via">Via e numero civico</label>
@@ -758,7 +762,11 @@ function pintarLista() {
       /* El id puede llevar guion —reggio-emilia, massa-carrara— y la
          expresion tiene que aceptarlo: con /^[a-z]+$/ esas dos salian "Senza
          mappa" aunque su mapa estuviera generado. */
-      var fuente = s.mapa || (s.id && /^[a-z-]+$/.test(s.id) ? '../media/mappa-' + s.id + '.jpg' : '');
+      /* Archivo de media/ solo para las que vienen de sedi.js, que son las que
+         lo tienen; las creadas aqui llevan el mapa dentro de la ficha. Probar
+         el archivo para todas era pedir uno que no existe cada vez. */
+      var deArchivo = (window.SEDI_BASE || []).some(function (b) { return b.id === s.id; });
+      var fuente = s.mapa || (deArchivo ? '../media/mappa-' + s.id + '.jpg' : '');
       if (fuente) {
         var im = document.createElement('img'); im.alt = '';
         /* Una sede sin direccion todavia no tiene mapa generado: en vez del
@@ -904,7 +912,10 @@ function ponerMapa(dataUrl) {
 }
 
 function abrirEditor(sede) {
-  editando = sede || { id: 'sede-' + Date.now().toString(36), orden: Date.now() };
+  /* Una iglesia nueva nace SIN id: se lo pone el guardado, sacado del nombre
+     de la ciudad. Antes era 'sede-' + un numero, y eso habria sido su
+     direccion para siempre: /sede-lq3x9k/ en vez de /massa-carrara/. */
+  editando = sede || { id: null, orden: Date.now() };
   $('#titulo-hoja').textContent = sede ? ('Chiesa: ' + sede.citta) : 'Nuova sede';
   $('#citta').value = editando.citta || '';
   $('#via').value   = editando.via || '';
@@ -930,6 +941,7 @@ function abrirEditor(sede) {
   $('#borrar').style.display = (sede && esGenerale()) ? '' : 'none';
   $('#editor').style.display = 'block';
   document.body.style.overflow = 'hidden';
+  pintarUrlNueva();
   $('#citta').focus();
 }
 function cerrarEditor() {
@@ -937,6 +949,39 @@ function cerrarEditor() {
   document.body.style.overflow = '';
   editando = null;
 }
+/* --- la direccion de una iglesia nueva --------------------------------------
+   "Massa-Carrara" -> "massa-carrara". Sin acentos —"Forlì" -> "forli"—,
+   porque una direccion con acento se rompe al pegarla en algunos sitios.
+
+   Nunca se repite: si ya hay una "parma", la siguiente es "parma-2". Y no
+   puede llamarse como una carpeta de la web: una iglesia llamada "panel"
+   taparia el panel. */
+var RESERVADOS = ['panel', 'media', 'herramientas', 'sede', 'index', 'estilo', 'app', 'almacen'];
+function slug(t) {
+  return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+function slugUnico(citta) {
+  var base = slug(citta) || 'chiesa';
+  if (RESERVADOS.indexOf(base) >= 0) base += '-chiesa';
+  var usados = SEDI_CARGADAS.map(function (s) { return s.id; })
+    .concat((window.SEDI_BASE || []).map(function (s) { return s.id; }));
+  var id = base, n = 2;
+  while (usados.indexOf(id) >= 0) id = base + '-' + (n++);
+  return id;
+}
+function pintarUrlNueva() {
+  var p = $('#url-nueva');
+  if (!editando || editando.id) { p.hidden = true; return; }
+  var c = $('#citta').value.trim();
+  p.hidden = !c;
+  if (c) {
+    var raiz = location.host + location.pathname.replace(/panel\/(index\.html)?$/, '');
+    p.textContent = 'La sua pagina sarà: ' + raiz + slugUnico(c) + '/  — non si potrà cambiare dopo.';
+  }
+}
+$('#citta').addEventListener('input', pintarUrlNueva);
+
 $('#nueva').addEventListener('click', function () { abrirEditor(null); });
 $('#cancelar').addEventListener('click', cerrarEditor);
 $('#editor').addEventListener('click', function (e) { if (e.target === $('#editor')) cerrarEditor(); });
@@ -1021,7 +1066,7 @@ $('#f-sede').addEventListener('submit', function (e) {
 
   var lat = parseFloat($('#lat').value), lon = parseFloat($('#lon').value);
   var sede = {
-    id: editando.id,
+    id: editando.id || slugUnico(citta),
     orden: editando.orden || Date.now(),
     citta: citta,
     via: $('#via').value.trim(),
@@ -1039,7 +1084,9 @@ $('#f-sede').addEventListener('submit', function (e) {
     mapa: editando.mapa || ''
   };
   ALMACEN.guardar(sede).then(function () {
-    cerrarEditor(); pintarLista(); avisar('Scheda salvata.');
+    var eraNueva = !editando.id;
+    cerrarEditor(); pintarLista();
+    avisar(eraNueva ? 'Chiesa creata. La sua pagina: /' + sede.id + '/' : 'Scheda salvata.');
   }).catch(function (err) {
     /* El caso que de verdad pasa: la sesion ha caducado mientras el editor
        estaba abierto. Decir "non sono riuscito a salvare" y nada mas haria

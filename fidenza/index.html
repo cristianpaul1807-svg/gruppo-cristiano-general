@@ -87,6 +87,21 @@ window.__META = {
 </script>
 </head>
 <body data-raiz="../" data-sede="fidenza">
+<!-- En la pagina COMODIN (_sede.html) data-sede viene vacio: esa pagina sirve
+     a todas las iglesias creadas desde el panel que todavia no tienen la suya
+     generada. Aqui se saca la iglesia de la direccion —/massa-carrara/ ->
+     massa-carrara— ANTES de que se carguen los demas scripts, porque app.js
+     lo lee nada mas arrancar para no ponerla en "le altre chiese". -->
+<script>
+(function () {
+  var b = document.body;
+  if (b.getAttribute('data-sede')) return;
+  var trozo = location.pathname.split('/').filter(Boolean)[0] || '';
+  try { trozo = decodeURIComponent(trozo); } catch (e) {}
+  b.setAttribute('data-sede', trozo.toLowerCase());
+  b.setAttribute('data-generica', '1');
+})();
+</script>
 
 <div id="page-progress"></div>
 <div class="nav-backdrop"></div>

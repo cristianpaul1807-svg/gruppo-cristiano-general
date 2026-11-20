@@ -101,17 +101,14 @@ var SEDI = (window.SEDI_BASE || []).slice();
    subir un nivel. El HTML lo dice con data-raiz y asi no hay que adivinarlo
    contando barras en location.pathname, que falla en cuanto algo se mueve.
 
-   Y una tarjeta solo enlaza a su pagina si esa pagina EXISTE. Existe una por
-   cada entrada de sedi.js, porque el generador las hace de ahi. Una sede
-   creada desde el panel todavia no tiene pagina propia —la tendra en el
-   siguiente despliegue—, asi que su tarjeta se queda sin enlace en vez de
-   llevar a un 404.
+   Toda iglesia con id tiene pagina: las de sedi.js, la suya generada; las
+   creadas desde el panel, la pagina comodin (_sede.html), que nginx entrega
+   cuando la carpeta no existe. Por eso cualquier tarjeta puede enlazar.
    ---------------------------------------------------------------------------- */
 var RAIZ = document.body.getAttribute('data-raiz') || '';
-var CON_PAGINA = (window.SEDI_BASE || []).map(function (s) { return s.id; });
 
 function PAGINA(sede) {
-  return (sede.id && CON_PAGINA.indexOf(sede.id) >= 0) ? RAIZ + sede.id + '/' : '';
+  return sede.id ? RAIZ + sede.id + '/' : '';
 }
 
 /* Las rutas de sedi.js se escriben desde la raiz ('media/...'). Una imagen que
@@ -119,6 +116,23 @@ function PAGINA(sede) {
 function RUTA(p) {
   if (!p || /^(https?:|data:|\/)/.test(p)) return p;
   return RAIZ + p;
+}
+
+/* De donde sale el mapa de una sede. Hay dos sitios y no se mezclan:
+
+     - las de sedi.js tienen su mapa en un archivo, media/mappa-<id>.jpg,
+       generado con herramientas/mapa-sede.py;
+     - las creadas desde el panel lo llevan dentro de la ficha, en `mapa`,
+       porque el panel no puede escribir archivos en el servidor.
+
+   Antes se probaba el archivo para cualquier sede, y para las del panel eso
+   era una peticion a un archivo que no existe CADA VEZ que salia su tarjeta:
+   seis 404 solo en una visita normal. El aviso de "mapa pendiente" salia
+   bien, pero cada fallo es una peticion tirada. */
+function MAPA_DE(sede) {
+  if (sede.mapa) return sede.mapa;
+  var deArchivo = (window.SEDI_BASE || []).some(function (b) { return b.id === sede.id; });
+  return deArchivo ? RUTA('media/mappa-' + sede.id + '.jpg') : '';
 }
 
 (function () {
@@ -143,7 +157,7 @@ function RUTA(p) {
     /* Arriba va el logo de esa iglesia si lo tiene y lo quiere; si no, el
        mapa, que es lo normal. Y si no hay ninguno de los dos, una trama con
        el aviso — nunca un hueco negro, que parece un fallo de carga. */
-    var fuenteMapa = sede.mapa || (sede.id ? RUTA('media/mappa-' + sede.id + '.jpg') : '');
+    var fuenteMapa = MAPA_DE(sede);
     var pagina = PAGINA(sede);
     var cabecera;
     if (sede.logo) {
@@ -157,8 +171,17 @@ function RUTA(p) {
       cabecera = document.createElement(pagina ? 'a' : 'div');
       cabecera.className = 'sede-mappa';
       var im = document.createElement('img');
-      im.src = fuenteMapa; im.width = 1120; im.height = 700; im.loading = 'lazy';
+      im.width = 1120; im.height = 700; im.loading = 'lazy';
       im.alt = texto('sd_alt', 'Mappa della chiesa di') + ' ' + sede.citta;
+      /* Creada desde el panel sin pulsar "Genera la mappa": no hay archivo.
+         En vez de un icono roto, la trama con el aviso. */
+      im.onerror = (function (cab) {
+        return function () {
+          cab.textContent = texto('sd_senza_mappa', 'Mappa in attesa dell’indirizzo');
+          cab.classList.add('vuota');
+        };
+      })(cabecera);
+      im.src = fuenteMapa;
       cabecera.appendChild(im);
     } else {
       cabecera = document.createElement(pagina ? 'a' : 'div');
@@ -422,6 +445,8 @@ var I18N = {
     sp_chi_h: "Quiénes somos",
     sp_chi_p: "Esta iglesia forma parte del Gruppo Cristiano Latino Americano. La visión, los puntos de fe y la historia son los del grupo entero.",
     sp_chi_btn: "La visión del grupo",
+    sp_nf_h: "Esta iglesia no está",
+    sp_nf_p: "Esta dirección no corresponde a ninguna iglesia del grupo. Aquí abajo están todas las que hay.",
     sp_senza_h: "Esta página está esperando sus datos",
     sp_senza_p: "De esta iglesia faltan la dirección, los horarios y los idiomas. En cuanto lleguen, la página se rellena sola.",
     sd_aria: "Indicaciones para", sd_alt: "Mapa de la iglesia de",

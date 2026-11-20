@@ -15,22 +15,22 @@
      leyendo sedi.js. Si se corrige una pagina a mano, el siguiente generador
      se lo lleva por delante. Se corrige aqui y se vuelve a generar.
      ============================================================================ -->
-<title>Gruppo Cristiano Reggio Emilia — Chiesa evangelica a Reggio Emilia</title>
-<meta name="description" content="Gruppo Cristiano Reggio Emilia, chiesa evangelica in Via Arcangelo Corelli 5, 42124 Reggio Emilia (RE). Orari degli incontri e come arrivare.">
+<title>Gruppo Cristiano Latino Americano</title>
+<meta name="description" content="Una delle chiese del Gruppo Cristiano Latino Americano in Italia.">
 <meta name="robots" content="noindex, nofollow">
 
 <!-- La vista previa cuando alguien pega el enlace en WhatsApp, que es por
      donde va a circular esto. Sin esto sale un recuadro gris con la direccion
      y nadie lo abre. La imagen es el mapa de la propia iglesia. -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="Gruppo Cristiano Reggio Emilia">
-<meta property="og:description" content="Gruppo Cristiano Reggio Emilia, chiesa evangelica in Via Arcangelo Corelli 5, 42124 Reggio Emilia (RE). Orari degli incontri e come arrivare.">
-<meta property="og:url" content="https://www.gruppocristiano.it/reggio-emilia/">
-<meta property="og:image" content="https://www.gruppocristiano.it/media/mappa-reggio-emilia.jpg">
+<meta property="og:title" content="Gruppo Cristiano">
+<meta property="og:description" content="Una delle chiese del Gruppo Cristiano Latino Americano in Italia.">
+<meta property="og:url" content="https://www.gruppocristiano.it/">
+<meta property="og:image" content="https://www.gruppocristiano.it/media/logo-ufficiale.png">
 <meta property="og:locale" content="it_IT">
 <meta name="twitter:card" content="summary_large_image">
 
-<link rel="canonical" href="https://www.gruppocristiano.it/reggio-emilia/">
+<link rel="canonical" href="https://www.gruppocristiano.it/">
 <link rel="icon" href="../media/simbolo-256.png" type="image/png">
 <link rel="apple-touch-icon" href="../media/simbolo-256.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,26 +43,8 @@
 {
   "@context": "https://schema.org",
   "@type": "Church",
-  "name": "Gruppo Cristiano Reggio Emilia",
-  "parentOrganization": {
-    "@type": "Church",
-    "name": "Gruppo Cristiano Latino Americano",
-    "url": "https://www.gruppocristiano.it/"
-  },
-  "url": "https://www.gruppocristiano.it/reggio-emilia/",
-  "address": {
-    "@type": "PostalAddress",
-    "streetAddress": "Via Arcangelo Corelli 5",
-    "postalCode": "42124",
-    "addressLocality": "Reggio Emilia",
-    "addressRegion": "RE",
-    "addressCountry": "IT"
-  },
-  "geo": {
-    "@type": "GeoCoordinates",
-    "latitude": 44.706067,
-    "longitude": 10.607343
-  }
+  "name": "Gruppo Cristiano Latino Americano",
+  "url": "https://www.gruppocristiano.it/"
 }
 </script>
 
@@ -74,19 +56,25 @@
      general. Quien guarda el enlace en el movil se encuentra cuatro accesos
      directos con el mismo nombre. -->
 <script>
-window.__META = {
-  "it": {
-    "t": "Gruppo Cristiano Reggio Emilia — Chiesa evangelica a Reggio Emilia",
-    "d": "Gruppo Cristiano Reggio Emilia, chiesa evangelica in Via Arcangelo Corelli 5, 42124 Reggio Emilia (RE). Orari degli incontri e come arrivare."
-  },
-  "es": {
-    "t": "Gruppo Cristiano Reggio Emilia — Iglesia evangélica en Reggio Emilia",
-    "d": "Gruppo Cristiano Reggio Emilia, iglesia evangélica en Via Arcangelo Corelli 5, 42124 Reggio Emilia (RE). Horarios de las reuniones y cómo llegar."
-  }
-};
+window.__META = null;
 </script>
 </head>
-<body data-raiz="../" data-sede="reggio-emilia">
+<body data-raiz="../" data-sede="">
+<!-- En la pagina COMODIN (_sede.html) data-sede viene vacio: esa pagina sirve
+     a todas las iglesias creadas desde el panel que todavia no tienen la suya
+     generada. Aqui se saca la iglesia de la direccion —/massa-carrara/ ->
+     massa-carrara— ANTES de que se carguen los demas scripts, porque app.js
+     lo lee nada mas arrancar para no ponerla en "le altre chiese". -->
+<script>
+(function () {
+  var b = document.body;
+  if (b.getAttribute('data-sede')) return;
+  var trozo = location.pathname.split('/').filter(Boolean)[0] || '';
+  try { trozo = decodeURIComponent(trozo); } catch (e) {}
+  b.setAttribute('data-sede', trozo.toLowerCase());
+  b.setAttribute('data-generica', '1');
+})();
+</script>
 
 <div id="page-progress"></div>
 <div class="nav-backdrop"></div>
@@ -124,8 +112,8 @@ window.__META = {
 <header class="hero hero-sede">
   <div class="wrap">
     <p class="eyebrow" data-i18n="sp_eyebrow">Una chiesa del gruppo</p>
-    <h1>Gruppo Cristiano<br><em>Reggio Emilia</em></h1>
-    <p class="sp-via" id="sp-via">Via Arcangelo Corelli 5<span>42124 Reggio Emilia (RE)</span></p>
+    <h1>Gruppo Cristiano<br><em></em></h1>
+    <p class="sp-via" id="sp-via"></p>
     <div class="acciones" id="sp-acc"></div>
   </div>
 </header>

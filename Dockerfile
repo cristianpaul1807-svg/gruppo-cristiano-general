@@ -15,6 +15,12 @@ COPY nginx.conf /etc/nginx/conf.d/gruppocristiano.conf
 # pasar: el encargado manda el enlace de su iglesia por WhatsApp y no abre.
 COPY . /usr/share/nginx/html/
 
+# nginx.conf no se puede dejar fuera con .dockerignore —lo necesita el COPY
+# de arriba del todo—, asi que entra con el resto y aqui se quita. Sin esto,
+# cualquiera podia descargarse la configuracion del servidor en /nginx.conf.
+# Comprobado con un nginx de verdad: antes daba 200.
+RUN rm -f /usr/share/nginx/html/nginx.conf
+
 EXPOSE 80
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \

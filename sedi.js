@@ -96,35 +96,17 @@ var SEDI_BASE = [
     lingue: '',
     apple: '',
     publicada: false
-  },
-  {
-    /* Aparece en su mapa conceptual y no tengo nada mas: ni calle, ni
-       coordenada, ni horarios. La ficha se queda montada y vacia, en
-       borrador, para rellenarla desde el panel en cuanto lleguen los datos.
-       Inventarle una direccion seria mandar gente a una puerta equivocada.
-
-       Massa-Carrara ademas no es Emilia-Romagna sino Toscana: el grupo pasa
-       de una region a otra, y eso cambia como se cuenta en la web. */
-    id: 'massa-carrara',
-    citta: 'Massa-Carrara',
-    via: '',
-    cap: '',
-    web: '',
-    testo: '',
-    logo: '',
-    whatsapp: '',
-    orari: [],
-    lingue: '',
-    apple: '',
-    publicada: false
   }
-  /* Bologna NO esta: tu dijiste que existe y su propio mapa conceptual no la
-     nombra. Hasta que se aclare, fuera — una sede que no existe hace mas dano
-     que una sede que falta.
+  /* Las que faltan —Massa-Carrara, y Bologna si existe— NO se escriben aqui:
+     las crean ellos desde el panel. Es como van a trabajar a partir de ahora,
+     y asi se prueba el camino entero.
 
-     Para anadir una sede:
+     Una iglesia creada desde el panel tiene su pagina al momento, en
+     /su-ciudad/, sin desplegar nada: la sirve _sede.html, la pagina comodin.
+     Lo unico que le falta respecto a las de aqui es la vista previa propia al
+     pegar el enlace en WhatsApp. Para eso se anade aqui y se regenera:
+
        1. python3 -I herramientas/mapa-sede.py <id> <lat> <lon>
-       2. una entrada aqui
-       3. node herramientas/paginas-sede.js   (escribe <id>/index.html)
-     O, mas facil, desde el panel: pegas el enlace del mapa y sale sola. */
+       2. una entrada aqui, con el MISMO id que tenga en el panel
+       3. node herramientas/paginas-sede.js */
 ];

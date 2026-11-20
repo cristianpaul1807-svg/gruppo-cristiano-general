@@ -27,6 +27,8 @@ compilar. Desplegar es copiar la carpeta.
 ```
 index.html           la portada del grupo
 parma/ fidenza/ …    una carpeta por iglesia — GENERADAS, no se editan
+_sede.html           la página comodín de las iglesias creadas desde el panel
+                     — GENERADA también
 estilo.css           el estilo, compartido por todas las páginas
 app.js               el motor: fichas, idioma, menú, WhatsApp
 sede.js              lo que cambia dentro de la página de una iglesia
@@ -78,19 +80,39 @@ presentaría a una hora que ya no es.
 
 ### Añadir una iglesia
 
-**Lo fácil:** desde el panel. Se pega el enlace de Apple Maps o Google Maps de
-esa iglesia y salen solas las coordenadas, la calle y el código postal.
-Después «Genera la mappa» y la imagen se construye en el propio móvil. Sale al
-momento en la portada; **su página propia aparece en el siguiente despliegue**,
-cuando se regenere.
+**Lo normal: desde el panel**, y la crea el administrador general. Es como van
+a trabajar ellos, y por eso Massa-Carrara no está en `sedi.js`: la crean ellos.
 
-**A mano:**
+Se escribe la ciudad —el panel enseña **antes de guardar** la dirección que va
+a tener su página, `/massa-carrara/`, porque después no cambia— y se pega el
+enlace de Apple Maps o Google Maps: salen solas las coordenadas, la calle y el
+código postal. «Genera la mappa» construye la imagen en el propio móvil.
+
+**Tiene su página al momento, sin desplegar nada.** Su carpeta no existe, así
+que nginx entrega `_sede.html`, la página comodín: lee la ciudad de la
+dirección y se rellena desde la base de datos. Lo único que le falta respecto a
+una generada es la vista previa propia al pegar el enlace en WhatsApp
+(WhatsApp no ejecuta JavaScript y ve «Gruppo Cristiano» a secas). Para eso, el
+paso de abajo.
+
+**Para darle su vista previa en WhatsApp:**
 
 ```sh
-python3 -I herramientas/mapa-sede.py parma 44.807452 10.293616   # el mapa
-# una entrada en sedi.js
+python3 -I herramientas/mapa-sede.py massa-carrara 44.03 10.14   # el mapa
+# una entrada en sedi.js, con el MISMO id que tiene en el panel
 node herramientas/paginas-sede.js                                 # su página
 ```
+
+### Los borradores no tienen página
+
+Una iglesia en borrador **no sale por ninguna puerta**: ni en la portada ni
+escribiendo su dirección a mano, que enseña «Questa chiesa non c'è». El
+generador no le hace página, y si la tenía se la quita (solo si reconoce que
+la hizo él). Es lo que impide que la dirección de Reggio Emilia, que nadie ha
+confirmado, se pueda ver antes de tiempo.
+
+Una dirección que no es ninguna iglesia —`/loquesea/`— enseña lo mismo, con la
+lista de las que hay debajo.
 
 Las cuentas del script de Python y las de `mapa.js` son **las mismas a
 propósito**: 36 teselas, el mismo oscurecido, el mismo marcador. Si dejaran de
@@ -310,7 +332,7 @@ Nada aquí está inventado. Lo que no se sabe lleva un aviso amarillo.
 | Día de Fidenza | sus propios vídeos de YouTube; la hora no aparece |
 | Visión y puntos de fe | su PDF, transcrito literal |
 | Dirección de Reggio Emilia | Apple Maps — **sin confirmar**, por eso en borrador |
-| Massa-Carrara | solo el nombre. Sin dirección, en borrador |
+| Massa-Carrara | **la crean ellos desde el panel** — no está en `sedi.js` |
 | Bologna | **no aparece en su mapa conceptual.** Fuera hasta que se aclare |
 | Mapas | teselas de OpenStreetMap, con su atribución en cada ficha |
 

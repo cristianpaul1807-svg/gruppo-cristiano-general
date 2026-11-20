@@ -38,9 +38,19 @@
     return null;
   }
 
+  var GENERICA = document.body.hasAttribute('data-generica');
+
+  /* Un borrador no sale por ninguna puerta: ni en la lista de la portada ni
+     escribiendo su direccion a mano. */
+  function visible(s) { return !!(s && s.publicada !== false); }
+
   function dibujar() {
     var s = buscar();
-    if (!s) return;
+    if (!visible(s)) { noEncontrada(); return; }
+
+    /* En la pagina comodin el nombre no viene escrito: se pone aqui, y con el
+       el titulo de la pestana y el de los dos idiomas. */
+    if (GENERICA) ponerNombre(s);
 
     var dir = s.via && s.cap ? s.via + ', ' + s.cap + ', Italia' : '';
     var q = encodeURIComponent(dir);
@@ -83,15 +93,27 @@
     var mapa = $('#sp-mappa');
     if (mapa) {
       mapa.textContent = '';
-      var fuente = s.mapa || (s.id ? '../media/mappa-' + s.id + '.jpg' : '');
+      /* La misma regla que las tarjetas (app.js): archivo solo para las de
+         sedi.js, el de la ficha para las del panel. */
+      var fuente = window.MAPA_DE ? MAPA_DE(s) : (s.mapa || '');
       if (fuente && dir) {
         var a = document.createElement('a');
         a.href = 'https://www.google.com/maps/dir/?api=1&destination=' + q;
         a.target = '_blank'; a.rel = 'noopener';
         a.setAttribute('aria-label', texto('sd_aria', 'Indicazioni per') + ' ' + s.citta);
         var im = document.createElement('img');
-        im.src = fuente; im.width = 1120; im.height = 700;
+        im.width = 1120; im.height = 700;
         im.alt = texto('sd_alt', 'Mappa della chiesa di') + ' ' + s.citta;
+        /* Una iglesia creada desde el panel sin pulsar "Genera la mappa" no
+           tiene imagen: en vez de un icono roto, el aviso de mapa pendiente. */
+        im.onerror = function () {
+          mapa.textContent = '';
+          var v0 = document.createElement('div');
+          v0.className = 'sede-mappa vuota';
+          v0.textContent = texto('sd_senza_mappa', 'Mappa in attesa dell’indirizzo');
+          mapa.appendChild(v0);
+        };
+        im.src = fuente;
         a.appendChild(im);
         mapa.appendChild(a);
         var cap = document.createElement('p');
@@ -167,7 +189,61 @@
     return a;
   }
 
-  dibujar();
-  /* Al cambiar de idioma, app.js vuelve a pintar lo que dibuja JavaScript. */
+  /* --- el nombre, en la pagina comodin ------------------------------------- */
+  function ponerNombre(s) {
+    var em = document.querySelector('.hero-sede h1 em');
+    if (em) em.textContent = s.citta;
+    var dir = s.via && s.cap ? s.via + ', ' + s.cap : '';
+    window.__META = {
+      it: { t: 'Gruppo Cristiano ' + s.citta + ' — Chiesa evangelica a ' + s.citta,
+            d: s.testo || ('Gruppo Cristiano ' + s.citta + (dir ? ', ' + dir : '')
+               + '. Orari degli incontri e come arrivare.') },
+      es: { t: 'Gruppo Cristiano ' + s.citta + ' — Iglesia evangélica en ' + s.citta,
+            d: s.testo || ('Gruppo Cristiano ' + s.citta + (dir ? ', ' + dir : '')
+               + '. Horarios de las reuniones y cómo llegar.') }
+    };
+    var lang = document.documentElement.lang === 'es' ? 'es' : 'it';
+    document.title = window.__META[lang].t;
+    var md = document.querySelector('meta[name="description"]');
+    if (md) md.content = window.__META[lang].d;
+  }
+
+  /* --- una direccion que no es ninguna iglesia -----------------------------
+     /loquesea/ tambien cae en la pagina comodin. Hay que decir que ahi no hay
+     nada, y no dejar una portada vacia que parezca una iglesia sin datos. */
+  function noEncontrada() {
+    var h1 = document.querySelector('.hero-sede h1');
+    if (h1) h1.textContent = texto('sp_nf_h', 'Questa chiesa non c’è');
+    var via = $('#sp-via');
+    if (via) via.textContent = texto('sp_nf_p',
+      'Questo indirizzo non corrisponde a nessuna chiesa del gruppo. Qui sotto ci sono tutte quelle che ci sono.');
+    ['#sp-dettagli', '#sp-chi', '#sp-acc', '.hero-sede .eyebrow'].forEach(function (sel) {
+      var e = document.querySelector(sel); if (e) e.hidden = true;
+    });
+    document.title = 'Gruppo Cristiano';
+    window.__dibujarSede = noEncontrada;   // al cambiar de idioma, el aviso, no la ficha
+  }
+
+  /* --- arrancar --------------------------------------------------------------
+     Si la iglesia esta en sedi.js se pinta ya, y cuando llegan los datos de la
+     base de datos app.js la vuelve a pintar con lo ultimo.
+
+     Si NO esta —una creada desde el panel— hay que esperar a la base de datos
+     para saber siquiera como se llama. Se pide aqui directamente en vez de
+     esperar a app.js, porque app.js no avisa si la lista vuelve vacia, y la
+     pagina se quedaria muda para siempre. */
   window.__dibujarSede = dibujar;
+  if (visible(buscar())) {
+    dibujar();
+  } else if (window.ALMACEN) {
+    /* No esta, o esta en borrador en sedi.js. Puede que en la base de datos
+       si este publicada —la publicaron desde el panel—: se pregunta antes de
+       decir que no existe. */
+    ALMACEN.leer().then(function (lista) {
+      if (lista && lista.length) window.SEDI = lista;
+      if (visible(buscar())) dibujar(); else noEncontrada();
+    });
+  } else {
+    noEncontrada();
+  }
 })();
