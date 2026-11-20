@@ -1,0 +1,26 @@
+# Lo que NO se publica.
+#
+# La imagen copia la carpeta entera, asi que la lista de lo que se queda fuera
+# vive aqui. Se hace al reves —excluir en vez de incluir— porque cada iglesia
+# nueva es una carpeta nueva: con una lista de inclusion habria que acordarse
+# de anadirla al Dockerfile, y el dia que se olvide la pagina existe en el
+# repositorio y da 404 en produccion.
+
+.git
+.gitignore
+.dockerignore
+Dockerfile
+
+# Los generadores. Se ejecutan aqui y lo que producen si se publica; ellos no
+# pintan nada en el servidor.
+herramientas/
+
+# Documentacion y preparacion de la base de datos: para nosotros, no para el
+# navegador de nadie.
+README.md
+*.md
+supabase-setup.sql
+
+node_modules/
+*.py
+__pycache__/

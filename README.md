@@ -25,29 +25,71 @@ Archivos estáticos. No hay build, no hay dependencias, no hay nada que
 compilar. Desplegar es copiar la carpeta.
 
 ```
-index.html           la web
+index.html           la portada del grupo
+parma/ fidenza/ …    una carpeta por iglesia — GENERADAS, no se editan
+estilo.css           el estilo, compartido por todas las páginas
 app.js               el motor: fichas, idioma, menú, WhatsApp
+sede.js              lo que cambia dentro de la página de una iglesia
 sedi.js              LAS FICHAS de partida — es lo que más se toca
 fede.js              los diez puntos de fe, en italiano y español
-almacen.js           dónde se guardan las fichas del panel  ← aquí van las
-                     dos líneas de Supabase
+almacen.js           dónde se guardan las fichas  ← aquí van las dos líneas
+                     de Supabase
 mapa.js              genera el mapa de una sede en el navegador
 panel/               el panel del encargado
 supabase-setup.sql   la base de datos, para pegar de una vez
 media/               logo y mapas
-herramientas/        scripts de Python (no se despliegan)
+herramientas/        generadores (no se despliegan)
 ```
+
+## Un repositorio, un sitio por iglesia
+
+Cada comunidad tiene su propia dirección —`gruppocristiano.it/parma`— y a la
+vista de quien entra es su sitio: su título, su descripción, su mapa, su
+vista previa al pegar el enlace en WhatsApp. Por dentro es un solo proyecto:
+un CSS, un menú, un idioma, un panel. **Eso es lo que hace que arreglar algo
+una vez lo arregle en las cuatro.**
+
+Las páginas de cada iglesia **se generan**, no se escriben:
+
+```sh
+node herramientas/paginas-sede.js
+```
+
+Lee `sedi.js` y escribe `parma/index.html` y las demás desde
+`herramientas/plantilla-sede.html`. **Editar una a mano no sirve de nada:** la
+siguiente generación se la lleva por delante. Se corrige la plantilla y se
+vuelve a generar.
+
+### Por qué generadas y no pintadas con JavaScript
+
+Por las vistas previas. Cuando alguien pega el enlace de su iglesia en
+WhatsApp —que es por donde va a circular esto— WhatsApp lee el HTML tal cual
+llega y **no ejecuta JavaScript**. Si el título y la imagen los pusiera
+JavaScript, las cuatro iglesias compartirían la misma vista previa y nadie
+sabría cuál le han mandado.
+
+Así que va escrito en el HTML lo que tiene que estar aunque no haya
+JavaScript: título, descripción, imagen de vista previa, datos estructurados,
+el nombre de la ciudad y la dirección. Lo que cambia —horarios, idiomas, mapa,
+botones— lo pinta `sede.js` desde los datos vivos, **para que lo que cambie el
+encargado en el panel se vea también ahí**. Si estuviera todo escrito, el panel
+cambiaría la tarjeta de la portada y no la página de la iglesia: alguien se
+presentaría a una hora que ya no es.
 
 ### Añadir una iglesia
 
 **Lo fácil:** desde el panel. Se pega el enlace de Apple Maps o Google Maps de
 esa iglesia y salen solas las coordenadas, la calle y el código postal.
-Después «Genera la mappa» y la imagen se construye en el propio móvil.
+Después «Genera la mappa» y la imagen se construye en el propio móvil. Sale al
+momento en la portada; **su página propia aparece en el siguiente despliegue**,
+cuando se regenere.
 
-**A mano:** generar el mapa y añadir una entrada en `sedi.js`.
+**A mano:**
 
 ```sh
-python3 -I herramientas/mapa-sede.py parma 44.807452 10.293616
+python3 -I herramientas/mapa-sede.py parma 44.807452 10.293616   # el mapa
+# una entrada en sedi.js
+node herramientas/paginas-sede.js                                 # su página
 ```
 
 Las cuentas del script de Python y las de `mapa.js` son **las mismas a
@@ -69,6 +111,28 @@ panel ni la web saben cuál está en uso.
 | Quién ve lo que se crea | **solo ese móvil** | todo el mundo, al momento |
 | Al mudar de dominio | se pierde | se mantiene |
 | Para qué sirve | enseñar cómo funciona | usarlo de verdad |
+
+**Ahora mismo está en modo conectado:** `almacen.js` lleva la URL y la clave
+del proyecto de Supabase.
+
+### Quién puede tocar qué
+
+Los dos papeles que ellos mismos dibujaron en su mapa conceptual:
+
+| | Administrador general | Responsable de comunidad |
+|---|---|---|
+| Crear una iglesia | sí | no |
+| Borrar una iglesia | sí | no |
+| Cambiar cualquiera | sí | solo la suya |
+| Ver todas | sí | sí |
+
+Crear o borrar una iglesia es decidir qué comunidad entra en el grupo, y eso
+no es una decisión de contenido — por eso el responsable de sede no puede.
+
+Los permisos viven en la tabla `profilo` y se dan a mano desde Supabase: desde
+la web no se pueden cambiar. **Una cuenta recién creada no puede modificar nada
+hasta que tenga su fila ahí** — es el paso que más se olvida, y el `insert` está
+escrito al final de `supabase-setup.sql`.
 
 El propio panel lo dice en pantalla: en modo demo sale un aviso ámbar con las
 dos advertencias, y conectado sale uno verde. El aviso que no toca **se borra
@@ -182,6 +246,7 @@ Nada aquí está inventado. Lo que no se sabe lleva un aviso amarillo.
 
 | Dato | Fuente |
 |---|---|
+| Qué comunidades son | su mapa conceptual: Parma, Fidenza, Reggio Emilia, Massa-Carrara |
 | Nombre completo | su propio documento de visión, punto 3 |
 | Logo y colores (`#0c97f8`, `#034c82`) | el logo maestro, muestreado del PNG |
 | Dirección de Fidenza | verificada en OpenStreetMap |
@@ -189,6 +254,9 @@ Nada aquí está inventado. Lo que no se sabe lleva un aviso amarillo.
 | Horarios de Parma | Consiglio delle Chiese Cristiane di Parma — **sin confirmar por la iglesia** |
 | Día de Fidenza | sus propios vídeos de YouTube; la hora no aparece |
 | Visión y puntos de fe | su PDF, transcrito literal |
+| Dirección de Reggio Emilia | Apple Maps — **sin confirmar**, por eso en borrador |
+| Massa-Carrara | solo el nombre. Sin dirección, en borrador |
+| Bologna | **no aparece en su mapa conceptual.** Fuera hasta que se aclare |
 | Mapas | teselas de OpenStreetMap, con su atribución en cada ficha |
 
 **El logo sobre fondo oscuro tenía un problema medido:** el píxel más oscuro

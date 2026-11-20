@@ -93,9 +93,41 @@ var NOTAS_SEDE = { fidenza: 'ora_fidenza', parma: 'ora_parma' };
 
 var SEDI = (window.SEDI_BASE || []).slice();
 
+/* ----------------------------------------------------------------------------
+   DONDE ESTA LA RAIZ, Y QUE PAGINAS EXISTEN
+
+   Este mismo archivo dibuja las tarjetas en dos sitios: en la portada, donde
+   la raiz es aqui mismo, y dentro de la pagina de una iglesia, donde hay que
+   subir un nivel. El HTML lo dice con data-raiz y asi no hay que adivinarlo
+   contando barras en location.pathname, que falla en cuanto algo se mueve.
+
+   Y una tarjeta solo enlaza a su pagina si esa pagina EXISTE. Existe una por
+   cada entrada de sedi.js, porque el generador las hace de ahi. Una sede
+   creada desde el panel todavia no tiene pagina propia —la tendra en el
+   siguiente despliegue—, asi que su tarjeta se queda sin enlace en vez de
+   llevar a un 404.
+   ---------------------------------------------------------------------------- */
+var RAIZ = document.body.getAttribute('data-raiz') || '';
+var CON_PAGINA = (window.SEDI_BASE || []).map(function (s) { return s.id; });
+
+function PAGINA(sede) {
+  return (sede.id && CON_PAGINA.indexOf(sede.id) >= 0) ? RAIZ + sede.id + '/' : '';
+}
+
+/* Las rutas de sedi.js se escriben desde la raiz ('media/...'). Una imagen que
+   venga del panel es un data URL o una direccion entera, y esas no se tocan. */
+function RUTA(p) {
+  if (!p || /^(https?:|data:|\/)/.test(p)) return p;
+  return RAIZ + p;
+}
+
 (function () {
   var lista = document.getElementById('sedi-lista');
   if (!lista) return;
+
+  /* Dentro de la pagina de una iglesia, esta lista son LAS DEMAS: la propia
+     sobra, que es donde ya esta quien lo mira. */
+  var YO = document.body.getAttribute('data-sede') || '';
 
   function texto(k, alt) { var d = window.__T || {}; return d[k] !== undefined ? d[k] : alt; }
 
@@ -111,31 +143,38 @@ var SEDI = (window.SEDI_BASE || []).slice();
     /* Arriba va el logo de esa iglesia si lo tiene y lo quiere; si no, el
        mapa, que es lo normal. Y si no hay ninguno de los dos, una trama con
        el aviso — nunca un hueco negro, que parece un fallo de carga. */
-    var fuenteMapa = sede.mapa || (sede.id ? 'media/mappa-' + sede.id + '.jpg' : '');
+    var fuenteMapa = sede.mapa || (sede.id ? RUTA('media/mappa-' + sede.id + '.jpg') : '');
+    var pagina = PAGINA(sede);
     var cabecera;
     if (sede.logo) {
-      cabecera = document.createElement(dir ? 'a' : 'div');
+      cabecera = document.createElement(pagina ? 'a' : 'div');
       cabecera.className = 'sede-mappa logo';
       var il = document.createElement('img');
-      il.src = sede.logo; il.loading = 'lazy';
+      il.src = RUTA(sede.logo); il.loading = 'lazy';
       il.alt = texto('sd_alt_logo', 'Logo della chiesa di') + ' ' + sede.citta;
       cabecera.appendChild(il);
     } else if (fuenteMapa && dir) {
-      cabecera = document.createElement('a');
+      cabecera = document.createElement(pagina ? 'a' : 'div');
       cabecera.className = 'sede-mappa';
       var im = document.createElement('img');
       im.src = fuenteMapa; im.width = 1120; im.height = 700; im.loading = 'lazy';
       im.alt = texto('sd_alt', 'Mappa della chiesa di') + ' ' + sede.citta;
       cabecera.appendChild(im);
     } else {
-      cabecera = document.createElement('div');
+      cabecera = document.createElement(pagina ? 'a' : 'div');
       cabecera.className = 'sede-mappa vuota';
       cabecera.textContent = texto('sd_senza_mappa', 'Mappa in attesa dell’indirizzo');
     }
-    if (cabecera.tagName === 'A' && dir) {
-      cabecera.href = 'https://www.google.com/maps/dir/?api=1&destination=' + q;
-      cabecera.target = '_blank'; cabecera.rel = 'noopener';
-      cabecera.setAttribute('aria-label', texto('sd_aria', 'Indicazioni per') + ' ' + sede.citta);
+    /* El mapa ya no abre el navegador: abre LA PAGINA de esa iglesia.
+
+       Es el cambio que pidieron ellos. Cada comunidad tiene su propia
+       direccion —gruppocristiano.it/parma— y la tarjeta es la puerta. Dentro
+       de esa pagina estan los botones de llegar, que es donde tienen sentido:
+       quien toca una tarjeta normalmente quiere saber de esa iglesia, no
+       arrancar el coche. */
+    if (cabecera.tagName === 'A') {
+      cabecera.href = PAGINA(sede);
+      cabecera.setAttribute('aria-label', texto('sd_ver_aria', 'La chiesa di') + ' ' + sede.citta);
     }
     art.appendChild(cabecera);
 
@@ -197,33 +236,37 @@ var SEDI = (window.SEDI_BASE || []).slice();
       if (n.textContent) corpo.appendChild(n);
     }
 
-    if (dir || sede.web) {
+    if (pagina || dir || sede.web) {
       var acc = document.createElement('div');
       acc.className = 'acciones';
-      /* Cuando esa iglesia tenga su web, ese es el boton principal: es a donde
-         queremos que vaya la gente. Mientras no exista, manda el de llegar. */
-      if (sede.web) {
-        var w = document.createElement('a');
-        w.className = 'btn piena'; w.href = sede.web;
-        w.target = '_blank'; w.rel = 'noopener';
-        w.textContent = texto('sd_sito', 'Vai al sito');
-        acc.appendChild(w);
+      /* El boton principal es el de entrar en la iglesia. Ahi dentro esta
+         todo lo suyo —horarios, mapa, como llegar, con quien hablar— y es lo
+         que pidieron: que cada comunidad tenga su sitio.
+
+         Aqui NO van los dos botones de mapas. Una rejilla de cuatro tarjetas
+         con tres botones cada una son doce botones en una pantalla de movil,
+         y entonces no destaca ninguno. Llegar se decide dentro. */
+      if (pagina) {
+        var v = document.createElement('a');
+        v.className = 'btn piena'; v.href = pagina;
+        v.textContent = texto('sd_ver', 'La chiesa di') + ' ' + sede.citta;
+        acc.appendChild(v);
       }
       if (dir) {
         var g = document.createElement('a');
-        g.className = 'btn' + (sede.web ? '' : ' piena');
+        g.className = 'btn' + (pagina ? '' : ' piena');
         g.target = '_blank'; g.rel = 'noopener';
         g.href = 'https://www.google.com/maps/dir/?api=1&destination=' + q;
         g.textContent = texto('sd_vai', 'Come arrivare');
         acc.appendChild(g);
-        var a = document.createElement('a');
-        a.className = 'btn'; a.target = '_blank'; a.rel = 'noopener';
-        a.href = sede.apple
-          ? 'https://maps.apple.com/place?place-id=' + encodeURIComponent(sede.apple)
-            + '&address=' + q + '&name=' + encodeURIComponent('Gruppo Cristiano ' + sede.citta)
-          : 'https://maps.apple.com/?address=' + q;
-        a.textContent = 'Apple Maps';
-        acc.appendChild(a);
+      }
+      /* La web propia de esa iglesia, si algun dia la tiene aparte de esta. */
+      if (sede.web) {
+        var w = document.createElement('a');
+        w.className = 'btn'; w.href = sede.web;
+        w.target = '_blank'; w.rel = 'noopener';
+        w.textContent = texto('sd_sito', 'Vai al sito');
+        acc.appendChild(w);
       }
       corpo.appendChild(acc);
     }
@@ -262,14 +305,30 @@ var SEDI = (window.SEDI_BASE || []).slice();
     lista.textContent = '';
     /* Una ficha en borrador no sale. Es el boton que evita publicar algo a
        medio escribir desde el panel. */
-    SEDI.filter(function (s) { return s.publicada !== false; })
+    SEDI.filter(function (s) { return s.publicada !== false && s.id !== YO; })
         .forEach(function (s, i) { lista.appendChild(tarjeta(s, i)); });
-    lista.appendChild(espera());
+    /* La invitacion a mandar los datos de las demas solo tiene sentido en la
+       portada. Dentro de una iglesia, lo de al lado son sus hermanas. */
+    if (!YO) lista.appendChild(espera());
     if (observarReveal) observarReveal(lista);
   }
 
-  dibujar();
-  window.__dibujarSedi = dibujar;
+  /* El pie lista las ciudades, y se arma solo con las que estan publicadas.
+     Escrito a mano era una linea que se queda vieja: se anade una iglesia y
+     el pie sigue diciendo "Fidenza · Parma" durante meses sin que nadie lo
+     note. Lo que se puede deducir, se deduce. */
+  function pintarPie() {
+    var pie = document.querySelector('.pie-dir');
+    if (!pie) return;
+    var ciudades = SEDI.filter(function (s) { return s.publicada !== false; })
+                       .map(function (s) { return s.citta; })
+                       .filter(Boolean);
+    if (ciudades.length) pie.textContent = ciudades.join(' · ');
+  }
+
+  var dibujarTodo = function () { dibujar(); pintarPie(); };
+  dibujarTodo();
+  window.__dibujarSedi = dibujarTodo;
 
   /* Si alguien ha creado fichas desde el panel, mandan esas. ALMACEN devuelve
      null cuando no hay nada guardado o cuando el almacen no existe —navegacion
@@ -278,7 +337,14 @@ var SEDI = (window.SEDI_BASE || []).slice();
      todas a proposito". */
   if (window.ALMACEN) {
     ALMACEN.leer().then(function (guardadas) {
-      if (guardadas && guardadas.length) { SEDI = guardadas; dibujar(); }
+      if (guardadas && guardadas.length) {
+        SEDI = guardadas;
+        dibujar();
+        /* Dentro de la pagina de una iglesia hay que repintar tambien lo suyo:
+           si el encargado corrige un horario desde el panel, se corrige aqui y
+           en la portada a la vez. */
+        if (window.__dibujarSede) window.__dibujarSede();
+      }
     });
   }
 })();
@@ -344,6 +410,20 @@ var I18N = {
     sd_nota_p: "Las direcciones están verificadas una por una. Los horarios de Parma vienen del sitio del Consiglio delle Chiese Cristiane di Parma y tenéis que confirmarlos; de Fidenza no aparece la hora en ninguna parte.",
     sd_nota_p2: "De cada sede necesito el nombre, la calle con el número, los días y las horas, y los idiomas que se hablan. A partir de ahí la ficha se rellena, mapa incluido.",
     sd_vai: "Cómo llegar", sd_sito: "Ir a su web", sd_orari: "Horarios",
+    sd_ver: "La iglesia de", sd_ver_aria: "La iglesia de",
+    /* --- la página de cada iglesia --- */
+    sp_torna: "Todas las iglesias",
+    sp_eyebrow: "Una iglesia del grupo",
+    sp_dove: "Dónde estamos", sp_quando: "Cuándo nos reunimos",
+    sp_lingue: "Idiomas", sp_contatti: "Hablar con esta iglesia",
+    sp_contatti_p: "Escribe por WhatsApp y te contestamos. Si prefieres venir sin avisar, también: no hace falta avisar para entrar.",
+    sp_altre_h: "Las demás iglesias del grupo",
+    sp_altre_p: "El mismo grupo, la misma fe, otra ciudad.",
+    sp_chi_h: "Quiénes somos",
+    sp_chi_p: "Esta iglesia forma parte del Gruppo Cristiano Latino Americano. La visión, los puntos de fe y la historia son los del grupo entero.",
+    sp_chi_btn: "La visión del grupo",
+    sp_senza_h: "Esta página está esperando sus datos",
+    sp_senza_p: "De esta iglesia faltan la dirección, los horarios y los idiomas. En cuanto lleguen, la página se rellena sola.",
     sd_aria: "Indicaciones para", sd_alt: "Mapa de la iglesia de",
     sd_alt_logo: "Logo de la iglesia de",
     sd_senza_mappa: "Mapa esperando la dirección", sd_senza_via: "Dirección",
@@ -412,8 +492,12 @@ function aplicarIdioma(lang) {
   document.documentElement.lang = lang;
   var md = document.querySelector('meta[name="description"]');
   if (!aplicarIdioma.orig) aplicarIdioma.orig = { t: document.title, d: md ? md.content : '' };
-  document.title = d ? d.meta_title : aplicarIdioma.orig.t;
-  if (md) md.content = d ? d.meta_desc : aplicarIdioma.orig.d;
+  /* Cada pagina de iglesia tiene su propio titulo —"Gruppo Cristiano Parma"—
+     y no puede heredar el del grupo al cambiar de idioma. Si la pagina
+     declara __META manda ella; si no, el diccionario general. */
+  var mio = window.__META && window.__META[lang];
+  document.title = mio ? mio.t : (d ? d.meta_title : aplicarIdioma.orig.t);
+  if (md) md.content = mio ? mio.d : (d ? d.meta_desc : aplicarIdioma.orig.d);
   document.querySelectorAll('.langsw button').forEach(function (b) {
     b.classList.toggle('active', b.dataset.lang === lang);
   });
@@ -421,6 +505,7 @@ function aplicarIdioma(lang) {
      barrido de [data-i18n]: se vuelven a pintar con el diccionario cargado. */
   if (window.__dibujarSedi) window.__dibujarSedi();
   if (window.__dibujarFede) window.__dibujarFede();
+  if (window.__dibujarSede) window.__dibujarSede();
   try { localStorage.setItem('gc_lang', lang); } catch (e) {}
 }
 

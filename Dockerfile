@@ -6,13 +6,14 @@ FROM nginx:1.27-alpine
 RUN rm -f /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/gruppocristiano.conf
 
-COPY index.html robots.txt /usr/share/nginx/html/
-COPY sedi.js fede.js app.js almacen.js mapa.js /usr/share/nginx/html/
-COPY media/ /usr/share/nginx/html/media/
-# El panel. Va en su carpeta para que la direccion sea /panel.
-# Si esta linea falta, la pagina existe en el repositorio y da 404 en
-# produccion: el encargado abre el enlace y no hay nada.
-COPY panel/ /usr/share/nginx/html/panel/
+# Se copia la carpeta entera y lo que no va se queda fuera por .dockerignore.
+#
+# Antes se listaba archivo por archivo, que es mas explicito, pero ahora cada
+# iglesia es una carpeta —parma/, fidenza/...— y el dia que se anada una y
+# nadie se acuerde de tocar este archivo, la pagina existiria en el
+# repositorio y daria 404 en produccion. Eso es exactamente lo que no puede
+# pasar: el encargado manda el enlace de su iglesia por WhatsApp y no abre.
+COPY . /usr/share/nginx/html/
 
 EXPOSE 80
 

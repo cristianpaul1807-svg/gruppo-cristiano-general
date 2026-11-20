@@ -1,0 +1,324 @@
+/* ============================================================================
+   GRUPPO CRISTIANO LATINO AMERICANO — web general del grupo
+
+   Los azules salen del logo maestro, muestreados del PNG: #0c97f8 el claro
+   (el pez y "GRUPPO") y #034c82 el oscuro ("CRISTIANO"). No son los que habia
+   en el primer prototipo: aquellos venian del avatar de Instagram, que es una
+   imagen comprimida, y salian lavados.
+
+   El logo sobre este fondo tiene un problema medido: el pixel mas oscuro de
+   "CRISTIANO" da 1,04:1 de contraste contra #0b0d12, y la norma pide 3:1.
+   Por eso en la pagina va la version aclarada —misma tonalidad, luminosidad
+   subida, 4,25:1 medido— y el logo oficial sin tocar se guarda en
+   media/logo-ufficiale.png para cuando haga falta sobre blanco.
+   ============================================================================ */
+:root{
+  --ink:#0b0d12;
+  --ink-2:#12151c;
+  --ink-3:#171b24;
+  --bone:#eef2f7;
+  --bone-dim:#b6c1cf;
+  --stone:#7d8898;
+  --blu:#0c97f8;        /* el pez y "GRUPPO" */
+  --blu-2:#56b4ff;      /* el mismo, aclarado para texto pequeño */
+  --blu-dark:#034c82;   /* "CRISTIANO" */
+  --line:rgba(238,242,247,0.10);
+  --line-strong:rgba(238,242,247,0.20);
+  --ambar:#f0c040;
+  --max:1180px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
+@media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} }
+body{background:var(--ink);color:var(--bone);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+img{max-width:100%;height:auto;display:block;}
+a{color:inherit;text-decoration:none;}
+h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:400;line-height:1.08;
+  letter-spacing:-0.015em;}
+em{font-style:italic;color:var(--blu-2);}
+
+.wrap{max-width:var(--max);margin:0 auto;padding-inline:clamp(20px,5vw,48px);}
+section{padding-block:clamp(72px,11vh,130px);}
+
+.eyebrow{display:flex;align-items:center;gap:12px;font-size:11px;font-weight:500;
+  letter-spacing:0.22em;text-transform:uppercase;color:var(--blu-2);}
+.eyebrow::before{content:'';width:30px;height:1px;background:var(--blu);flex:none;}
+
+.sec-head{max-width:62ch;}
+.sec-head h2{font-size:clamp(28px,4.4vw,54px);margin-top:20px;}
+.sec-head > p{margin-top:20px;font-size:16px;line-height:1.8;color:var(--bone-dim);}
+
+/* --- progreso -------------------------------------------------------------- */
+#page-progress{position:fixed;top:0;left:0;height:2px;width:0;z-index:70;
+  background:linear-gradient(90deg,var(--blu-dark),var(--blu));}
+
+/* --- navegacion ------------------------------------------------------------ */
+nav{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;
+  justify-content:space-between;gap:16px;padding:14px clamp(20px,5vw,48px);
+  background:linear-gradient(180deg,rgba(11,13,18,0.94),rgba(11,13,18,0));
+  backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);}
+.brand{display:flex;align-items:center;gap:11px;min-width:0;}
+/* El simbolo y no el logo entero: a 38 px, "GRUPPO CRISTIANO" no se leeria
+   y solo ensuciaria la barra. El nombre va al lado, en la tipografia de la
+   pagina, que ademas se puede traducir. */
+.brand img{width:38px;height:auto;flex:none;}
+.brand-text{font-family:'Fraunces',serif;font-size:15px;letter-spacing:0.01em;
+  white-space:nowrap;line-height:1.15;}
+.brand-text b{display:block;font-weight:400;color:var(--blu-2);font-size:11px;
+  letter-spacing:0.16em;text-transform:uppercase;}
+.navright{display:flex;align-items:center;gap:14px;}
+.navlinks{display:flex;gap:26px;font-size:12.5px;letter-spacing:0.06em;}
+.navlinks a{opacity:.72;transition:opacity .25s;}
+.navlinks a:hover,.navlinks a:focus-visible{opacity:1;}
+
+.langsw{display:flex;border:1px solid var(--line-strong);border-radius:999px;
+  overflow:hidden;flex:none;}
+.langsw button{background:none;border:0;color:var(--stone);cursor:pointer;
+  font:500 11px/1 'Inter',sans-serif;letter-spacing:0.12em;padding:8px 12px;}
+.langsw button.active{background:var(--blu-dark);color:#fff;}
+
+.nav-toggle{display:none;background:none;border:0;color:var(--bone);cursor:pointer;padding:6px;}
+.nav-toggle svg{width:23px;height:23px;}
+.nav-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:58;opacity:0;
+  pointer-events:none;transition:opacity .3s;}
+.nav-backdrop.open{opacity:1;pointer-events:auto;}
+@media (max-width:900px){
+  .nav-toggle{display:block;}
+  .navlinks{position:fixed;inset:0 auto 0 0;width:78vw;max-width:300px;z-index:64;
+    flex-direction:column;gap:0;background:var(--ink-2);padding:84px 30px 30px;
+    border-right:1px solid var(--line-strong);font-size:15px;
+    transform:translateX(-100%);transition:transform .32s cubic-bezier(.22,1,.36,1);}
+  .navlinks.open{transform:translateX(0);}
+  .navlinks a{width:100%;padding:16px 0;border-bottom:1px solid var(--line);opacity:1;}
+}
+
+/* --- portada --------------------------------------------------------------- */
+.hero{position:relative;min-height:100svh;display:grid;grid-template-rows:1fr auto;
+  justify-items:center;align-items:center;text-align:center;
+  padding:clamp(86px,13vh,140px) 0 clamp(70px,8vh,92px);overflow:hidden;}
+.hero::before{content:'';position:absolute;top:30%;left:50%;width:min(140vw,1020px);
+  aspect-ratio:1;transform:translate(-50%,-50%);z-index:0;pointer-events:none;
+  background:radial-gradient(circle,rgba(12,151,248,0.17) 0%,rgba(3,76,130,0.11) 40%,
+    rgba(11,13,18,0) 70%);}
+.hero .wrap{position:relative;z-index:1;}
+.hero-logo{width:min(74vw,420px);margin:0 auto clamp(22px,3.5vh,36px);
+  filter:drop-shadow(0 18px 44px rgba(3,76,130,0.55));}
+.hero h1{font-size:clamp(27px,4.4vw,48px);margin-top:4px;}
+.hero-p{margin:22px auto 0;max-width:54ch;font-size:clamp(15px,1.6vw,17px);
+  line-height:1.8;color:var(--bone-dim);}
+.versetto{margin-top:20px;font-family:'Fraunces',serif;font-style:italic;
+  font-size:13.5px;letter-spacing:.04em;color:var(--blu-2);}
+.acciones{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:28px;}
+
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 26px;
+  border:1px solid var(--line-strong);border-radius:999px;font-size:13.5px;
+  font-weight:500;letter-spacing:0.03em;cursor:pointer;background:none;
+  color:var(--bone);font-family:inherit;transition:border-color .25s,background .25s;}
+.btn:hover,.btn:focus-visible{border-color:var(--blu);background:rgba(12,151,248,0.12);}
+.btn.piena{background:var(--blu-dark);border-color:var(--blu-dark);color:#fff;}
+.btn.piena:hover,.btn.piena:focus-visible{background:var(--blu);border-color:var(--blu);}
+.btn svg{width:16px;height:16px;flex:none;}
+
+.cue{position:relative;z-index:2;margin-top:clamp(16px,3vh,30px);
+  font-size:10px;letter-spacing:0.24em;text-transform:uppercase;color:var(--stone);
+  display:flex;flex-direction:column;align-items:center;gap:9px;transition:opacity .4s;}
+.cue i{width:1px;height:22px;background:linear-gradient(180deg,var(--blu),transparent);}
+/* Por debajo de 760 de alto el aviso acaba detras de la banda de prototipo.
+   En una pantalla asi sobra: ya asoma media seccion siguiente. */
+@media (max-height:760px){ .hero .cue{display:none;} }
+@media (max-height:820px){
+  .hero{padding-top:clamp(70px,10vh,96px);}
+  .hero-logo{width:min(56vw,290px);margin-bottom:clamp(14px,2vh,22px);}
+  .hero h1{font-size:clamp(23px,3.4vw,34px);}
+  .hero-p{margin-top:16px;font-size:14.5px;line-height:1.7;}
+  .acciones{margin-top:22px;}
+}
+
+/* --- avisos de dato que falta ---------------------------------------------- */
+.x-conf{display:inline-block;margin-left:7px;padding:2px 8px;border-radius:3px;
+  background:var(--ambar);color:#1a1300;font-size:9.5px;font-weight:600;
+  letter-spacing:0.1em;text-transform:uppercase;vertical-align:2px;white-space:nowrap;}
+.nota{margin-top:clamp(26px,4vw,40px);padding:20px 22px;max-width:76ch;
+  border:1px solid var(--line-strong);border-left:3px solid var(--ambar);
+  background:rgba(23,27,36,0.7);}
+.nota b{display:block;font-family:'Fraunces',serif;font-size:17px;color:var(--ambar);
+  margin-bottom:7px;font-weight:400;}
+.nota p{font-size:14.5px;line-height:1.75;color:var(--bone-dim);}
+.nota p + p{margin-top:10px;}
+
+/* --- las sedes -------------------------------------------------------------- */
+/* El tope de 430 px no es cosmetico: con dos sedes y columnas de 1fr cada
+   ficha se iba a 580 px y el mapa salia enorme, como si la seccion estuviera
+   a medio hacer. Con el tope, dos fichas o seis se ven del mismo tamano. */
+.sedi{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));
+  justify-content:center;gap:clamp(16px,2.4vw,24px);margin-top:clamp(34px,5vw,54px);}
+.sede{border:1px solid var(--line);background:var(--ink-2);border-radius:5px;
+  overflow:hidden;display:flex;flex-direction:column;
+  width:100%;max-width:430px;justify-self:center;}
+.sede-mappa{display:block;position:relative;background:var(--ink-3);}
+.sede-mappa img{width:100%;height:auto;aspect-ratio:16/10;object-fit:cover;display:block;}
+.sede-mappa.logo img{object-fit:contain;padding:22px;background:var(--ink-3);}
+.sede-mappa::after{content:'';position:absolute;left:50%;top:50%;width:14px;height:14px;
+  margin:-7px 0 0 -7px;border-radius:50%;border:1.5px solid var(--blu-2);
+  animation:pulso 2.6s ease-out infinite;pointer-events:none;}
+.sede-mappa.logo::after,.sede-mappa.vuota::after{display:none;}
+@keyframes pulso{ 0%{transform:scale(1);opacity:.85;} 70%,100%{transform:scale(3.4);opacity:0;} }
+@media (prefers-reduced-motion:reduce){ .sede-mappa::after{animation:none;opacity:.5;} }
+.sede-mappa.vuota{aspect-ratio:16/10;display:grid;place-items:center;text-align:center;
+  padding:18px;background:
+    repeating-linear-gradient(135deg,rgba(238,242,247,0.035) 0 8px,transparent 8px 16px),
+    var(--ink-3);
+  font-size:11.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--stone);}
+
+.sede-corpo{padding:22px 22px 24px;display:flex;flex-direction:column;flex:1;}
+.sede-corpo h3{font-size:clamp(22px,2.4vw,27px);}
+.sede-via{margin-top:9px;font-size:14.5px;line-height:1.6;color:var(--bone-dim);}
+.sede-testo{margin-top:13px;font-size:14px;line-height:1.75;color:var(--bone-dim);}
+.sede-lingue{margin-top:13px;display:flex;flex-wrap:wrap;gap:6px;}
+.sede-lingue span{font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--blu-2);border:1px solid var(--blu-dark);padding:4px 9px;border-radius:3px;}
+.sede-orari{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);
+  display:grid;gap:9px;}
+.sede-orari div{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:baseline;
+  font-size:14px;}
+.sede-orari dt{color:var(--stone);font-size:11px;letter-spacing:0.14em;text-transform:uppercase;}
+.sede-orari dd{color:var(--bone);font-variant-numeric:tabular-nums;}
+.sede-nota{margin-top:14px;font-size:12.5px;line-height:1.65;color:var(--stone);
+  padding-left:11px;border-left:2px solid var(--line-strong);}
+.sede .acciones{justify-content:flex-start;margin-top:auto;padding-top:20px;gap:9px;}
+.sede .btn{padding:11px 18px;font-size:12.5px;}
+.sede.attesa{border-style:dashed;border-color:var(--line-strong);background:transparent;}
+.sede.attesa .sede-corpo p{font-size:14px;line-height:1.75;color:var(--bone-dim);margin-top:12px;}
+.sede-cap{padding:0 22px 14px;font-size:11px;color:var(--stone);}
+
+/* --- visione y punti di fede ------------------------------------------------ */
+#visione{background:var(--ink-2);border-block:1px solid var(--line);}
+.lista-num{margin-top:clamp(34px,5vw,54px);display:grid;gap:clamp(18px,2.6vw,26px);
+  grid-template-columns:repeat(auto-fit,minmax(290px,1fr));}
+.punto{padding-left:46px;position:relative;}
+.punto::before{content:attr(data-n);position:absolute;left:0;top:-2px;
+  font-family:'Fraunces',serif;font-size:21px;color:var(--blu-2);
+  font-variant-numeric:tabular-nums;}
+.punto h3{font-size:18px;margin-bottom:8px;}
+.punto p{font-size:14.5px;line-height:1.8;color:var(--bone-dim);}
+.punto ul{margin-top:8px;padding-left:18px;font-size:14.5px;line-height:1.8;
+  color:var(--bone-dim);}
+
+.fede{margin-top:clamp(34px,5vw,54px);border-top:1px solid var(--line);}
+.fede details{border-bottom:1px solid var(--line);}
+.fede summary{list-style:none;cursor:pointer;padding:20px 44px 20px 46px;position:relative;
+  font-family:'Fraunces',serif;font-size:clamp(17px,2vw,21px);line-height:1.35;}
+.fede summary::-webkit-details-marker{display:none;}
+.fede summary::before{content:attr(data-n);position:absolute;left:0;top:21px;
+  font-size:15px;color:var(--blu-2);font-variant-numeric:tabular-nums;}
+.fede summary::after{content:'';position:absolute;right:8px;top:50%;width:10px;height:10px;
+  margin-top:-7px;border-right:1.5px solid var(--blu-2);border-bottom:1.5px solid var(--blu-2);
+  transform:rotate(45deg);transition:transform .25s;}
+.fede details[open] summary::after{transform:rotate(-135deg);margin-top:-2px;}
+.fede summary:focus-visible{outline:2px solid var(--blu-2);outline-offset:3px;}
+.fede .risposta{padding:0 0 22px 46px;max-width:72ch;font-size:15px;line-height:1.85;
+  color:var(--bone-dim);}
+.fede .rif{display:block;margin-top:10px;font-size:12px;color:var(--stone);
+  font-style:italic;}
+
+/* --- preguntas generales ---------------------------------------------------- */
+.faq{margin-top:clamp(34px,5vw,54px);border-top:1px solid var(--line);}
+.faq details{border-bottom:1px solid var(--line);}
+.faq summary{list-style:none;cursor:pointer;padding:22px 44px 22px 0;position:relative;
+  font-family:'Fraunces',serif;font-size:clamp(18px,2.1vw,23px);line-height:1.35;}
+.faq summary::-webkit-details-marker{display:none;}
+.faq summary::after{content:'';position:absolute;right:8px;top:50%;width:11px;height:11px;
+  margin-top:-7px;border-right:1.5px solid var(--blu-2);border-bottom:1.5px solid var(--blu-2);
+  transform:rotate(45deg);transition:transform .25s;}
+.faq details[open] summary::after{transform:rotate(-135deg);margin-top:-2px;}
+.faq summary:focus-visible{outline:2px solid var(--blu-2);outline-offset:3px;}
+.faq .risposta{padding:0 0 24px;max-width:66ch;font-size:15px;line-height:1.85;
+  color:var(--bone-dim);}
+
+/* --- WhatsApp flotante ------------------------------------------------------ */
+/* Siempre a la vista. Dos cosas que normalmente se hacen mal y aqui no:
+   deja hueco al pie para no tapar nada (padding-bottom del body), y se
+   aparta de la banda de prototipo en vez de montarse encima. */
+.wa{position:fixed;right:clamp(14px,3vw,26px);bottom:calc(var(--banda,38px) + 16px);
+  z-index:66;display:flex;align-items:center;gap:10px;
+  padding:13px 20px 13px 15px;border-radius:999px;
+  background:#1faa54;color:#fff;font-size:14px;font-weight:500;
+  box-shadow:0 10px 30px rgba(0,0,0,0.45);
+  transition:transform .25s ease, box-shadow .25s ease;}
+.wa:hover,.wa:focus-visible{transform:translateY(-2px);box-shadow:0 14px 36px rgba(0,0,0,0.55);}
+.wa svg{width:22px;height:22px;flex:none;}
+.wa.apagado{background:var(--ink-3);color:var(--stone);border:1px solid var(--line-strong);
+  cursor:default;}
+.wa.apagado:hover{transform:none;}
+@media (max-width:560px){ .wa .wa-txt{display:none;} .wa{padding:14px;} }
+
+/* --- pie -------------------------------------------------------------------- */
+footer{border-top:1px solid var(--line);padding:50px 0 64px;text-align:center;}
+footer .marchio img{width:min(58vw,250px);margin:0 auto;opacity:.92;}
+footer .sociali{display:flex;justify-content:center;gap:12px;margin-top:26px;}
+footer .sociali a{display:grid;place-items:center;width:40px;height:40px;
+  border:1px solid var(--line-strong);border-radius:10px;color:var(--stone);
+  transition:color .25s,border-color .25s;}
+footer .sociali a:hover{color:var(--blu-2);border-color:var(--blu);}
+footer .sociali svg{width:19px;height:19px;}
+footer .pie-dir{margin-top:22px;font-size:13.5px;color:var(--bone-dim);}
+footer .pie-min{margin-top:10px;font-size:11.5px;color:var(--stone);}
+
+.banda{position:fixed;left:0;right:0;bottom:0;z-index:65;padding:9px 16px;
+  background:var(--blu-dark);color:#fff;text-align:center;font-size:11px;font-weight:600;
+  letter-spacing:0.1em;text-transform:uppercase;}
+body{padding-bottom:38px;}
+
+/* --- aparicion al bajar ----------------------------------------------------- */
+.reveal{opacity:0;transform:translateY(22px);
+  transition:opacity .8s cubic-bezier(.22,1,.36,1),transform .8s cubic-bezier(.22,1,.36,1);}
+.reveal.in{opacity:1;transform:none;}
+.d1{transition-delay:.09s;} .d2{transition-delay:.18s;} .d3{transition-delay:.27s;}
+@media (prefers-reduced-motion:reduce){ .reveal{opacity:1;transform:none;transition:none;} }
+
+/* ============================================================================
+   LA PAGINA DE UNA IGLESIA  —  /parma/, /fidenza/...
+
+   Reaprovecha todo lo de arriba: el menu, los botones, las tarjetas, los
+   horarios. Aqui solo esta lo que esa pagina tiene y la portada no.
+   ============================================================================ */
+
+/* La portada de una iglesia es mas baja que la del grupo a proposito: aqui no
+   hay que convencer a nadie de nada, hay que decir donde esta y cuando abren.
+   Una portada a pantalla completa obligaria a bajar para leer una direccion. */
+.hero-sede{min-height:auto;padding-block:clamp(104px,16vh,168px) clamp(44px,7vh,76px);}
+.hero-sede .wrap{display:block;text-align:center;}
+.hero-sede h1{font-size:clamp(38px,8vw,76px);line-height:1.02;margin-bottom:18px;}
+.hero-sede h1 em{font-style:normal;color:var(--blu-2);}
+.hero-sede .eyebrow{margin-bottom:16px;}
+.hero-sede .acciones{justify-content:center;margin-top:28px;}
+
+.sp-via{font-size:clamp(16px,2.2vw,19px);line-height:1.55;color:var(--bone-dim);}
+.sp-via span{display:block;color:var(--stone);font-size:0.92em;}
+
+/* Dos columnas: el mapa manda a la izquierda, los datos a la derecha. Por
+   debajo de 900 se apilan con el mapa arriba — en el movil lo primero que se
+   mira es donde cae. */
+.sp-griglia{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
+  gap:clamp(24px,4vw,52px);align-items:start;}
+@media (max-width:900px){ .sp-griglia{grid-template-columns:1fr;} }
+
+.sp-mappa img{width:100%;height:auto;display:block;border-radius:6px;
+  border:1px solid var(--line);}
+.sp-mappa a{display:block;}
+.sp-mappa .sede-cap{margin-top:8px;}
+.sp-mappa .sede-mappa.vuota{border-radius:6px;}
+
+.sp-info h2{font-size:clamp(21px,2.6vw,27px);margin-bottom:12px;}
+.sp-info h2 + *{margin-bottom:26px;}
+.sp-info .sede-orari{margin-bottom:8px;}
+.sp-info .sede-nota{margin-bottom:26px;}
+.sp-p{color:var(--bone-dim);line-height:1.7;}
+
+.sp-testo{color:var(--bone-dim);line-height:1.7;margin-bottom:26px;}
+
+#sp-chi{padding-block:clamp(52px,8vh,92px);border-top:1px solid var(--line);}
+#sp-chi .acciones{margin-top:24px;}

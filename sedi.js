@@ -24,6 +24,9 @@
                 de 180, porque de ahi sale tambien lo que lee Google.
      logo       'media/logo-<id>.png' si esa iglesia tiene el suyo y quiere
                 que salga. Vacio = sale el mapa, que es lo normal.
+     whatsapp   el numero DE ESA IGLESIA, con prefijo. Sale en su pagina.
+                Vacio = no sale el boton. Cada comunidad tiene el suyo: quien
+                busca Parma tiene que escribir a Parma.
      orari      lista de pares [que, cuando]
      lingue     que idiomas se hablan en esa sede. No es un adorno en este
                 grupo: se llaman Latino Americano y para una familia recien
@@ -49,6 +52,7 @@ var SEDI_BASE = [
     web: '',
     testo: '',
     logo: '',
+    whatsapp: '',
     orari: [['Incontro', 'Domenica']],
     lingue: '',
     apple: 'I30D78275B47BD836',
@@ -69,18 +73,58 @@ var SEDI_BASE = [
     web: '',
     testo: '',
     logo: '',
+    whatsapp: '',
     orari: [['Incontro', 'Domenica 10:30'], ['Preghiera', 'Giovedì 20:30']],
     lingue: '',
     apple: 'I95F8BD462A52E3D3',
     publicada: true
+  },
+  {
+    /* El grupo la da por suya en su propio mapa conceptual, asi que entra.
+       La direccion la encontre yo en Apple Maps y NO la han confirmado ellos:
+       por eso queda en borrador. El mapa y la pagina estan hechos; el dia que
+       lo confirmen, publicada: true y ya esta. */
+    id: 'reggio-emilia',
+    citta: 'Reggio Emilia',
+    via: 'Via Arcangelo Corelli 5',
+    cap: '42124 Reggio Emilia (RE)',
+    web: '',
+    testo: '',
+    logo: '',
+    whatsapp: '',
+    orari: [],
+    lingue: '',
+    apple: '',
+    publicada: false
+  },
+  {
+    /* Aparece en su mapa conceptual y no tengo nada mas: ni calle, ni
+       coordenada, ni horarios. La ficha se queda montada y vacia, en
+       borrador, para rellenarla desde el panel en cuanto lleguen los datos.
+       Inventarle una direccion seria mandar gente a una puerta equivocada.
+
+       Massa-Carrara ademas no es Emilia-Romagna sino Toscana: el grupo pasa
+       de una region a otra, y eso cambia como se cuenta en la web. */
+    id: 'massa-carrara',
+    citta: 'Massa-Carrara',
+    via: '',
+    cap: '',
+    web: '',
+    testo: '',
+    logo: '',
+    whatsapp: '',
+    orari: [],
+    lingue: '',
+    apple: '',
+    publicada: false
   }
-  /* Reggio Emilia esta fuera a proposito: la direccion existe —Via Arcangelo
-     Corelli 5, 42124— pero la iglesia tiene que confirmarla antes de que
-     salga publicada. Queda anotada en ventas/, no en una pagina que puede
-     ver cualquiera.
+  /* Bologna NO esta: tu dijiste que existe y su propio mapa conceptual no la
+     nombra. Hasta que se aclare, fuera — una sede que no existe hace mas dano
+     que una sede que falta.
 
      Para anadir una sede:
        1. python3 -I herramientas/mapa-sede.py <id> <lat> <lon>
        2. una entrada aqui
+       3. node herramientas/paginas-sede.js   (escribe <id>/index.html)
      O, mas facil, desde el panel: pegas el enlace del mapa y sale sola. */
 ];

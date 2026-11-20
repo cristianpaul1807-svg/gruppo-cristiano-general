@@ -288,6 +288,14 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
       </div>
 
       <div class="campo">
+        <label for="whatsapp">WhatsApp di questa chiesa</label>
+        <input type="text" id="whatsapp" inputmode="tel" placeholder="+39 333 1234567">
+        <p class="pista">Con il prefisso del paese. È il numero che compare nella pagina
+          di questa chiesa: chi cerca Parma scrive a Parma, non a Fidenza. Se è vuoto,
+          il bottone non compare.</p>
+      </div>
+
+      <div class="campo">
         <label for="logo">Logo di questa chiesa</label>
         <input type="text" id="logo" placeholder="media/logo-parma.png" autocapitalize="none">
         <p class="pista">Solo se questa chiesa ha un logo suo e vuole che si veda. Se è
@@ -551,7 +559,7 @@ function importar() {
       lat: s.lat != null ? s.lat : null, lon: s.lon != null ? s.lon : null,
       orari: (s.orari || []).map(function (o) { return [o[0], o[1]]; }),
       web: s.web || '', testo: s.testo || '', lingue: s.lingue || '',
-      logo: s.logo || '', publicada: s.publicada !== false,
+      logo: s.logo || '', whatsapp: s.whatsapp || '', publicada: s.publicada !== false,
       apple: s.apple || '',
       mapa: ''   // vacio a proposito: la ficha sigue usando el archivo de media/
     });
@@ -633,6 +641,7 @@ function abrirEditor(sede) {
   $('#testo').value = editando.testo || '';
   $('#lingue').value = editando.lingue || '';
   $('#logo').value = editando.logo || '';
+  $('#whatsapp').value = editando.whatsapp || '';
   $('#publicada').checked = editando.publicada !== false;
   if (window.__contarTexto) window.__contarTexto();
   $('#apple').value = editando.apple || '';
@@ -749,6 +758,7 @@ $('#f-sede').addEventListener('submit', function (e) {
     testo: $('#testo').value.trim(),
     lingue: $('#lingue').value.trim(),
     logo: $('#logo').value.trim(),
+    whatsapp: $('#whatsapp').value.trim(),
     publicada: $('#publicada').checked,
     apple: $('#apple').value.trim(),
     mapa: editando.mapa || ''
