@@ -25,15 +25,17 @@ Archivos estáticos. No hay build, no hay dependencias, no hay nada que
 compilar. Desplegar es copiar la carpeta.
 
 ```
-index.html      la web
-app.js          el motor: fichas, idioma, menú, WhatsApp
-sedi.js         LAS FICHAS — es lo que más se toca
-fede.js         los diez puntos de fe, en italiano y español
-almacen.js      dónde se guardan las fichas del panel
-mapa.js         genera el mapa de una sede en el navegador
-panel/          el panel del encargado
-media/          logo y mapas
-herramientas/   scripts de Python (no se despliegan)
+index.html           la web
+app.js               el motor: fichas, idioma, menú, WhatsApp
+sedi.js              LAS FICHAS de partida — es lo que más se toca
+fede.js              los diez puntos de fe, en italiano y español
+almacen.js           dónde se guardan las fichas del panel  ← aquí van las
+                     dos líneas de Supabase
+mapa.js              genera el mapa de una sede en el navegador
+panel/               el panel del encargado
+supabase-setup.sql   la base de datos, para pegar de una vez
+media/               logo y mapas
+herramientas/        scripts de Python (no se despliegan)
 ```
 
 ### Añadir una iglesia
@@ -57,24 +59,66 @@ mano, y en una rejilla de fichas eso canta.
 
 ## El panel
 
-`/panel/` — usuario `gruppocristiano`, contraseña `Isaia2026!`
+`/panel/`. Tiene **dos modos y elige solo**, según si `almacen.js` lleva URL y
+clave de Supabase. No hay que tocar nada más para pasar de uno a otro: ni el
+panel ni la web saben cuál está en uso.
 
-**Dos cosas que hay que decir antes de enseñarlo, y están escritas dentro del
-propio panel:**
+| | Sin base de datos | Con base de datos |
+|---|---|---|
+| Entrada | usuario `gruppocristiano` / `Isaia2026!`, escritos en la página | correo y contraseña, comprobados por el servidor |
+| Quién ve lo que se crea | **solo ese móvil** | todo el mundo, al momento |
+| Al mudar de dominio | se pierde | se mantiene |
+| Para qué sirve | enseñar cómo funciona | usarlo de verdad |
 
-1. **La contraseña no protege nada todavía.** Está escrita en la página y
-   quien sepa abrir el código la ve. Sirve para enseñar cómo funciona, no para
-   cerrarlo. La cerradura de verdad necesita que la comprobación pase en un
-   servidor.
-2. **Las fichas creadas ahí se quedan en ese móvil.** No las ve otro teléfono
-   ni quien abre el sitio.
-
-**Las dos se arreglan con lo mismo: una base de datos.** Todo pasa por
-`almacen.js` justamente para eso — se reescribe ese archivo y nada más.
+El propio panel lo dice en pantalla: en modo demo sale un aviso ámbar con las
+dos advertencias, y conectado sale uno verde. El aviso que no toca **se borra
+del documento** al arrancar, no se esconde con CSS.
 
 El botón **«Porta dentro le schede del sito»** trae las iglesias ya publicadas
 para poder editarlas. Sin él, la primera ficha creada desde el panel haría
 desaparecer las demás, porque el panel manda sobre lo escrito en `sedi.js`.
+
+### Encenderlo de verdad
+
+1. Proyecto nuevo en Supabase (plan gratuito, dos proyectos por cuenta).
+2. SQL Editor → pegar `supabase-setup.sql` entero → Run. Se puede volver a
+   ejecutar sin romper nada.
+3. Authentication → Providers → Email: **desactivar «Enable email signups»**.
+   Si no, cualquiera que encuentre `/panel/` se hace una cuenta y edita la web
+   de la iglesia.
+4. Authentication → Users → Add user: la cuenta del encargado, con **Auto
+   Confirm User** marcado.
+5. Settings → API: copiar Project URL y clave anon en las dos líneas de
+   `almacen.js`. Nada más.
+6. **Comprobarlo:** crear una ficha y abrirla desde otro teléfono. Si desde el
+   otro teléfono no se ve, algo de lo anterior no se hizo.
+
+La clave anon es pública por diseño: va dentro de la página. Lo que protege
+son las reglas de la tabla, que están en el SQL.
+
+---
+
+## Antes de enseñárselo a ellos
+
+Mientras no tengan su dominio, la web vive en uno nuestro y **ellos entran al
+panel** para cambiar información y añadir fichas. Eso convierte en obligatorio
+lo que antes era «el paso siguiente»:
+
+- **La base de datos es imprescindible**, no una mejora. Sin ella, el
+  encargado añade una ficha desde su móvil y nadie más la ve: el panel no
+  serviría para nada.
+- **La contraseña escrita en la página ya no es una demo.** En una dirección
+  pública, quien encuentre `/panel/` y mire el código entra.
+- **Lo guardado en el navegador no sobrevive la mudanza.** Es por origen: al
+  pasar de nuestro dominio a `gruppocristiano.it` se queda atrás. Lo que está
+  en la base de datos, no.
+- **El `noindex` y el `Disallow` se quedan.** «Que lo vean ellos» no es «que
+  lo indexe Google», y sigue siendo lo acordado hasta que tengan su dominio.
+
+Mejor en un **subdominio propio** (`gruppocristiano.digitatex.com`) y en su
+propia app de Easypanel, no dentro de la web de Digitatex. Así la mudanza
+después es solo un cambio de DNS: está comprobado que no hay ni una ruta
+absoluta en todo el proyecto.
 
 ---
 

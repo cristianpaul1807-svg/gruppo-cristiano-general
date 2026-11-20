@@ -154,18 +154,23 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
 
     <form id="f-entrada" novalidate>
       <div class="campo">
-        <label for="usuario">Utente</label>
-        <input type="text" id="usuario" autocomplete="username" autocapitalize="none" required>
+        <label for="usuario" id="et-usuario">Utente</label>
+        <input type="text" id="usuario" autocomplete="username" autocapitalize="none"
+          autocorrect="off" spellcheck="false" required>
       </div>
       <div class="campo">
         <label for="clave">Password</label>
         <input type="password" id="clave" autocomplete="current-password" required>
       </div>
       <p class="error" id="err-entrada" role="alert"></p>
-      <button type="submit" class="btn piena">Entra</button>
+      <button type="submit" class="btn piena" id="b-entrar">Entra</button>
     </form>
 
-    <div class="aviso" style="margin-top:22px">
+    <!-- Hay dos avisos y se enseña UNO, el que diga la verdad en ese momento.
+         El que sobra se borra del documento en el arranque: dejarlo escondido
+         con display:none es como acaba enseñandose el equivocado el dia que
+         alguien toca el CSS. -->
+    <div class="aviso" id="aviso-demo" style="margin-top:22px">
       <b>Da leggere prima di usarlo</b>
       Questa porta non è ancora una serratura vera: l'utente e la password stanno
       scritti nella pagina, e chi sa guardare dentro il codice li vede. Serve a far
@@ -173,6 +178,12 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
       Le schede create qui restano <b style="display:inline;color:var(--bone-dim)">su questo
       telefono</b>: non le vede né un altro telefono né chi apre il sito. Per questo
       serve una banca dati vera — ed è il passo dopo, non questo.
+    </div>
+    <div class="aviso" id="aviso-vero" style="margin-top:22px;border-left-color:var(--verde)">
+      <b style="color:var(--verde)">Questo pannello è collegato</b>
+      Entra con la tua email e la tua password. Quello che salvi qui lo vedono tutti
+      sul sito, da qualsiasi telefono, subito. Nessuno può crearsi un account da solo:
+      gli accessi li diamo noi.
     </div>
   </div>
 </div>
@@ -203,11 +214,17 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
       </div>
     </div>
 
-    <div class="aviso" style="margin-bottom:22px">
+    <div class="aviso" id="aviso-lista-demo" style="margin-bottom:22px">
       <b>Dove finiscono queste schede</b>
       Restano in questo telefono, in questo browser. Le vedi tu, qui. Chi apre il sito
       vede ancora le schede scritte nella pagina. Quando passiamo a una banca dati vera,
       quello che c'è qui si carica lì e lo vedono tutti.
+    </div>
+    <div class="aviso" id="aviso-lista-vero" style="margin-bottom:22px;border-left-color:var(--verde)">
+      <b style="color:var(--verde)">Dove finiscono queste schede</b>
+      Nella banca dati del gruppo. Quello che salvi lo vede chiunque apra il sito, da
+      qualsiasi telefono. Se togli la spunta «Pubblicata sul sito» la scheda resta qui,
+      salvata, e fuori non si vede: la vedi solo tu, entrando da questa pagina.
     </div>
 
     <div id="lista" class="fichas"></div>
@@ -341,18 +358,44 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
 'use strict';
 
 /* ============================================================================
-   LA LLAVE.
+   LA PUERTA.
 
-   Esto NO es seguridad. Esta escrito en una pagina que se descarga entera en
-   el navegador de quien entra, asi que cualquiera que sepa abrir el codigo lo
-   ve. Sirve para que el panel se pueda enseñar y usar, no para proteger nada.
+   Hay dos, y la que se usa depende de si almacen.js tiene base de datos:
 
-   La cerradura de verdad necesita que la comprobacion pase en un servidor, no
-   aqui. Eso llega con la banca dati, y entonces esta constante desaparece.
+     CON BASE DE DATOS la comprobacion pasa en el servidor. El correo y la
+     contraseña van a Supabase, vuelve un token con caducidad, y sin ese token
+     la base de datos no deja escribir nada. Lo de aqui abajo no se usa.
+
+     SIN ELLA se usa LLAVE, que NO es seguridad: esta escrita en una pagina que
+     se descarga entera en el navegador de quien entra, asi que cualquiera que
+     sepa abrir el codigo la ve. Sirve para que el panel se pueda enseñar, no
+     para proteger nada.
+
+   El dia que se rellene SUPABASE en almacen.js, esta constante deja de hacer
+   nada sola: no hay que acordarse de borrarla.
    ============================================================================ */
 var LLAVE = { usuario: 'gruppocristiano', clave: 'Isaia2026!' };
 
 var $ = function (s) { return document.querySelector(s); };
+
+/* Un solo sitio donde se pregunta cual de las dos puertas es. */
+var CONECTADO = !!(window.ALMACEN && ALMACEN.conBase);
+
+(function () {
+  /* Se quita del documento el aviso que no toca, y se ajusta la etiqueta: con
+     base de datos no se entra con un nombre de usuario, se entra con un
+     correo, y el teclado del movil tiene que saberlo. */
+  var fuera = CONECTADO
+    ? ['#aviso-demo', '#aviso-lista-demo']
+    : ['#aviso-vero', '#aviso-lista-vero'];
+  fuera.forEach(function (s) { var e = $(s); if (e) e.remove(); });
+
+  if (CONECTADO) {
+    $('#et-usuario').textContent = 'Email';
+    $('#usuario').type = 'email';
+    $('#usuario').autocomplete = 'email';
+  }
+})();
 var brindis = $('#brindis'), brindisT = null;
 function avisar(txt, mal) {
   brindis.textContent = txt;
@@ -370,31 +413,66 @@ function entrar() {
 }
 $('#f-entrada').addEventListener('submit', function (e) {
   e.preventDefault();
-  var u = $('#usuario').value.trim().toLowerCase();
+  var u = $('#usuario').value.trim();
   var c = $('#clave').value;
-  if (u === LLAVE.usuario && c === LLAVE.clave) {
-    try { sessionStorage.setItem('gcf_panel', '1'); } catch (err) {}
-    $('#err-entrada').textContent = '';
-    entrar();
-  } else {
-    $('#err-entrada').textContent = 'Utente o password non corretti.';
+  var err = $('#err-entrada'), b = $('#b-entrar');
+  err.textContent = '';
+
+  if (!CONECTADO) {
+    if (u.toLowerCase() === LLAVE.usuario && c === LLAVE.clave) {
+      try { sessionStorage.setItem('gcf_panel', '1'); } catch (x) {}
+      entrar();
+    } else {
+      err.textContent = 'Utente o password non corretti.';
+    }
+    return;
   }
+
+  b.disabled = true; b.textContent = 'Un attimo…';
+  ALMACEN.entrar(u, c).then(function () {
+    entrar();
+  }).catch(function (x) {
+    /* Supabase contesta en inglés. Lo que importa aquí es una sola cosa —no
+       has entrado— y eso se dice en el idioma de la página; el texto suyo se
+       guarda en la consola para cuando haga falta mirarlo. */
+    err.textContent = /invalid|credential/i.test(x.message || '')
+      ? 'Email o password non corretti.'
+      : 'Non sono riuscito a entrare. Controlla la connessione.';
+    if (window.console) console.warn('entrada:', x.message);
+  }).then(function () {
+    b.disabled = false; b.textContent = 'Entra';
+  });
 });
+
 $('#salir').addEventListener('click', function () {
   try { sessionStorage.removeItem('gcf_panel'); } catch (e) {}
-  location.reload();
+  (CONECTADO ? ALMACEN.salir() : Promise.resolve()).then(function () {
+    location.reload();
+  });
 });
-/* sessionStorage y no localStorage: la sesion muere al cerrar la pestaña. En
-   un movil prestado eso es la diferencia entre una sesion y una puerta
-   abierta para siempre. */
-try { if (sessionStorage.getItem('gcf_panel') === '1') entrar(); } catch (e) {}
+
+/* Volver a entrar sin escribir la contraseña otra vez.
+
+   Sin base de datos se usa sessionStorage y no localStorage: la sesion muere
+   al cerrar la pestaña, que en un movil prestado es la diferencia entre una
+   sesion y una puerta abierta para siempre.
+
+   Con base de datos manda el token de Supabase, que ya trae su caducidad. */
+if (CONECTADO) {
+  if (ALMACEN.hayEntrado()) entrar();
+} else {
+  try { if (sessionStorage.getItem('gcf_panel') === '1') entrar(); } catch (e) {}
+}
 
 /* --- lista ---------------------------------------------------------------- */
 var editando = null;
 
 function pintarLista() {
   var lista = $('#lista');
-  ALMACEN.leer().then(function (sedi) {
+  /* true = tambien los borradores. El panel los necesita para poder
+     publicarlos; la web publica pide la lista sin mas y la base de datos no se
+     los daria ni pidiendolos. */
+  ALMACEN.leer(true).then(function (sedi) {
     lista.textContent = '';
     if (!sedi || !sedi.length) {
       /* Nada guardado todavia. En vez de un cartel vacio, el boton que trae
@@ -481,8 +559,20 @@ function importar() {
 }
 
 $('#restaurar').addEventListener('click', function () {
-  if (!confirm('Elimina tutte le schede create qui. Il sito torna a mostrare quelle scritte nella pagina. Procedo?')) return;
-  ALMACEN.vaciar().then(function () { pintarLista(); avisar('Schede eliminate.'); });
+  /* El mismo boton borra cosas muy distintas segun donde se guarde. Sin base
+     de datos borra lo de este movil. Con base de datos borra las fichas DE
+     TODOS, y eso hay que decirlo con esas palabras antes de preguntar. */
+  var pregunta = CONECTADO
+    ? 'Attenzione: elimina tutte le schede dalla banca dati, per tutti. '
+      + 'Il sito torna a mostrare quelle scritte nella pagina. Procedo?'
+    : 'Elimina tutte le schede create qui. Il sito torna a mostrare quelle '
+      + 'scritte nella pagina. Procedo?';
+  if (!confirm(pregunta)) return;
+  ALMACEN.vaciar().then(function () {
+    pintarLista(); avisar('Schede eliminate.');
+  }).catch(function (err) {
+    avisar('Non sono riuscito a eliminarle: ' + err.message, true);
+  });
 });
 
 /* --- editor --------------------------------------------------------------- */
@@ -666,6 +756,14 @@ $('#f-sede').addEventListener('submit', function (e) {
   ALMACEN.guardar(sede).then(function () {
     cerrarEditor(); pintarLista(); avisar('Scheda salvata.');
   }).catch(function (err) {
+    /* El caso que de verdad pasa: la sesion ha caducado mientras el editor
+       estaba abierto. Decir "non sono riuscito a salvare" y nada mas haria
+       que alguien reescribiera la ficha entera por nada. */
+    if (CONECTADO && !ALMACEN.hayEntrado()) {
+      $('#err-sede').textContent = 'La sessione è scaduta. Entra di nuovo: '
+        + 'quello che hai scritto resta qui finché non chiudi la pagina.';
+      return;
+    }
     $('#err-sede').textContent = 'Non sono riuscito a salvare: ' + err.message;
   });
 });
@@ -675,6 +773,8 @@ $('#borrar').addEventListener('click', function () {
   if (!confirm('Elimino la scheda di ' + (editando.citta || 'questa sede') + '?')) return;
   ALMACEN.borrar(editando.id).then(function () {
     cerrarEditor(); pintarLista(); avisar('Scheda eliminata.');
+  }).catch(function (err) {
+    $('#err-sede').textContent = 'Non sono riuscito a eliminarla: ' + err.message;
   });
 });
 </script>
