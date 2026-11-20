@@ -131,6 +131,30 @@ var ALMACEN = (function () {
     };
   }
 
+  /* ENTRAR CON UN NUMERO DE TELEFONO.
+     Supabase solo sabe de correo + contrasena (entrar por telefono exige
+     contratar SMS). Asi que un numero se convierte en una direccion interna,
+     siempre la misma para el mismo numero, que nunca recibe correo:
+       "340 083 7962" -> "393400837962@tel.gruppocristiano.it"
+     Quien entra escribe su numero como quiera; el panel lo ensena como numero. */
+  var DOM_TEL = 'tel.gruppocristiano.it';
+  function cuenta(entrada) {
+    var t = String(entrada || '').trim().toLowerCase();
+    if (t.indexOf('@') >= 0) return t;
+    var d = t.replace(/[^0-9]/g, '');
+    if (d.indexOf('00') === 0) d = d.slice(2);
+    if (d.length === 10 && d.charAt(0) === '3') d = '39' + d;
+    return d.length >= 8 ? d + '@' + DOM_TEL : t;
+  }
+  function mostrar(email) {
+    var m = new RegExp('^(\\d+)@' + DOM_TEL.replace(/\./g, '\\.') + '$').exec(String(email || ''));
+    if (!m) return email || '';
+    var d = m[1];
+    return d.indexOf('39') === 0 && d.length === 12
+      ? '+39 ' + d.slice(2, 5) + ' ' + d.slice(5, 8) + ' ' + d.slice(8)
+      : '+' + d;
+  }
+
   /* De lo que se guarda en `sito`, solo los campos conocidos que vengan. */
   function soloLoDado(d) {
     var o = {};
@@ -179,6 +203,8 @@ var ALMACEN = (function () {
     /* El panel lo mira para saber si pone la cerradura de verdad o la de
        mentira, y para decirlo en pantalla en vez de que nadie lo sepa. */
     conBase: conBase,
+    cuenta: cuenta,
+    mostrar: mostrar,
 
     hayEntrado: function () {
       return conBase ? viva(sesion()) : false;
@@ -189,7 +215,7 @@ var ALMACEN = (function () {
       return fetch(SUPABASE.url + '/auth/v1/token?grant_type=password', {
         method: 'POST',
         headers: { 'apikey': SUPABASE.key, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: correo, password: clave })
+        body: JSON.stringify({ email: cuenta(correo), password: clave })
       }).then(function (r) {
         return r.json().then(function (d) {
           if (!r.ok) throw new Error(d.error_description || d.msg || d.error || 'no se ha podido entrar');
@@ -307,7 +333,7 @@ var ALMACEN = (function () {
        conectado como el responsable que acaba de crear. */
     creaAccesso: function (email, clave, ruolo, sede) {
       if (!conBase) return Promise.reject(new Error('Serve la banca dati.'));
-      email = String(email || '').trim().toLowerCase();
+      email = cuenta(email);
       var inv = { email: email, ruolo: ruolo, sede: ruolo === 'sede' ? sede : null };
 
       function limpiar(err) {

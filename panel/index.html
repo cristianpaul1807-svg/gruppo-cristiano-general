@@ -377,8 +377,8 @@ a.btn{text-decoration:none;}
             <select id="ac-per"></select>
           </div>
           <div class="campo">
-            <label for="ac-email">Email</label>
-            <input type="email" id="ac-email" autocomplete="off" autocapitalize="none"
+            <label for="ac-email">Email o numero di telefono</label>
+            <input type="text" id="ac-email" autocomplete="off" autocapitalize="none"
               spellcheck="false" placeholder="responsabile@esempio.it">
           </div>
           <div class="campo">
@@ -404,7 +404,7 @@ a.btn{text-decoration:none;}
         <p>Scrivetelo adesso, insieme. La password non si vedrà più.</p>
         <dl class="datos">
           <div><dt>Pannello</dt><dd id="cr-url"></dd></div>
-          <div><dt>Email</dt><dd id="cr-email"></dd></div>
+          <div><dt>Entra con</dt><dd id="cr-email"></dd></div>
           <div><dt>Password</dt><dd id="cr-pass"></dd></div>
           <div><dt>Può toccare</dt><dd id="cr-che"></dd></div>
         </dl>
@@ -678,9 +678,10 @@ var CONECTADO = !!(window.ALMACEN && ALMACEN.conBase);
   fuera.forEach(function (s) { var e = $(s); if (e) e.remove(); });
 
   if (CONECTADO) {
-    $('#et-usuario').textContent = 'Email';
-    $('#usuario').type = 'email';
-    $('#usuario').autocomplete = 'email';
+    /* Correo o numero de telefono: el general puede entrar con su numero. */
+    $('#et-usuario').textContent = 'Email o numero di telefono';
+    $('#usuario').type = 'text';
+    $('#usuario').autocomplete = 'username';
   }
 })();
 var brindis = $('#brindis'), brindisT = null;
@@ -739,7 +740,7 @@ function aplicarRuolo() {
   if (CONECTADO && YO.email) {
     var q = $('#quien');
     q.textContent = 'Sei entrato come ';
-    var b = document.createElement('b'); b.textContent = YO.email; q.appendChild(b);
+    var b = document.createElement('b'); b.textContent = ALMACEN.mostrar(YO.email); q.appendChild(b);
     var r = document.createElement('span'); r.className = 'rol';
     r.textContent = gen ? 'amministratore generale' : 'responsabile · ' + nombreSede(YO.sede);
     q.appendChild(r);
@@ -930,7 +931,7 @@ function pintarLista() {
         if (suyos.length) {
           resp.textContent = 'Gestita da ';
           var rb = document.createElement('b');
-          rb.textContent = suyos.map(function (a) { return a.email; }).join(', ');
+          rb.textContent = suyos.map(function (a) { return ALMACEN.mostrar(a.email); }).join(', ');
           resp.appendChild(rb);
         } else {
           resp.textContent = 'Nessun responsabile: per ora la gestisci tu';
@@ -1522,7 +1523,7 @@ function pintarAccessi() {
     d.className = 'acceso' + (a.attivo ? '' : ' apagado');
 
     var q = document.createElement('div'); q.className = 'q';
-    var b = document.createElement('b'); b.textContent = a.email || '(senza email)';
+    var b = document.createElement('b'); b.textContent = ALMACEN.mostrar(a.email) || '(senza email)';
     var s = document.createElement('span');
     s.textContent = a.ruolo === 'generale' ? 'Tutto il gruppo' : nombreSede(a.sede);
     q.appendChild(b); q.appendChild(s);
@@ -1546,7 +1547,7 @@ function pintarAccessi() {
       bt.className = 'btn mini' + (a.attivo ? ' peligro' : '');
       bt.textContent = a.attivo ? 'Togli accesso' : 'Ridai accesso';
       bt.addEventListener('click', function () {
-        if (a.attivo && !confirm('Tolgo l\'accesso a ' + a.email + '? Non potrà più modificare niente. '
+        if (a.attivo && !confirm('Tolgo l\'accesso a ' + ALMACEN.mostrar(a.email) + '? Non potrà più modificare niente. '
           + 'Si può ridare dopo, con la stessa password.')) return;
         bt.disabled = true;
         ALMACEN.cambiaAccesso(a.utente, !a.attivo).then(function () {
@@ -1568,7 +1569,7 @@ function pintarAccessi() {
   ACCESSI.inviti.forEach(function (i) {
     var d = document.createElement('div'); d.className = 'acceso';
     var q = document.createElement('div'); q.className = 'q';
-    var b = document.createElement('b'); b.textContent = i.email;
+    var b = document.createElement('b'); b.textContent = ALMACEN.mostrar(i.email);
     var s = document.createElement('span');
     s.textContent = (i.ruolo === 'generale' ? 'Tutto il gruppo' : nombreSede(i.sede)) + ' · invito non usato';
     q.appendChild(b); q.appendChild(s); d.appendChild(q);
@@ -1643,16 +1644,17 @@ function errorAcceso(x) {
 $('#f-acceso').addEventListener('submit', function (e) {
   e.preventDefault();
   var per = $('#ac-per').value;
-  var email = $('#ac-email').value.trim().toLowerCase();
+  var escrito = $('#ac-email').value.trim();
+  var email = ALMACEN.cuenta(escrito);
   var pass = $('#ac-pass').value;
   var err = $('#err-acceso'), b = $('#ac-crea');
   err.textContent = '';
 
   if (!per) { err.textContent = 'Scegli per chi è questo accesso.'; return; }
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent = 'Email non valida.'; return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent = 'Scrivi un\'email o un numero di telefono.'; return; }
   if (pass.length < 8) { err.textContent = 'La password deve avere almeno 8 caratteri.'; return; }
   if (ACCESSI.attivi.some(function (a) { return a.email === email; })) {
-    err.textContent = 'Questa email ha già un accesso. Se è spento, riaccendilo dalla lista qui sopra.';
+    err.textContent = 'Questo accesso esiste già. Se è spento, riaccendilo dalla lista qui sopra.';
     return;
   }
 
@@ -1667,7 +1669,7 @@ $('#f-acceso').addEventListener('submit', function (e) {
     /* Sin el https://: es para apuntarlo a mano o dictarlo, y el movil lo
        completa solo al escribirlo en el navegador. */
     $('#cr-url').textContent = location.host + location.pathname.replace(/index\.html$/, '');
-    $('#cr-email').textContent = email;
+    $('#cr-email').textContent = ALMACEN.mostrar(email);
     $('#cr-pass').textContent = pass;
     $('#cr-che').textContent = gen ? 'Tutto il gruppo' : 'Solo ' + nombreSede(per);
     $('#f-acceso').hidden = true;
