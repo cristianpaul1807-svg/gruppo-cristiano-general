@@ -48,6 +48,7 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
 .btn.peligro{color:var(--rojo);border-color:rgba(224,107,107,0.4);}
 .btn.peligro:hover:not(:disabled){background:rgba(224,107,107,0.12);border-color:var(--rojo);}
 .btn.mini{padding:8px 14px;font-size:12px;}
+a.btn{text-decoration:none;}
 
 .campo{display:grid;gap:6px;}
 .campo label{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--stone);}
@@ -138,6 +139,60 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
   transition:opacity .25s,transform .25s;max-width:92vw;text-align:center;}
 .brindis.ver{opacity:1;transform:translateX(-50%) translateY(0);}
 .brindis.mal{border-color:var(--rojo);color:var(--rojo);}
+
+/* `hidden` tiene que ganar SIEMPRE. Sin esto, un boton con hidden sigue
+   viendose, porque .btn le pone display:inline-flex y eso pisa al hidden del
+   navegador. Y los botones que se esconden aqui son los de crear y borrar
+   iglesias, que un responsable de sede no debe ni ver. */
+[hidden]{display:none !important;}
+
+/* --- quien eres --------------------------------------------------------- */
+.quien{margin-top:20px;font-size:13px;color:var(--stone);}
+.quien b{color:var(--bone);font-weight:500;}
+.quien .rol{display:inline-block;margin-left:8px;padding:2px 9px;border-radius:999px;
+  font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;
+  background:rgba(12,151,248,0.16);color:var(--blu-2);}
+
+/* --- accessi --------------------------------------------------------------- */
+.pista-sec{font-size:14px;color:var(--bone-dim);max-width:62ch;margin:-10px 0 20px;line-height:1.65;}
+.accessi{display:grid;gap:9px;margin-bottom:22px;}
+.acceso{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:13px 16px;
+  border:1px solid var(--line);border-radius:5px;background:var(--ink-2);}
+.acceso .q{flex:1;min-width:200px;}
+.acceso .q b{display:block;font-weight:500;font-size:14.5px;word-break:break-all;}
+.acceso .q span{font-size:12.5px;color:var(--stone);}
+.acceso.apagado{opacity:.55;}
+.acceso .etq{font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:600;
+  padding:3px 9px;border-radius:999px;}
+.etq.gen{background:rgba(12,151,248,0.18);color:var(--blu-2);}
+.etq.sed{background:rgba(95,192,138,0.16);color:var(--verde);}
+.etq.off{background:rgba(224,107,107,0.14);color:var(--rojo);}
+.etq.pend{background:rgba(240,192,64,0.16);color:var(--ambar);}
+.ficha .resp{font-size:12px;color:var(--stone);word-break:break-all;}
+.ficha .resp b{color:var(--bone-dim);font-weight:500;}
+
+.nuevo-acceso,.creado{max-width:none;margin:0;}
+.nuevo-acceso h3,.creado h3{font-family:'Fraunces',serif;font-weight:400;font-size:21px;margin-bottom:16px;}
+.campo select{width:100%;padding:11px 13px;background:var(--ink-3);color:var(--bone);
+  border:1px solid var(--line-strong);border-radius:4px;font:400 15px/1.5 'Inter',sans-serif;}
+.con-boton{display:flex;gap:8px;}
+.con-boton input{flex:1;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.04em;}
+
+.creado{border-color:var(--verde);margin-top:16px;}
+.creado > p{font-size:13.5px;color:var(--ambar);margin:-8px 0 16px;}
+.datos{display:grid;gap:10px;}
+.datos div{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:baseline;}
+.datos dt{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--stone);}
+.datos dd{font-size:17px;word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+
+/* --- capas ----------------------------------------------------------------- */
+.capa{display:none;position:fixed;inset:0;z-index:45;background:rgba(5,7,10,0.72);
+  overflow-y:auto;padding:clamp(14px,6vh,70px) 14px;}
+.capa .hoja{margin:0 auto;}
+.capa-centro{min-height:100svh;display:grid;place-items:center;padding:28px 18px;text-align:center;}
+.capa-centro[hidden]{display:none;}
+.capa-centro h1{font-size:27px;}
+.capa-centro p{margin-top:12px;color:var(--bone-dim);font-size:14.5px;line-height:1.65;}
 </style>
 </head>
 <body>
@@ -198,16 +253,22 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
         <img src="../media/simbolo-256.png" width="256" height="256" alt="">
         <div><b>Gruppo Cristiano</b><span>Pannello chiese</span></div>
       </div>
-      <div style="display:flex;gap:9px">
+      <div style="display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end">
         <a class="btn mini" href="../" target="_blank" rel="noopener">Vedi il sito</a>
+        <button class="btn mini" id="mia-pass" type="button" hidden>La mia password</button>
         <button class="btn mini" id="salir" type="button">Esci</button>
       </div>
     </div>
   </header>
 
   <div class="wrap">
+    <!-- Quien eres. Una linea, arriba, para que nadie dude de con que cuenta
+         ha entrado — sobre todo cuando el dia de la configuracion se prueban
+         varias cuentas desde el mismo movil. -->
+    <p class="quien" id="quien" hidden></p>
+
     <div class="barra" style="margin-top:26px">
-      <h2>Le chiese</h2>
+      <h2 id="titulo-lista">Le chiese</h2>
       <div class="acc">
         <button class="btn peligro mini" id="restaurar" type="button">Torna alle schede del sito</button>
         <button class="btn piena" id="nueva" type="button">+ Nuova chiesa</button>
@@ -228,7 +289,109 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
     </div>
 
     <div id="lista" class="fichas"></div>
+
+    <!-- ========================================================================
+         ACCESSI — solo para el administrador general.
+
+         Aqui se da la llave de cada iglesia: correo y contrasena, que se
+         eligen juntos, en persona. Cuando el correo con codigo este listo,
+         esto cambia a "escribe el correo y le llega un codigo".
+         ======================================================================== -->
+    <section id="accessi" hidden>
+      <div class="barra" style="margin-top:48px">
+        <h2>Accessi</h2>
+      </div>
+      <p class="pista-sec">Chi può entrare in questo pannello e cosa può toccare.
+        L'amministratore generale tocca tutto. Il responsabile di una chiesa tocca solo
+        la sua: non può crearne né eliminarne nessuna.</p>
+
+      <div id="lista-accessi" class="accessi"></div>
+
+      <form class="hoja nuevo-acceso" id="f-acceso" novalidate>
+        <h3>Nuovo accesso</h3>
+        <div class="rejilla">
+          <div class="campo">
+            <label for="ac-per">Per chi</label>
+            <select id="ac-per"></select>
+          </div>
+          <div class="campo">
+            <label for="ac-email">Email</label>
+            <input type="email" id="ac-email" autocomplete="off" autocapitalize="none"
+              spellcheck="false" placeholder="responsabile@esempio.it">
+          </div>
+          <div class="campo">
+            <label for="ac-pass">Password <span style="text-transform:none;letter-spacing:0">(almeno 8 caratteri)</span></label>
+            <div class="con-boton">
+              <input type="text" id="ac-pass" autocomplete="new-password" autocapitalize="none" spellcheck="false">
+              <button class="btn mini" type="button" id="ac-genera">Genera</button>
+            </div>
+            <p class="pista">Si vede in chiaro apposta: la scegliete insieme e la scrivete
+              insieme. Dopo, ognuno la può cambiare dal bottone «La mia password».</p>
+          </div>
+        </div>
+        <p class="error" id="err-acceso" role="alert"></p>
+        <div class="pie-hoja">
+          <button class="btn piena" type="submit" id="ac-crea">Crea accesso</button>
+        </div>
+      </form>
+
+      <!-- Lo que hay que apuntar, en grande, justo despues de crear el acceso.
+           Es el momento en que estan los dos delante del movil. -->
+      <div class="hoja creado" id="ac-creado" hidden>
+        <h3>Accesso creato</h3>
+        <p>Scrivetelo adesso, insieme. La password non si vedrà più.</p>
+        <dl class="datos">
+          <div><dt>Pannello</dt><dd id="cr-url"></dd></div>
+          <div><dt>Email</dt><dd id="cr-email"></dd></div>
+          <div><dt>Password</dt><dd id="cr-pass"></dd></div>
+          <div><dt>Può toccare</dt><dd id="cr-che"></dd></div>
+        </dl>
+        <div class="pie-hoja">
+          <button class="btn piena" type="button" id="cr-ok">Fatto, l'ho scritto</button>
+        </div>
+      </div>
+    </section>
   </div>
+</div>
+
+<!-- ============================================================================
+     SIN PERMISO. Ha entrado bien —correo y contrasena correctos— pero su
+     acceso esta quitado o nunca se le dio un papel. Se le dice exactamente eso:
+     si viese el panel vacio pensaria que la web esta rota.
+     ============================================================================ -->
+<div id="sin-permiso" class="capa-centro" hidden>
+  <div class="caja-entrada">
+    <img src="../media/simbolo-256.png" width="256" height="256" alt="">
+    <h1>Accesso non attivo</h1>
+    <p>Email e password sono giusti, ma questo account in questo momento non può
+      modificare niente. Parlane con l'amministratore generale del gruppo.</p>
+    <button class="btn" type="button" id="salir2" style="margin:24px auto 0;display:flex">Esci</button>
+  </div>
+</div>
+
+<!-- ============================================================================
+     CAMBIAR MI CONTRASENA
+     ============================================================================ -->
+<div id="cambio" class="capa">
+  <form class="hoja" id="f-cambio" novalidate style="max-width:440px">
+    <h2>La mia password</h2>
+    <p>La nuova password vale da subito. Quella vecchia smette di funzionare.</p>
+    <div class="rejilla">
+      <div class="campo">
+        <label for="np1">Nuova password</label>
+        <input type="password" id="np1" autocomplete="new-password">
+      </div>
+      <div class="campo">
+        <label for="np2">Ripetila</label>
+        <input type="password" id="np2" autocomplete="new-password">
+      </div>
+    </div>
+    <p class="error" id="err-cambio" role="alert" style="margin-top:12px"></p>
+    <div class="pie-hoja">
+      <button class="btn" type="button" id="cambio-no">Annulla</button>
+      <button class="btn piena" type="submit">Cambia</button>
+    </div>
+  </form>
 </div>
 
 <!-- ============================================================================
@@ -413,11 +576,66 @@ function avisar(txt, mal) {
   brindisT = setTimeout(function () { brindis.classList.remove('ver'); }, 3200);
 }
 
-/* --- entrada -------------------------------------------------------------- */
+/* --- quien eres y que puedes tocar ----------------------------------------
+   Al entrar se pregunta a la base de datos que papel tiene esta cuenta. El
+   panel ensena solo lo que esa cuenta puede hacer — pero ojo, esconder un
+   boton NO es la seguridad: la seguridad son las reglas de la base de datos,
+   que rechazan el cambio aunque alguien se fabrique el boton a mano. Esconder
+   es para no confundir; las reglas son para no dejar. */
+var YO = null;
+function esGenerale() { return !!(YO && YO.ruolo === 'generale'); }
+
 function entrar() {
   $('#entrada').style.display = 'none';
-  $('#panel').style.display = 'block';
-  pintarLista();
+  ALMACEN.yo().then(function (p) {
+    if (!p || p.attivo === false) {
+      /* Correo y contrasena buenos, pero sin papel o con el acceso quitado.
+         Se le dice eso exactamente; un panel vacio pareceria un fallo. */
+      $('#sin-permiso').hidden = false;
+      return;
+    }
+    YO = p;
+    $('#panel').style.display = 'block';
+    aplicarRuolo();
+    pintarLista();
+  }).catch(function (x) {
+    /* Lo normal aqui es una sesion caducada. Se limpia y se vuelve a pedir
+       la entrada, en vez de dejar a nadie mirando una pantalla en blanco. */
+    if (window.console) console.warn('yo:', x && x.message);
+    (CONECTADO ? ALMACEN.salir() : Promise.resolve()).then(function () {
+      $('#entrada').style.display = '';
+      $('#err-entrada').textContent = 'La sessione è scaduta o la connessione non va. Entra di nuovo.';
+    });
+  });
+}
+
+function aplicarRuolo() {
+  var gen = esGenerale();
+  /* Crear y borrar iglesias, y vaciar la lista: solo el general. */
+  $('#nueva').hidden = !gen;
+  $('#restaurar').hidden = !gen;
+  $('#titulo-lista').textContent = gen ? 'Le chiese' : 'La tua chiesa';
+  $('#mia-pass').hidden = !CONECTADO;
+  $('#accessi').hidden = !(gen && CONECTADO);
+
+  if (CONECTADO && YO.email) {
+    var q = $('#quien');
+    q.textContent = 'Sei entrato come ';
+    var b = document.createElement('b'); b.textContent = YO.email; q.appendChild(b);
+    var r = document.createElement('span'); r.className = 'rol';
+    r.textContent = gen ? 'amministratore generale' : 'responsabile · ' + nombreSede(YO.sede);
+    q.appendChild(r);
+    q.hidden = false;
+  }
+}
+
+/* El nombre bonito de una sede a partir de su id: 'reggio-emilia' -> 'Reggio
+   Emilia'. Primero se busca en las fichas cargadas; si no esta, se adivina. */
+var SEDI_CARGADAS = [];
+function nombreSede(id) {
+  var todas = SEDI_CARGADAS.concat(window.SEDI_BASE || []);
+  for (var i = 0; i < todas.length; i++) if (todas[i].id === id) return todas[i].citta;
+  return String(id || '').replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
 }
 $('#f-entrada').addEventListener('submit', function (e) {
   e.preventDefault();
@@ -475,13 +693,41 @@ if (CONECTADO) {
 /* --- lista ---------------------------------------------------------------- */
 var editando = null;
 
+var ACCESSI = { attivi: [], inviti: [] };
+
 function pintarLista() {
   var lista = $('#lista');
+  /* El general ademas carga los accesos, para poner en cada ficha quien es su
+     responsable. Es lo que pidio el diseno: la ficha "lleva" un correo. */
+  var pideAccesos = (esGenerale() && CONECTADO)
+    ? ALMACEN.accessi().catch(function () { return { attivi: [], inviti: [] }; })
+    : Promise.resolve({ attivi: [], inviti: [] });
+
   /* true = tambien los borradores. El panel los necesita para poder
      publicarlos; la web publica pide la lista sin mas y la base de datos no se
      los daria ni pidiendolos. */
-  ALMACEN.leer(true).then(function (sedi) {
+  Promise.all([ALMACEN.leer(true), pideAccesos]).then(function (r) {
+    var sedi = r[0];
+    ACCESSI = r[1];
+    SEDI_CARGADAS = sedi || [];
+    if (esGenerale() && CONECTADO) pintarAccessi();
+
+    /* El responsable de una sede solo ve la suya. La base de datos le
+       dejaria leer las demas —son publicas— pero no tocarlas, y ensenarle
+       fichas con un boton "Modifica" que luego falla seria un engano. */
+    if (sedi && YO && YO.ruolo === 'sede') {
+      sedi = sedi.filter(function (s) { return s.id === YO.sede; });
+    }
+
     lista.textContent = '';
+    if ((!sedi || !sedi.length) && YO && YO.ruolo === 'sede') {
+      var v0 = document.createElement('div');
+      v0.className = 'vacio'; v0.style.gridColumn = '1 / -1';
+      v0.textContent = 'La scheda della tua chiesa non è ancora nella banca dati. '
+        + 'La deve caricare l\'amministratore generale: poi la trovi qui.';
+      lista.appendChild(v0);
+      return;
+    }
     if (!sedi || !sedi.length) {
       /* Nada guardado todavia. En vez de un cartel vacio, el boton que trae
          aqui las sedes que el sitio ya ensena: asi se empieza a editar lo que
@@ -509,8 +755,20 @@ function pintarLista() {
       /* El mismo respaldo que usa la pagina publica: o la imagen generada
          aqui, o el archivo de media/ si la ficha viene del sitio. Desde el
          panel la ruta sube un nivel. */
-      var fuente = s.mapa || (s.id && !s.mapa && /^[a-z]+$/.test(s.id) ? '../media/mappa-' + s.id + '.jpg' : '');
-      if (fuente) { var im = document.createElement('img'); im.src = fuente; im.alt = ''; m.appendChild(im); }
+      /* El id puede llevar guion —reggio-emilia, massa-carrara— y la
+         expresion tiene que aceptarlo: con /^[a-z]+$/ esas dos salian "Senza
+         mappa" aunque su mapa estuviera generado. */
+      var fuente = s.mapa || (s.id && /^[a-z-]+$/.test(s.id) ? '../media/mappa-' + s.id + '.jpg' : '');
+      if (fuente) {
+        var im = document.createElement('img'); im.alt = '';
+        /* Una sede sin direccion todavia no tiene mapa generado: en vez del
+           icono de imagen rota, el mismo aviso que si no hubiera nada. */
+        im.onerror = (function (cont) {
+          return function () { cont.textContent = 'Senza mappa'; };
+        })(m);
+        im.src = fuente;
+        m.appendChild(im);
+      }
       else { m.textContent = 'Senza mappa'; }
       f.appendChild(m);
 
@@ -535,6 +793,22 @@ function pintarLista() {
         ? s.orari.map(function (o) { return o[0] + ': ' + o[1]; }).join(' · ')
         : 'Orari da confermare';
       c.appendChild(hor);
+
+      /* Quien lleva esta iglesia. Solo lo ve el general, que es quien da los
+         accesos: asi de un vistazo sabe que ficha tiene responsable y cual no. */
+      if (esGenerale() && CONECTADO) {
+        var resp = document.createElement('p'); resp.className = 'resp';
+        var suyos = ACCESSI.attivi.filter(function (a) { return a.ruolo === 'sede' && a.sede === s.id && a.attivo; });
+        if (suyos.length) {
+          resp.textContent = 'Responsabile: ';
+          var rb = document.createElement('b');
+          rb.textContent = suyos.map(function (a) { return a.email; }).join(', ');
+          resp.appendChild(rb);
+        } else {
+          resp.textContent = 'Nessun responsabile';
+        }
+        c.appendChild(resp);
+      }
 
       var acc = document.createElement('div'); acc.className = 'acc';
       var ed = document.createElement('button');
@@ -652,7 +926,8 @@ function abrirEditor(sede) {
   var h = $('#horarios'); h.textContent = '';
   (editando.orari && editando.orari.length ? editando.orari : [['', '']])
     .forEach(function (o) { h.appendChild(filaHorario(o[0], o[1])); });
-  $('#borrar').style.display = sede ? '' : 'none';
+  /* Eliminar una iglesia: solo el general, y solo si ya existe. */
+  $('#borrar').style.display = (sede && esGenerale()) ? '' : 'none';
   $('#editor').style.display = 'block';
   document.body.style.overflow = 'hidden';
   $('#citta').focus();
@@ -786,6 +1061,224 @@ $('#borrar').addEventListener('click', function () {
   }).catch(function (err) {
     $('#err-sede').textContent = 'Non sono riuscito a eliminarla: ' + err.message;
   });
+});
+
+/* ============================================================================
+   ACCESSI — el general da y quita las llaves de cada iglesia.
+
+   Por ahora con correo y contrasena, elegidos juntos en persona. Cuando el
+   correo de Resend este verificado se cambia a "escribe el correo y le llega
+   un codigo": esta seccion cambia, el resto del panel no.
+   ============================================================================ */
+function pintarAccessi() {
+  var cont = $('#lista-accessi');
+  cont.textContent = '';
+
+  /* Primero el general, despues por iglesia. Los apagados al final: son
+     historia, no lo que se busca al abrir esto. */
+  var filas = ACCESSI.attivi.slice().sort(function (a, b) {
+    if (a.attivo !== b.attivo) return a.attivo ? -1 : 1;
+    if (a.ruolo !== b.ruolo) return a.ruolo === 'generale' ? -1 : 1;
+    return nombreSede(a.sede).localeCompare(nombreSede(b.sede));
+  });
+
+  filas.forEach(function (a) {
+    var d = document.createElement('div');
+    d.className = 'acceso' + (a.attivo ? '' : ' apagado');
+
+    var q = document.createElement('div'); q.className = 'q';
+    var b = document.createElement('b'); b.textContent = a.email || '(senza email)';
+    var s = document.createElement('span');
+    s.textContent = a.ruolo === 'generale' ? 'Tutto il gruppo' : nombreSede(a.sede);
+    q.appendChild(b); q.appendChild(s);
+    d.appendChild(q);
+
+    var e = document.createElement('span');
+    if (!a.attivo) { e.className = 'etq off'; e.textContent = 'spento'; }
+    else if (a.ruolo === 'generale') { e.className = 'etq gen'; e.textContent = 'generale'; }
+    else { e.className = 'etq sed'; e.textContent = 'responsabile'; }
+    d.appendChild(e);
+
+    /* A uno mismo no se le puede quitar el acceso: si fuese el unico general,
+       nadie podria volver a entrar. La base de datos tambien lo impide. */
+    if (YO && a.email === YO.email) {
+      var tu = document.createElement('span');
+      tu.className = 'etq gen'; tu.textContent = 'sei tu';
+      d.appendChild(tu);
+    } else {
+      var bt = document.createElement('button');
+      bt.type = 'button';
+      bt.className = 'btn mini' + (a.attivo ? ' peligro' : '');
+      bt.textContent = a.attivo ? 'Togli accesso' : 'Ridai accesso';
+      bt.addEventListener('click', function () {
+        if (a.attivo && !confirm('Tolgo l\'accesso a ' + a.email + '? Non potrà più modificare niente. '
+          + 'Si può ridare dopo, con la stessa password.')) return;
+        bt.disabled = true;
+        ALMACEN.cambiaAccesso(a.utente, !a.attivo).then(function () {
+          avisar(a.attivo ? 'Accesso tolto.' : 'Accesso ridato.');
+          pintarLista();
+        }).catch(function (x) {
+          bt.disabled = false;
+          avisar('Non ci sono riuscito: ' + x.message, true);
+        });
+      });
+      d.appendChild(bt);
+    }
+    cont.appendChild(d);
+  });
+
+  /* Invitaciones a medias. Normalmente no hay ninguna —el panel las borra si
+     el registro falla—, pero si quedase alguna se ve y se puede anular, en
+     vez de que siga ahi abierta sin que nadie lo sepa. */
+  ACCESSI.inviti.forEach(function (i) {
+    var d = document.createElement('div'); d.className = 'acceso';
+    var q = document.createElement('div'); q.className = 'q';
+    var b = document.createElement('b'); b.textContent = i.email;
+    var s = document.createElement('span');
+    s.textContent = (i.ruolo === 'generale' ? 'Tutto il gruppo' : nombreSede(i.sede)) + ' · invito non usato';
+    q.appendChild(b); q.appendChild(s); d.appendChild(q);
+    var e = document.createElement('span'); e.className = 'etq pend'; e.textContent = 'in sospeso';
+    d.appendChild(e);
+    var bt = document.createElement('button');
+    bt.type = 'button'; bt.className = 'btn mini'; bt.textContent = 'Annulla';
+    bt.addEventListener('click', function () {
+      ALMACEN.annullaInvito(i.email).then(function () { avisar('Invito annullato.'); pintarLista(); });
+    });
+    d.appendChild(bt);
+    cont.appendChild(d);
+  });
+
+  /* El desplegable de "para quien": cada iglesia, y al final la opcion de
+     otro administrador general, separada para que no se elija sin querer. */
+  var sel = $('#ac-per'), antes = sel.value;
+  sel.textContent = '';
+  var o0 = document.createElement('option'); o0.value = ''; o0.textContent = 'Scegli…';
+  sel.appendChild(o0);
+  SEDI_CARGADAS.forEach(function (sd) {
+    var o = document.createElement('option'); o.value = sd.id;
+    o.textContent = sd.citta + (sd.publicada === false ? ' (bozza)' : '');
+    sel.appendChild(o);
+  });
+  var og = document.createElement('option');
+  og.disabled = true; og.textContent = '──────────';
+  sel.appendChild(og);
+  var oG = document.createElement('option'); oG.value = '__generale__';
+  oG.textContent = 'Un altro amministratore generale';
+  sel.appendChild(oG);
+  if (antes) sel.value = antes;
+}
+
+/* Una contrasena que se pueda dictar en voz alta y escribir en un movil sin
+   equivocarse: sin 0/O ni 1/l/I, y en tres trozos. Doce caracteres al azar
+   de verdad (crypto, no Math.random). */
+function generaPassword() {
+  var letras = 'abcdefghjkmnpqrstuvwxyz', numeros = '23456789';
+  var r = new Uint32Array(12);
+  crypto.getRandomValues(r);
+  function de(conj, i) { return conj.charAt(r[i] % conj.length); }
+  var a = '', b = '', c = '';
+  for (var i = 0; i < 4; i++) { a += de(letras, i); b += de(numeros, 4 + i); c += de(letras, 8 + i); }
+  return a.charAt(0).toUpperCase() + a.slice(1) + '-' + b + '-' + c;
+}
+$('#ac-genera').addEventListener('click', function () {
+  $('#ac-pass').value = generaPassword();
+});
+
+/* Supabase contesta en ingles y con codigos. Aqui se dice que ha pasado y,
+   sobre todo, que hacer. */
+function errorAcceso(x) {
+  var m = ((x && x.message) || '') + ' ' + ((x && x.codigo) || '');
+  if (/signup.?disabled|signups? (are )?not allowed/i.test(m))
+    return 'In Supabase le registrazioni sono spente. Va acceso «Enable email signups» '
+      + '(supabase-setup.sql, passo 1).';
+  if (/already|exists|registered/i.test(m))
+    return 'Questa email ha già un account. Se il suo accesso è spento, riaccendilo dalla lista qui sopra.';
+  if (/weak|at least|should be/i.test(m))
+    return 'Password troppo debole: almeno 8 caratteri. Il bottone «Genera» ne fa una buona.';
+  if (/database error/i.test(m))
+    return 'La banca dati ha rifiutato l\'account perché non trova l\'invito. Riprova: se succede '
+      + 'di nuovo, il trigger di supabase-setup.sql non è installato.';
+  if (/invalid.*email|email.*invalid|validation/i.test(m))
+    return 'Email non valida.';
+  if (/rate|too many|429/i.test(m))
+    return 'Troppi tentativi di fila. Aspetta un minuto e riprova.';
+  return 'Non sono riuscito a creare l\'accesso: ' + ((x && x.message) || 'errore sconosciuto');
+}
+
+$('#f-acceso').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var per = $('#ac-per').value;
+  var email = $('#ac-email').value.trim().toLowerCase();
+  var pass = $('#ac-pass').value;
+  var err = $('#err-acceso'), b = $('#ac-crea');
+  err.textContent = '';
+
+  if (!per) { err.textContent = 'Scegli per chi è questo accesso.'; return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent = 'Email non valida.'; return; }
+  if (pass.length < 8) { err.textContent = 'La password deve avere almeno 8 caratteri.'; return; }
+  if (ACCESSI.attivi.some(function (a) { return a.email === email; })) {
+    err.textContent = 'Questa email ha già un accesso. Se è spento, riaccendilo dalla lista qui sopra.';
+    return;
+  }
+
+  var gen = per === '__generale__';
+  if (gen && !confirm('Stai creando un altro AMMINISTRATORE GENERALE: potrà fare tutto, anche '
+    + 'creare ed eliminare chiese e togliere accessi. Procedo?')) return;
+
+  b.disabled = true; b.textContent = 'Creo l\'accesso…';
+  ALMACEN.creaAccesso(email, pass, gen ? 'generale' : 'sede', gen ? null : per).then(function () {
+    /* Lo que hay que apuntar, en grande. La contrasena se ensena esta unica
+       vez y se borra de la pantalla al pulsar "Fatto". */
+    /* Sin el https://: es para apuntarlo a mano o dictarlo, y el movil lo
+       completa solo al escribirlo en el navegador. */
+    $('#cr-url').textContent = location.host + location.pathname.replace(/index\.html$/, '');
+    $('#cr-email').textContent = email;
+    $('#cr-pass').textContent = pass;
+    $('#cr-che').textContent = gen ? 'Tutto il gruppo' : 'Solo ' + nombreSede(per);
+    $('#f-acceso').hidden = true;
+    $('#ac-creado').hidden = false;
+    $('#ac-email').value = ''; $('#ac-pass').value = ''; $('#ac-per').value = '';
+    pintarLista();
+  }).catch(function (x) {
+    err.textContent = errorAcceso(x);
+    if (window.console) console.warn('creaAccesso:', x && x.message, x && x.codigo);
+  }).then(function () {
+    b.disabled = false; b.textContent = 'Crea accesso';
+  });
+});
+
+$('#cr-ok').addEventListener('click', function () {
+  $('#cr-pass').textContent = '';
+  $('#ac-creado').hidden = true;
+  $('#f-acceso').hidden = false;
+});
+
+/* --- la contrasena propia ------------------------------------------------- */
+function cerrarCambio() { $('#cambio').style.display = 'none'; }
+$('#mia-pass').addEventListener('click', function () {
+  $('#np1').value = ''; $('#np2').value = ''; $('#err-cambio').textContent = '';
+  $('#cambio').style.display = 'block';
+  $('#np1').focus();
+});
+$('#cambio-no').addEventListener('click', cerrarCambio);
+$('#cambio').addEventListener('click', function (e) { if (e.target === $('#cambio')) cerrarCambio(); });
+$('#f-cambio').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var a = $('#np1').value, b = $('#np2').value, err = $('#err-cambio');
+  err.textContent = '';
+  if (a.length < 8) { err.textContent = 'Almeno 8 caratteri.'; return; }
+  if (a !== b) { err.textContent = 'Le due password non sono uguali.'; return; }
+  ALMACEN.cambiaPassword(a).then(function () {
+    cerrarCambio(); avisar('Password cambiata. Da adesso vale quella nuova.');
+  }).catch(function (x) {
+    err.textContent = /different|same/i.test(x.message || '')
+      ? 'È uguale a quella di adesso. Scegline un\'altra.'
+      : 'Non sono riuscito a cambiarla: ' + x.message;
+  });
+});
+
+$('#salir2').addEventListener('click', function () {
+  ALMACEN.salir().then(function () { location.reload(); });
 });
 </script>
 </body>

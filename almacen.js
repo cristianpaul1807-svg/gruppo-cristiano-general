@@ -222,13 +222,31 @@ var ALMACEN = (function () {
 
     guardar: function (sede) {
       if (conBase) {
-        /* Un solo viaje para crear y para corregir: si el id ya existe, se
-           fusiona. Asi el panel no tiene que saber si la ficha es nueva. */
-        return rest('sede?on_conflict=id', {
-          method: 'POST',
-          headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
-          body: JSON.stringify(aFila(sede))
-        }, true);
+        /* Primero se intenta CORREGIR, y solo si no habia nada se CREA.
+
+           Antes era un solo viaje —un "upsert", insertar y si ya existe
+           fusionar— y era un error con los dos papeles: Postgres comprueba
+           la regla de INSERTAR tambien en un upsert, aunque la fila exista.
+           Como solo el general puede insertar, el responsable de Parma no
+           habria podido guardar ni su propia ficha.
+
+           Asi, el responsable solo pasa por la regla de corregir, que le deja
+           tocar la suya. Si intentase tocar otra, la correccion no encuentra
+           nada que pueda tocar, se intenta crear, y la regla de crear le
+           dice que no. */
+        var fila = aFila(sede);
+        return rest('sede?id=eq.' + encodeURIComponent(fila.id), {
+          method: 'PATCH',
+          headers: { 'Prefer': 'return=representation' },
+          body: JSON.stringify(fila)
+        }, true).then(function (tocadas) {
+          if (tocadas && tocadas.length) return null;
+          return rest('sede', {
+            method: 'POST',
+            headers: { 'Prefer': 'return=minimal' },
+            body: JSON.stringify(fila)
+          }, true);
+        });
       }
       return conTienda('readwrite', function (t) { return t.put(sede); });
     },
@@ -238,6 +256,121 @@ var ALMACEN = (function () {
         return rest('sede?id=eq.' + encodeURIComponent(id), { method: 'DELETE' }, true);
       }
       return conTienda('readwrite', function (t) { return t.delete(id); });
+    },
+
+    /* ======================================================================
+       LOS ACCESOS
+       ====================================================================== */
+
+    /* Quien soy: mi papel y mi sede. El panel lo mira al entrar para saber
+       que ensenar. Sin base de datos no hay papeles: el modo demo se
+       comporta como general, que es lo que hacia siempre. */
+    yo: function () {
+      if (!conBase) return Promise.resolve({ ruolo: 'generale', sede: null, attivo: true, demo: true });
+      var s = sesion();
+      var uid = s && s.user && s.user.id;
+      if (!uid) return Promise.resolve(null);
+      return rest('profilo?select=ruolo,sede,email,attivo&utente=eq.' + encodeURIComponent(uid), {}, true)
+        .then(function (f) { return (f && f[0]) || null; });
+    },
+
+    /* Todos los accesos y las invitaciones pendientes. Solo lo puede leer el
+       general; a cualquier otro la base de datos le devuelve listas vacias. */
+    accessi: function () {
+      if (!conBase) return Promise.resolve({ attivi: [], inviti: [] });
+      return Promise.all([
+        rest('profilo?select=utente,ruolo,sede,email,attivo&order=ruolo.asc,sede.asc', {}, true),
+        rest('invito?select=email,ruolo,sede,creato', {}, true)
+      ]).then(function (r) { return { attivi: r[0] || [], inviti: r[1] || [] }; });
+    },
+
+    /* Crear la cuenta de un responsable.
+
+       Dos pasos, y el orden importa: primero la invitacion, despues el
+       registro. El trigger de la base de datos solo deja crear la cuenta si
+       la invitacion existe.
+
+       El registro se hace con fetch a pelo y su respuesta se tira: trae una
+       sesion para la cuenta NUEVA, y si se guardase, el general quedaria
+       conectado como el responsable que acaba de crear. */
+    creaAccesso: function (email, clave, ruolo, sede) {
+      if (!conBase) return Promise.reject(new Error('Serve la banca dati.'));
+      email = String(email || '').trim().toLowerCase();
+      var inv = { email: email, ruolo: ruolo, sede: ruolo === 'sede' ? sede : null };
+
+      function limpiar(err) {
+        /* Si el registro falla, la invitacion no puede quedarse colgada: con
+           ella, cualquiera que supiera ese correo podria registrarse con su
+           propia contrasena durante 24 horas. */
+        return rest('invito?email=eq.' + encodeURIComponent(email), { method: 'DELETE' }, true)
+          .catch(function () {})
+          .then(function () { throw err; });
+      }
+
+      return rest('invito?on_conflict=email', {
+        method: 'POST',
+        headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify(inv)
+      }, true).then(function () {
+        return fetch(SUPABASE.url + '/auth/v1/signup', {
+          method: 'POST',
+          headers: { 'apikey': SUPABASE.key, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, password: clave })
+        }).then(function (r) {
+          return r.text().then(function (t) {
+            var d = {}; try { d = JSON.parse(t); } catch (e) {}
+            if (!r.ok) {
+              var m = d.msg || d.error_description || d.message || d.error || ('HTTP ' + r.status);
+              var e2 = new Error(m); e2.codigo = d.error_code || d.code || r.status;
+              throw e2;
+            }
+            return d;
+          });
+        });
+      }).catch(limpiar);
+      /* Si lo que fallo fue la propia invitacion no habia nada que limpiar,
+         pero borrar algo que no existe no hace dano: un solo camino de error
+         es mas facil de seguir que dos. */
+    },
+
+    /* Anular una invitacion que se quedo a medias. */
+    annullaInvito: function (email) {
+      if (!conBase) return Promise.resolve();
+      return rest('invito?email=eq.' + encodeURIComponent(String(email).toLowerCase()),
+        { method: 'DELETE' }, true);
+    },
+
+    /* Quitar o devolver un acceso. No se borra la cuenta: se apaga. Asi, si
+       vuelve, se le enciende y sigue con su misma contrasena. */
+    cambiaAccesso: function (utente, attivo) {
+      if (!conBase) return Promise.reject(new Error('Serve la banca dati.'));
+      return rest('profilo?utente=eq.' + encodeURIComponent(utente), {
+        method: 'PATCH',
+        headers: { 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ attivo: !!attivo })
+      }, true);
+    },
+
+    /* Cada uno cambia SU contrasena. La del general la eligen juntos el dia
+       que se crea, pero luego cada responsable debe poder poner la suya. */
+    cambiaPassword: function (nueva) {
+      if (!conBase) return Promise.reject(new Error('Serve la banca dati.'));
+      var s = sesion();
+      if (!viva(s)) return Promise.reject(new Error('Sessione scaduta.'));
+      return fetch(SUPABASE.url + '/auth/v1/user', {
+        method: 'PUT',
+        headers: {
+          'apikey': SUPABASE.key, 'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + s.access_token
+        },
+        body: JSON.stringify({ password: nueva })
+      }).then(function (r) {
+        return r.text().then(function (t) {
+          var d = {}; try { d = JSON.parse(t); } catch (e) {}
+          if (!r.ok) throw new Error(d.msg || d.error_description || d.message || ('HTTP ' + r.status));
+          return d;
+        });
+      });
     },
 
     /* Para el boton de "volver a como estaba": deja la lista vacia y la web

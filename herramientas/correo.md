@@ -132,13 +132,26 @@ Son **6 dígitos, no 8**: en el correo la longitud no se puede cambiar.
 
 ## 6. Que nadie pueda crearse una cuenta
 
-*Authentication → Providers → Email* → **Enable email signups: OFF**.
+**Esto ya está resuelto, y no con el interruptor.** Mientras se entra con
+contraseña, «Enable email signups» tiene que estar **activado**, porque el
+panel crea las cuentas de los responsables por la vía del registro. Lo que
+impide que cualquiera se registre es el trigger de `supabase-setup.sql`: si el
+correo no tiene invitación del administrador general, rechaza la cuenta.
 
-Y en el código, al pedir el código, `shouldCreateUser: false`.
+Cuando se pase al código por correo, además, al pedir el código se manda
+`shouldCreateUser: false`: pedir un código no crea nunca una cuenta, solo
+sirve para las que ya existen.
 
-Con las dos cosas, pedir el código solo funciona para los correos que haya
-dado de alta el administrador general. Quien no esté invitado lo pide y no le
-llega nada — que es justo lo que se quiere.
+---
+
+## Mientras tanto: correo y contraseña
+
+Hasta que este dominio esté verificado, **el panel funciona con correo y
+contraseña**, que elige el administrador general con cada responsable, en
+persona. Está explicado en el README, sección «Cómo se dan los accesos».
+
+Al pasar al código no hay que migrar nada: las cuentas, las invitaciones y los
+permisos son los mismos. Cambia la puerta, no lo que hay detrás.
 
 ---
 

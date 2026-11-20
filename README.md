@@ -129,10 +129,16 @@ Los dos papeles que ellos mismos dibujaron en su mapa conceptual:
 Crear o borrar una iglesia es decidir qué comunidad entra en el grupo, y eso
 no es una decisión de contenido — por eso el responsable de sede no puede.
 
-Los permisos viven en la tabla `profilo` y se dan a mano desde Supabase: desde
-la web no se pueden cambiar. **Una cuenta recién creada no puede modificar nada
-hasta que tenga su fila ahí** — es el paso que más se olvida, y el `insert` está
-escrito al final de `supabase-setup.sql`.
+Los permisos viven en la tabla `profilo` y **los crea un trigger** al crear la
+cuenta, a partir de la invitación. Desde la web el general solo puede
+encender o apagar un acceso: el papel y la sede de una cuenta no se pueden
+cambiar desde el panel, para que nadie pueda ascenderse a sí mismo ni pasarse
+de iglesia.
+
+**Esconder botones no es la seguridad.** El panel no le enseña a un
+responsable los botones de crear o borrar, pero lo que de verdad se lo impide
+son las reglas de la base de datos: si alguien se fabricase el botón a mano,
+la base de datos le diría que no igual. Está probado.
 
 El propio panel lo dice en pantalla: en modo demo sale un aviso ámbar con las
 dos advertencias, y conectado sale uno verde. El aviso que no toca **se borra
@@ -144,21 +150,70 @@ desaparecer las demás, porque el panel manda sobre lo escrito en `sedi.js`.
 
 ### Encenderlo de verdad
 
-1. Proyecto nuevo en Supabase (plan gratuito, dos proyectos por cuenta).
-2. SQL Editor → pegar `supabase-setup.sql` entero → Run. Se puede volver a
-   ejecutar sin romper nada.
-3. Authentication → Providers → Email: **desactivar «Enable email signups»**.
-   Si no, cualquiera que encuentre `/panel/` se hace una cuenta y edita la web
-   de la iglesia.
-4. Authentication → Users → Add user: la cuenta del encargado, con **Auto
-   Confirm User** marcado.
-5. Settings → API: copiar Project URL y clave anon en las dos líneas de
-   `almacen.js`. Nada más.
-6. **Comprobarlo:** crear una ficha y abrirla desde otro teléfono. Si desde el
-   otro teléfono no se ve, algo de lo anterior no se hizo.
+El proyecto de Supabase ya existe y `almacen.js` ya lleva su URL y su clave.
+Falta:
+
+1. **SQL Editor** → pegar `supabase-setup.sql` entero → **Run**. Se puede
+   volver a ejecutar sin romper nada.
+2. **Authentication → Sign In / Providers → Email:**
+   - «Enable email signups» → **activado**. El panel crea las cuentas por esa
+     vía. Lo que impide que cualquiera se registre no es este interruptor,
+     es el trigger (abajo).
+   - «Confirm email» → **desactivado**. Si no, cada cuenta nueva espera un
+     correo de confirmación que el correo de fábrica de Supabase manda a
+     razón de 2 por hora.
+3. **El primer administrador general**, el único que se crea a mano:
+   ```sql
+   insert into public.invito (email, ruolo)
+   values ('correo-del-administrador@ejemplo.com', 'generale');
+   ```
+   y después, en menos de 24 horas, Authentication → Users → **Add user**
+   con ese correo y una contraseña, marcando **Auto Confirm User**.
+4. A partir de ahí, **todo desde el panel**.
+5. **Comprobarlo:** entrar con un responsable de sede y ver que solo aparece
+   SU iglesia. Y crear una ficha y abrirla desde otro teléfono.
 
 La clave anon es pública por diseño: va dentro de la página. Lo que protege
 son las reglas de la tabla, que están en el SQL.
+
+### Cómo se dan los accesos
+
+El administrador general entra en `/panel/`, baja a **Accessi**, elige la
+iglesia, escribe el correo y la contraseña —el botón «Genera» hace una que se
+puede dictar sin equivocarse— y pulsa **Crea accesso**. Sale un recuadro con
+lo que hay que apuntar. **La contraseña se enseña esa única vez.**
+
+Por dentro son dos pasos, y es lo que hace que funcione sin tener en la página
+la llave de administrador de Supabase (que permitiría a cualquiera que mirase
+el código crear cuentas):
+
+1. el panel apunta una **invitación** para ese correo, con su papel y su sede;
+2. registra la cuenta por la vía normal, y un **trigger** en la base de datos
+   comprueba la invitación: si está, crea la cuenta con su permiso; **si no
+   está, la rechaza entera**.
+
+Así el registro está abierto, pero solo funciona para quien haya invitado el
+general. Las invitaciones caducan en 24 horas, y si un registro falla el panel
+borra la suya para que no quede una puerta abierta.
+
+**Quitar un acceso** no borra la cuenta: la apaga. Si esa persona vuelve, se
+le enciende con un botón y sigue con su misma contraseña. Nadie puede
+apagarse a sí mismo — si fuese el único general, no podría volver a entrar
+nadie.
+
+**Cada uno puede cambiar su contraseña** con el botón «La mia password».
+
+**Si alguien la olvida**, mientras no haya correo con código: está el `update`
+al final de `supabase-setup.sql`, para ejecutar desde el editor SQL.
+
+### Cuando el correo esté listo
+
+Hoy se entra con correo y contraseña. Cuando el DNS de
+`accessi.gruppocristiano.it` esté verificado en Resend (ver
+`herramientas/correo.md`), se cambia a **código de 6 dígitos al correo**: el
+general solo escribe el correo, y a esa persona le llega un código cada vez
+que quiera entrar. Las invitaciones y los permisos no cambian: cambia la
+puerta, no lo que hay detrás.
 
 ---
 
