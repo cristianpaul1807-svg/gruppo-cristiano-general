@@ -427,6 +427,11 @@ create table if not exists public.sito (
 );
 insert into public.sito (id) values (true) on conflict (id) do nothing;
 
+-- El WhatsApp del grupo: el del boton verde de la portada, para quien no sabe
+-- a que iglesia escribir. Dentro de la pagina de cada iglesia, ese boton
+-- escribe a ESA iglesia (su numero va en su ficha).
+alter table public.sito add column if not exists whatsapp text not null default '';
+
 comment on table public.sito is
   'Lo de la web general que cambia el administrador general desde el panel. Una sola fila.';
 

@@ -312,6 +312,20 @@ a.btn{text-decoration:none;}
           <button class="btn piena" type="button" id="sito-salva" disabled>Salva la foto</button>
         </div>
       </div>
+
+      <form class="hoja" id="f-sito-wa" style="max-width:none;margin:16px 0 0" novalidate>
+        <div class="campo">
+          <label for="sito-wa">WhatsApp del gruppo</label>
+          <input type="tel" id="sito-wa" inputmode="tel" autocomplete="off" placeholder="+39 3xx xxx xxxx">
+          <p class="pista">È il bottone verde della pagina principale, per chi non sa a quale chiesa
+            scrivere. Dentro la pagina di ogni chiesa, quel bottone scrive alla chiesa. Vuoto = il
+            bottone porta all'elenco delle chiese.</p>
+        </div>
+        <p class="error" id="err-sito-wa" role="alert"></p>
+        <div class="pie-hoja">
+          <button class="btn piena" type="submit" id="sito-wa-salva">Salva il numero</button>
+        </div>
+      </form>
     </section>
 
     <div class="barra" style="margin-top:26px">
@@ -1178,7 +1192,8 @@ function pintarSito(url) {
 }
 function cargarSito() {
   ALMACEN.leerSito().then(function (s) {
-    SITO = { copertina: (s && s.copertina) || '' };
+    SITO = { copertina: (s && s.copertina) || '', whatsapp: (s && s.whatsapp) || '' };
+    $('#sito-wa').value = SITO.whatsapp;
     SITO_PENDIENTE = null;
     $('#sito-salva').disabled = true;
     pintarSito(SITO.copertina);
@@ -1223,6 +1238,25 @@ function cargarSito() {
     }).then(function () { b.textContent = 'Salva la foto'; });
   });
 })();
+
+/* El WhatsApp del grupo. Se acepta como lo escriba cualquiera (con espacios,
+   sin +39) y se comprueba que salga un numero de verdad antes de guardarlo. */
+$('#f-sito-wa').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var v = $('#sito-wa').value.trim(), err = $('#err-sito-wa'), b = $('#sito-wa-salva');
+  err.textContent = '';
+  var d = v.replace(/[^0-9]/g, '');
+  if (d.indexOf('00') === 0) d = d.slice(2);
+  if (d.length === 10 && d.charAt(0) === '3') d = '39' + d;
+  if (v && d.length < 8) { err.textContent = 'Il numero non sembra giusto.'; return; }
+  b.disabled = true;
+  ALMACEN.guardarSito({ whatsapp: v }).then(function () {
+    avisar(v ? 'Numero salvato: il bottone verde scrive a ' + v + '.' : 'Numero tolto.');
+    cargarSito();
+  }).catch(function (x) {
+    err.textContent = 'Non sono riuscito a salvarlo: ' + x.message;
+  }).then(function () { b.disabled = false; });
+});
 
 /* --- la direccion de una iglesia nueva --------------------------------------
    "Massa-Carrara" -> "massa-carrara". Sin acentos —"Forlì" -> "forli"—,

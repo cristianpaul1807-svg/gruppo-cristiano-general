@@ -131,6 +131,13 @@ var ALMACEN = (function () {
     };
   }
 
+  /* De lo que se guarda en `sito`, solo los campos conocidos que vengan. */
+  function soloLoDado(d) {
+    var o = {};
+    ['copertina', 'whatsapp'].forEach(function (k) { if (d && d[k] !== undefined) o[k] = String(d[k] || ''); });
+    return o;
+  }
+
   /* ==========================================================================
      SIN ELLA — el almacen del propio navegador
      ========================================================================== */
@@ -437,7 +444,7 @@ var ALMACEN = (function () {
        en blanco por un fallo. */
     leerSito: function () {
       if (conBase) {
-        return rest('sito?select=copertina&limit=1', {}, false)
+        return rest('sito?select=copertina,whatsapp&limit=1', {}, false)
           .then(function (f) { return (f && f[0]) || null; })
           .catch(function () { return null; });
       }
@@ -453,14 +460,18 @@ var ALMACEN = (function () {
         return rest('sito?id=eq.true', {
           method: 'PATCH',
           headers: { 'Prefer': 'return=representation' },
-          body: JSON.stringify({ copertina: datos.copertina || '' })
+          /* Solo lo que se pasa: guardar el numero no borra la foto, ni al reves. */
+          body: JSON.stringify(soloLoDado(datos))
         }, true).then(function (f) {
           if (!f || !f.length) throw new Error('solo l\'amministratore generale può cambiarla');
           return f[0];
         });
       }
-      try { localStorage.setItem('gcf_sito', JSON.stringify({ copertina: datos.copertina || '' })); } catch (e) {}
-      return Promise.resolve(datos);
+      var antes = {};
+      try { antes = JSON.parse(localStorage.getItem('gcf_sito') || '{}') || {}; } catch (e) {}
+      var todo = Object.assign({ copertina: '', whatsapp: '' }, antes, soloLoDado(datos));
+      try { localStorage.setItem('gcf_sito', JSON.stringify(todo)); } catch (e) {}
+      return Promise.resolve(todo);
     },
 
     /* Anular una invitacion que se quedo a medias. */

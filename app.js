@@ -5,11 +5,12 @@
    ============================================================================ */
 
 /* ============================================================================
-   EL WHATSAPP DEL ENCARGADO.
+   EL WHATSAPP DEL GRUPO.
 
-   Cuando llegue el numero se escribe aqui, entre comillas, solo digitos y con
-   el 39 delante: '39XXXXXXXXXX'. Mientras este vacio el boton sigue a la
-   vista pero apagado y lleva a las sedes, en vez de abrir una ventana rota.
+   Lo pone el administrador general desde el panel («Il sito del gruppo») y
+   se guarda en la base de datos. Esta variable es solo el respaldo por si no
+   hay base: vacia, el boton sigue a la vista pero apagado y lleva a las
+   sedes, en vez de abrir una ventana rota.
 
    Va al encargado de ESTA web, no a una sede concreta: es para quien no
    entiende la pagina o no sabe a que iglesia ir.
@@ -184,14 +185,30 @@ var observarReveal;
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') cerrar(); });
 })();
 
-/* --- el boton de WhatsApp -------------------------------------------------- */
+/* --- el boton de WhatsApp -------------------------------------------------- 
+   En la portada, el numero del grupo, que pone el general en su panel («Il
+   sito del gruppo»). Dentro de la pagina de una iglesia no se toca: alli lo
+   pone sede.js con el numero de esa iglesia. */
+function NUMERO_WA(t) {
+  var d = String(t || '').replace(/[^0-9]/g, '');
+  if (d.indexOf('00') === 0) d = d.slice(2);
+  if (d.length === 10 && d.charAt(0) === '3') d = '39' + d;
+  return d.length >= 8 ? d : '';
+}
 (function () {
   var wa = $('#wa');
-  if (!wa) return;
-  if (WHATSAPP) {
+  if (!wa || document.body.hasAttribute('data-sede')) return;
+  function encender(n) {
     wa.classList.remove('apagado');
-    wa.href = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(WA_MENSAJE);
+    wa.href = 'https://wa.me/' + n + '?text=' + encodeURIComponent(WA_MENSAJE);
     wa.target = '_blank'; wa.rel = 'noopener';
+  }
+  if (NUMERO_WA(WHATSAPP)) encender(NUMERO_WA(WHATSAPP));
+  if (window.ALMACEN && ALMACEN.leerSito) {
+    ALMACEN.leerSito().then(function (s) {
+      var n = NUMERO_WA(s && s.whatsapp);
+      if (n) encender(n);
+    });
   }
 })();
 
