@@ -823,7 +823,7 @@ var I18N = {
     q7: "Quiero venir a Italia como misionero. ¿Me pueden ayudar?",
     a7: "Sí — es el séptimo punto de nuestra visión. Escríbenos por WhatsApp y hablamos.",
     wa_txt: "Escríbenos",
-    foot_dir: "Fidenza · Parma", foot_min: "Isaías 55:5",
+    foot_dir: "Fidenza · Parma", foot_min: "Isaías 55:5", foot_panel: "Área reservada",
     banda: "Prototipo Digitatex · contenidos por confirmar"
   }
 };

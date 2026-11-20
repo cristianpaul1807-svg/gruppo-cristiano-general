@@ -77,10 +77,16 @@ section{padding-block:clamp(72px,11vh,124px);scroll-margin-top:64px;}
   background:linear-gradient(90deg,var(--blu-dark),var(--blu));}
 
 /* --- navegacion: barra blanca, como en su ejemplo --------------------------- */
+/* El blanco con desenfoque va en un ::before y NO en la propia barra: un
+   backdrop-filter en la barra convierte la barra en la "caja" de todo lo fijo
+   que lleva dentro, y el menu del movil (fijo, a toda la altura) quedaba
+   encerrado en los 70 px de la barra, con los enlaces cayendo transparentes
+   encima de la foto. */
 nav{position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;
   justify-content:space-between;gap:16px;padding:10px clamp(20px,5vw,48px);
-  background:rgba(255,255,255,0.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   border-bottom:1px solid var(--linea);}
+nav::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:rgba(255,255,255,0.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
 .brand{display:flex;align-items:center;gap:11px;min-width:0;}
 /* El simbolo y no el logo entero: a 40 px, "GRUPPO CRISTIANO" no se leeria. El
    nombre va al lado, en la letra de la pagina, que ademas se traduce. */
@@ -413,6 +419,9 @@ footer .sociali a:hover{background:rgba(255,255,255,.1);border-color:#fff;}
 footer .sociali svg{width:19px;height:19px;}
 footer .pie-dir{margin-top:24px;font-size:14px;color:#c9d3e3;}
 footer .pie-min{margin-top:10px;font-size:12px;color:#93a3bd;}
+footer .pie-panel{margin-top:18px;font-size:12px;}
+footer .pie-panel a{color:#93a3bd;text-decoration:underline;text-underline-offset:3px;}
+footer .pie-panel a:hover{color:#fff;}
 
 .banda{position:fixed;left:0;right:0;bottom:0;z-index:65;padding:9px 16px;
   background:var(--oro);color:var(--marino);text-align:center;font-size:11px;font-weight:700;
