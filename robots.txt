@@ -1,0 +1,7 @@
+# La web todavia vive en un dominio que no es suyo y esta sin terminar.
+# Hasta que este en gruppocristiano.it, no entra en ningun buscador.
+#
+# Esto se quita el dia que se mude, Y ADEMAS hay que quitar la etiqueta
+# noindex del index.html y del panel: las dos cosas, no una.
+User-agent: *
+Disallow: /

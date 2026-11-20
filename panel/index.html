@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Pannello chiese — Gruppo Cristiano</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="../media/simbolo-256.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --ink:#0b0d12; --ink-2:#12151c; --ink-3:#171b24;
+  --bone:#eef2f7; --bone-dim:#b6c1cf; --stone:#7d8898;
+  --blu:#0c97f8; --blu-2:#56b4ff; --blu-dark:#034c82;
+  --line:rgba(238,242,247,0.10); --line-strong:rgba(238,242,247,0.20);
+  --rojo:#e06b6b; --verde:#5fc08a; --ambar:#f0c040;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--ink);color:var(--bone);font-family:'Inter',system-ui,sans-serif;
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+img{max-width:100%;display:block;}
+h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:400;line-height:1.15;}
+.wrap{max-width:1060px;margin:0 auto;padding:0 clamp(18px,4vw,34px);}
+
+/* --- cabecera ------------------------------------------------------------- */
+header{border-bottom:1px solid var(--line);background:var(--ink-2);}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding-block:16px;}
+.marca{display:flex;align-items:center;gap:11px;min-width:0;}
+.marca img{width:34px;height:34px;}
+.marca b{font-family:'Fraunces',serif;font-weight:400;font-size:15px;}
+.marca span{display:block;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;
+  color:var(--stone);}
+
+/* --- botones y campos ----------------------------------------------------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 20px;border:1px solid var(--line-strong);border-radius:999px;
+  background:none;color:var(--bone);font:500 13px/1 'Inter',sans-serif;cursor:pointer;
+  transition:border-color .2s,background .2s;white-space:nowrap;}
+.btn:hover:not(:disabled){border-color:var(--blu);background:rgba(12,151,248,0.12);}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn.piena{background:var(--blu-dark);border-color:var(--blu-dark);color:#fff;}
+.btn.piena:hover:not(:disabled){background:var(--blu);border-color:var(--blu);}
+.btn.peligro{color:var(--rojo);border-color:rgba(224,107,107,0.4);}
+.btn.peligro:hover:not(:disabled){background:rgba(224,107,107,0.12);border-color:var(--rojo);}
+.btn.mini{padding:8px 14px;font-size:12px;}
+
+.campo{display:grid;gap:6px;}
+.campo label{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--stone);}
+.campo input,.campo textarea{width:100%;padding:11px 13px;background:var(--ink-3);
+  color:var(--bone);border:1px solid var(--line-strong);border-radius:4px;
+  font:400 15px/1.5 'Inter',sans-serif;}
+.campo input:focus,.campo textarea:focus{outline:0;border-color:var(--blu);
+  box-shadow:0 0 0 3px rgba(12,151,248,0.18);}
+.campo .pista{font-size:12px;color:var(--stone);line-height:1.5;}
+
+/* --- entrada -------------------------------------------------------------- */
+#entrada{min-height:100svh;display:grid;place-items:center;padding:28px 18px;}
+.caja-entrada{width:100%;max-width:380px;}
+.caja-entrada img{width:72px;height:72px;margin:0 auto 22px;}
+.caja-entrada h1{font-size:27px;text-align:center;}
+.caja-entrada > p{margin-top:10px;text-align:center;font-size:14px;color:var(--bone-dim);}
+.caja-entrada form{display:grid;gap:14px;margin-top:26px;}
+
+/* El aviso de que esto todavia no es una cerradura de verdad. Va dentro de la
+   pantalla de entrada a proposito: es lo primero que se lee, no una nota al
+   pie que nadie mira. */
+.aviso{padding:15px 17px;border:1px solid var(--line-strong);border-radius:4px;
+  border-left:3px solid var(--ambar);background:rgba(23,27,36,0.8);
+  font-size:13px;line-height:1.65;color:var(--bone-dim);}
+.aviso b{display:block;color:var(--ambar);font-weight:500;margin-bottom:5px;}
+
+.error{font-size:13.5px;color:var(--rojo);min-height:20px;}
+
+/* --- panel ---------------------------------------------------------------- */
+#panel{display:none;padding-block:clamp(26px,5vw,44px) 80px;}
+.barra{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  flex-wrap:wrap;margin-bottom:24px;}
+.barra h2{font-size:clamp(23px,3vw,31px);}
+.barra .acc{display:flex;gap:9px;flex-wrap:wrap;}
+
+.fichas{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
+  gap:16px;}
+.ficha{border:1px solid var(--line);background:var(--ink-2);border-radius:5px;
+  overflow:hidden;display:flex;flex-direction:column;}
+.ficha .mapa{aspect-ratio:16/10;background:
+  repeating-linear-gradient(135deg,rgba(238,242,247,0.035) 0 8px,transparent 8px 16px),
+  var(--ink-3);display:grid;place-items:center;font-size:11px;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--stone);}
+.ficha .mapa img{width:100%;height:100%;object-fit:cover;}
+.ficha .cuerpo{padding:17px 18px;display:flex;flex-direction:column;gap:7px;flex:1;}
+.ficha h3{font-size:21px;}
+.ficha .via{font-size:13.5px;color:var(--bone-dim);line-height:1.5;}
+.ficha .hor{font-size:12.5px;color:var(--stone);}
+.ficha .acc{display:flex;gap:8px;margin-top:auto;padding-top:14px;}
+.vacio{padding:44px 24px;text-align:center;border:1px dashed var(--line-strong);
+  border-radius:5px;color:var(--stone);font-size:14px;}
+
+/* --- formulario ----------------------------------------------------------- */
+#editor{display:none;position:fixed;inset:0;z-index:40;background:rgba(5,7,10,0.72);
+  overflow-y:auto;padding:clamp(14px,4vh,44px) 14px;}
+.hoja{max-width:620px;margin:0 auto;background:var(--ink-2);border:1px solid var(--line-strong);
+  border-radius:6px;padding:clamp(20px,4vw,30px);}
+.hoja h2{font-size:25px;margin-bottom:6px;}
+.hoja > p{font-size:13.5px;color:var(--stone);margin-bottom:20px;}
+.rejilla{display:grid;gap:15px;}
+.rejilla.dos{grid-template-columns:1fr 1fr;}
+@media (max-width:560px){ .rejilla.dos{grid-template-columns:1fr;} }
+
+.horarios{display:grid;gap:9px;}
+.horario{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;}
+@media (max-width:560px){ .horario{grid-template-columns:1fr 1fr;} .horario .quitar{grid-column:2;justify-self:end;} }
+.quitar{background:none;border:0;color:var(--stone);cursor:pointer;font-size:19px;
+  line-height:1;padding:6px 9px;border-radius:4px;}
+.quitar:hover{color:var(--rojo);background:rgba(224,107,107,0.1);}
+
+.previa{margin-top:6px;border:1px solid var(--line-strong);border-radius:4px;
+  overflow:hidden;background:var(--ink-3);}
+.previa .hueco{aspect-ratio:16/10;display:grid;place-items:center;text-align:center;
+  padding:16px;font-size:12.5px;color:var(--stone);line-height:1.6;}
+.previa img{width:100%;aspect-ratio:16/10;object-fit:cover;}
+.progreso{height:2px;background:var(--line);overflow:hidden;}
+.progreso i{display:block;height:2px;width:0;background:var(--blu-2);transition:width .2s;}
+
+.pie-hoja{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:24px;
+  padding-top:20px;border-top:1px solid var(--line);}
+.pie-hoja .izq{margin-right:auto;}
+
+/* El aviso va ARRIBA y no abajo: con el editor abierto, abajo se pone justo
+   encima de "Salva" —el boton que mas se toca— y en el movil se come el dedo. */
+.brindis{position:fixed;left:50%;top:18px;transform:translateX(-50%) translateY(-16px);
+  z-index:60;padding:12px 22px;border-radius:999px;background:var(--ink-3);
+  border:1px solid var(--line-strong);font-size:13.5px;opacity:0;pointer-events:none;
+  transition:opacity .25s,transform .25s;max-width:92vw;text-align:center;}
+.brindis.ver{opacity:1;transform:translateX(-50%) translateY(0);}
+.brindis.mal{border-color:var(--rojo);color:var(--rojo);}
+</style>
+</head>
+<body>
+
+<!-- ============================================================================
+     ENTRADA. Usuario y contraseña, y nada mas: aqui no se crean cuentas.
+     Quien entra es quien ya tiene la llave.
+     ============================================================================ -->
+<div id="entrada">
+  <div class="caja-entrada">
+    <img src="../media/simbolo-256.png" width="256" height="256" alt="Gruppo Cristiano">
+    <h1>Pannello chiese</h1>
+    <p>Per aggiungere o cambiare una chiesa del gruppo.</p>
+
+    <form id="f-entrada" novalidate>
+      <div class="campo">
+        <label for="usuario">Utente</label>
+        <input type="text" id="usuario" autocomplete="username" autocapitalize="none" required>
+      </div>
+      <div class="campo">
+        <label for="clave">Password</label>
+        <input type="password" id="clave" autocomplete="current-password" required>
+      </div>
+      <p class="error" id="err-entrada" role="alert"></p>
+      <button type="submit" class="btn piena">Entra</button>
+    </form>
+
+    <div class="aviso" style="margin-top:22px">
+      <b>Da leggere prima di usarlo</b>
+      Questa porta non è ancora una serratura vera: l'utente e la password stanno
+      scritti nella pagina, e chi sa guardare dentro il codice li vede. Serve a far
+      capire come funziona il pannello, non a proteggerlo.
+      Le schede create qui restano <b style="display:inline;color:var(--bone-dim)">su questo
+      telefono</b>: non le vede né un altro telefono né chi apre il sito. Per questo
+      serve una banca dati vera — ed è il passo dopo, non questo.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================================
+     PANEL
+     ============================================================================ -->
+<div id="panel">
+  <header>
+    <div class="wrap">
+      <div class="marca">
+        <img src="../media/simbolo-256.png" width="256" height="256" alt="">
+        <div><b>Gruppo Cristiano</b><span>Pannello chiese</span></div>
+      </div>
+      <div style="display:flex;gap:9px">
+        <a class="btn mini" href="../" target="_blank" rel="noopener">Vedi il sito</a>
+        <button class="btn mini" id="salir" type="button">Esci</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="barra" style="margin-top:26px">
+      <h2>Le chiese</h2>
+      <div class="acc">
+        <button class="btn peligro mini" id="restaurar" type="button">Torna alle schede del sito</button>
+        <button class="btn piena" id="nueva" type="button">+ Nuova chiesa</button>
+      </div>
+    </div>
+
+    <div class="aviso" style="margin-bottom:22px">
+      <b>Dove finiscono queste schede</b>
+      Restano in questo telefono, in questo browser. Le vedi tu, qui. Chi apre il sito
+      vede ancora le schede scritte nella pagina. Quando passiamo a una banca dati vera,
+      quello che c'è qui si carica lì e lo vedono tutti.
+    </div>
+
+    <div id="lista" class="fichas"></div>
+  </div>
+</div>
+
+<!-- ============================================================================
+     EDITOR
+     ============================================================================ -->
+<div id="editor">
+  <form class="hoja" id="f-sede" novalidate>
+    <h2 id="titulo-hoja">Nuova chiesa</h2>
+    <p>I campi con il trattino restano vuoti e nella pagina escono come «da confermare».</p>
+
+    <div class="rejilla">
+      <div class="campo">
+        <label for="citta">Città *</label>
+        <input type="text" id="citta" required placeholder="Fidenza">
+      </div>
+      <div class="campo">
+        <label for="via">Via e numero civico</label>
+        <input type="text" id="via" placeholder="Via Galileo Ferraris 14">
+      </div>
+      <div class="campo">
+        <label for="cap">CAP, città e provincia</label>
+        <input type="text" id="cap" placeholder="43036 Fidenza (PR)">
+      </div>
+
+      <div class="rejilla dos">
+        <div class="campo">
+          <label for="lat">Latitudine</label>
+          <input type="text" id="lat" inputmode="decimal" placeholder="44.859535">
+        </div>
+        <div class="campo">
+          <label for="lon">Longitudine</label>
+          <input type="text" id="lon" inputmode="decimal" placeholder="10.087606">
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="web">Sito di questa chiesa</label>
+        <input type="url" id="web" placeholder="https://..." autocapitalize="none">
+        <p class="pista">Quando questa chiesa avrà il suo sito, qui. Nella scheda compare
+          il bottone «Vai al sito» e diventa quello principale. Se è vuoto, non compare.</p>
+      </div>
+
+      <div class="campo">
+        <label for="testo">Descrizione <span id="cuenta" style="text-transform:none;letter-spacing:0;float:right">0 / 240</span></label>
+        <textarea id="testo" maxlength="240" rows="3"
+          placeholder="Due righe su questa chiesa: chi siete, cosa si trova qui."></textarea>
+        <p class="pista">Massimo 240 caratteri — sono circa tre righe nella scheda, così
+          tutte le schede vengono uguali. Oltre i 180 il contatore avvisa: da qui esce anche
+          quello che legge Google, e Google taglia verso i 160.</p>
+      </div>
+
+      <div class="campo">
+        <label for="lingue">Lingue che si parlano</label>
+        <input type="text" id="lingue" placeholder="Italiano, Español">
+        <p class="pista">Separate da una virgola. Per una famiglia appena arrivata questo
+          decide se viene o no, quindi vale la pena scriverlo.</p>
+      </div>
+
+      <div class="campo">
+        <label for="logo">Logo di questa chiesa</label>
+        <input type="text" id="logo" placeholder="media/logo-parma.png" autocapitalize="none">
+        <p class="pista">Solo se questa chiesa ha un logo suo e vuole che si veda. Se è
+          vuoto, nella scheda compare la mappa — che è il normale.</p>
+      </div>
+
+      <div class="campo">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:14px;color:var(--bone)">
+          <input type="checkbox" id="publicada" checked style="width:auto;margin:0">
+          Pubblicata sul sito
+        </label>
+        <p class="pista">Togli la spunta per preparare una scheda senza che esca. Resta qui,
+          salvata, finché non la pubblichi.</p>
+      </div>
+
+      <div class="campo">
+        <label for="apple">Scheda Apple Maps <span style="text-transform:none;letter-spacing:0">(si riempie da sola)</span></label>
+        <input type="text" id="apple" placeholder="I95F8BD462A52E3D3" autocapitalize="none">
+        <p class="pista">Se c'è, il bottone «Apple Maps» apre la scheda della chiesa — con
+          il suo nome e «Organizzazione religiosa» — invece di cercare un indirizzo.</p>
+      </div>
+
+      <div class="campo">
+        <label for="pegar">Oppure incolla qui il link di Apple Maps o Google Maps</label>
+        <input type="text" id="pegar" placeholder="https://maps.apple.com/place?...coordinate=44.85,10.08...">
+        <p class="pista">Dal telefono: apri la sede nelle mappe, «Condividi», copia il link
+          e incollalo qui. Le coordinate si riempiono da sole.</p>
+      </div>
+
+      <div class="campo">
+        <label>Mappa</label>
+        <div class="previa" id="previa">
+          <div class="hueco" id="hueco-previa">Metti le coordinate e premi «Genera la mappa».</div>
+          <div class="progreso"><i id="barra-mapa"></i></div>
+        </div>
+        <button class="btn mini" type="button" id="generar" style="justify-self:start;margin-top:9px">
+          Genera la mappa
+        </button>
+      </div>
+
+      <div class="campo">
+        <label>Orari</label>
+        <div class="horarios" id="horarios"></div>
+        <button class="btn mini" type="button" id="mas-horario" style="justify-self:start">
+          + Aggiungi un orario
+        </button>
+        <p class="pista">A sinistra cosa (Incontro, Preghiera, Giovani), a destra quando
+          (Domenica 10:30). Se lasci tutto vuoto, la scheda dice «da confermare».</p>
+      </div>
+    </div>
+
+    <p class="error" id="err-sede" role="alert" style="margin-top:14px"></p>
+
+    <div class="pie-hoja">
+      <button class="btn peligro mini izq" type="button" id="borrar">Elimina questa chiesa</button>
+      <button class="btn" type="button" id="cancelar">Annulla</button>
+      <button class="btn piena" type="submit">Salva</button>
+    </div>
+  </form>
+</div>
+
+<div class="brindis" id="brindis" role="status" aria-live="polite"></div>
+
+<script src="../sedi.js"></script>
+<script src="../almacen.js"></script>
+<script src="../mapa.js"></script>
+<script>
+'use strict';
+
+/* ============================================================================
+   LA LLAVE.
+
+   Esto NO es seguridad. Esta escrito en una pagina que se descarga entera en
+   el navegador de quien entra, asi que cualquiera que sepa abrir el codigo lo
+   ve. Sirve para que el panel se pueda enseñar y usar, no para proteger nada.
+
+   La cerradura de verdad necesita que la comprobacion pase en un servidor, no
+   aqui. Eso llega con la banca dati, y entonces esta constante desaparece.
+   ============================================================================ */
+var LLAVE = { usuario: 'gruppocristiano', clave: 'Isaia2026!' };
+
+var $ = function (s) { return document.querySelector(s); };
+var brindis = $('#brindis'), brindisT = null;
+function avisar(txt, mal) {
+  brindis.textContent = txt;
+  brindis.classList.toggle('mal', !!mal);
+  brindis.classList.add('ver');
+  clearTimeout(brindisT);
+  brindisT = setTimeout(function () { brindis.classList.remove('ver'); }, 3200);
+}
+
+/* --- entrada -------------------------------------------------------------- */
+function entrar() {
+  $('#entrada').style.display = 'none';
+  $('#panel').style.display = 'block';
+  pintarLista();
+}
+$('#f-entrada').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var u = $('#usuario').value.trim().toLowerCase();
+  var c = $('#clave').value;
+  if (u === LLAVE.usuario && c === LLAVE.clave) {
+    try { sessionStorage.setItem('gcf_panel', '1'); } catch (err) {}
+    $('#err-entrada').textContent = '';
+    entrar();
+  } else {
+    $('#err-entrada').textContent = 'Utente o password non corretti.';
+  }
+});
+$('#salir').addEventListener('click', function () {
+  try { sessionStorage.removeItem('gcf_panel'); } catch (e) {}
+  location.reload();
+});
+/* sessionStorage y no localStorage: la sesion muere al cerrar la pestaña. En
+   un movil prestado eso es la diferencia entre una sesion y una puerta
+   abierta para siempre. */
+try { if (sessionStorage.getItem('gcf_panel') === '1') entrar(); } catch (e) {}
+
+/* --- lista ---------------------------------------------------------------- */
+var editando = null;
+
+function pintarLista() {
+  var lista = $('#lista');
+  ALMACEN.leer().then(function (sedi) {
+    lista.textContent = '';
+    if (!sedi || !sedi.length) {
+      /* Nada guardado todavia. En vez de un cartel vacio, el boton que trae
+         aqui las sedes que el sitio ya ensena: asi se empieza a editar lo que
+         hay en vez de partir de cero y hacerlas desaparecer sin querer. */
+      var v = document.createElement('div');
+      v.className = 'vacio';
+      v.style.gridColumn = '1 / -1';
+      var t = document.createElement('p');
+      t.textContent = 'Non hai ancora nessuna scheda qui. Il sito ne mostra '
+        + (window.SEDI_BASE ? SEDI_BASE.length : 0) + ': portale dentro e le modifichi da qui.';
+      var bt = document.createElement('button');
+      bt.className = 'btn piena'; bt.type = 'button'; bt.style.marginTop = '16px';
+      bt.textContent = 'Porta dentro le schede del sito';
+      bt.addEventListener('click', importar);
+      v.appendChild(t); v.appendChild(bt);
+      lista.appendChild(v);
+      return;
+    }
+    sedi.forEach(function (s) {
+      var f = document.createElement('article');
+      f.className = 'ficha';
+
+      var m = document.createElement('div');
+      m.className = 'mapa';
+      /* El mismo respaldo que usa la pagina publica: o la imagen generada
+         aqui, o el archivo de media/ si la ficha viene del sitio. Desde el
+         panel la ruta sube un nivel. */
+      var fuente = s.mapa || (s.id && !s.mapa && /^[a-z]+$/.test(s.id) ? '../media/mappa-' + s.id + '.jpg' : '');
+      if (fuente) { var im = document.createElement('img'); im.src = fuente; im.alt = ''; m.appendChild(im); }
+      else { m.textContent = 'Senza mappa'; }
+      f.appendChild(m);
+
+      var c = document.createElement('div');
+      c.className = 'cuerpo';
+      var h = document.createElement('h3'); h.textContent = s.citta; c.appendChild(h);
+
+      var via = document.createElement('p'); via.className = 'via';
+      via.textContent = s.via ? (s.via + (s.cap ? ' · ' + s.cap : '')) : 'Indirizzo da confermare';
+      c.appendChild(via);
+
+      if (s.publicada === false) {
+        var bor = document.createElement('p');
+        bor.className = 'hor';
+        bor.innerHTML = '<span style="background:#f0c040;color:#1a1300;padding:2px 8px;'
+          + 'border-radius:3px;font-size:9.5px;font-weight:600;letter-spacing:.1em;'
+          + 'text-transform:uppercase">bozza</span>';
+        c.appendChild(bor);
+      }
+      var hor = document.createElement('p'); hor.className = 'hor';
+      hor.textContent = (s.orari && s.orari.length)
+        ? s.orari.map(function (o) { return o[0] + ': ' + o[1]; }).join(' · ')
+        : 'Orari da confermare';
+      c.appendChild(hor);
+
+      var acc = document.createElement('div'); acc.className = 'acc';
+      var ed = document.createElement('button');
+      ed.className = 'btn mini'; ed.type = 'button'; ed.textContent = 'Modifica';
+      ed.addEventListener('click', function () { abrirEditor(s); });
+      acc.appendChild(ed);
+      c.appendChild(acc);
+
+      f.appendChild(c);
+      lista.appendChild(f);
+    });
+  });
+}
+
+function importar() {
+  var base = window.SEDI_BASE || [];
+  if (!base.length) { avisar('Non trovo le schede del sito.', true); return; }
+  Promise.all(base.map(function (s, i) {
+    return ALMACEN.guardar({
+      id: s.id || ('sede-' + i), orden: i,
+      citta: s.citta || '', via: s.via || '', cap: s.cap || '',
+      lat: s.lat != null ? s.lat : null, lon: s.lon != null ? s.lon : null,
+      orari: (s.orari || []).map(function (o) { return [o[0], o[1]]; }),
+      web: s.web || '', testo: s.testo || '', lingue: s.lingue || '',
+      logo: s.logo || '', publicada: s.publicada !== false,
+      apple: s.apple || '',
+      mapa: ''   // vacio a proposito: la ficha sigue usando el archivo de media/
+    });
+  })).then(function () { pintarLista(); avisar('Schede portate dentro.'); });
+}
+
+$('#restaurar').addEventListener('click', function () {
+  if (!confirm('Elimina tutte le schede create qui. Il sito torna a mostrare quelle scritte nella pagina. Procedo?')) return;
+  ALMACEN.vaciar().then(function () { pintarLista(); avisar('Schede eliminate.'); });
+});
+
+/* --- editor --------------------------------------------------------------- */
+function filaHorario(que, cuando) {
+  var fila = document.createElement('div');
+  fila.className = 'horario';
+  var a = document.createElement('input'); a.type = 'text'; a.placeholder = 'Incontro'; a.value = que || '';
+  var b = document.createElement('input'); b.type = 'text'; b.placeholder = 'Domenica 10:30'; b.value = cuando || '';
+  var x = document.createElement('button');
+  x.type = 'button'; x.className = 'quitar'; x.textContent = '×';
+  x.setAttribute('aria-label', 'Togli questo orario');
+  x.addEventListener('click', function () { fila.remove(); });
+  fila.appendChild(a); fila.appendChild(b); fila.appendChild(x);
+  return fila;
+}
+$('#mas-horario').addEventListener('click', function () {
+  $('#horarios').appendChild(filaHorario('', ''));
+});
+
+/* El contador no corta: avisa. Cortar a mitad de palabra sin decir nada es la
+   clase de cosa que acaba publicada. El maxlength del campo es el tope duro;
+   esto es el aviso de que te estas pasando de lo que lee Google. */
+(function () {
+  var t = $('#testo'), c = $('#cuenta');
+  function pintar() {
+    var n = t.value.length;
+    c.textContent = n + ' / 240';
+    c.style.color = n > 180 ? 'var(--ambar, #f0c040)' : 'var(--stone)';
+  }
+  t.addEventListener('input', pintar);
+  window.__contarTexto = pintar;
+  pintar();
+})();
+
+function ponerMapa(dataUrl) {
+  var p = $('#previa');
+  var viejo = p.querySelector('img');
+  if (viejo) viejo.remove();
+  if (dataUrl) {
+    $('#hueco-previa').style.display = 'none';
+    var im = document.createElement('img');
+    im.src = dataUrl; im.alt = 'Anteprima della mappa';
+    p.insertBefore(im, p.firstChild);
+  } else {
+    $('#hueco-previa').style.display = 'grid';
+  }
+}
+
+function abrirEditor(sede) {
+  editando = sede || { id: 'sede-' + Date.now().toString(36), orden: Date.now() };
+  $('#titulo-hoja').textContent = sede ? ('Chiesa: ' + sede.citta) : 'Nuova sede';
+  $('#citta').value = editando.citta || '';
+  $('#via').value   = editando.via || '';
+  $('#cap').value   = editando.cap || '';
+  $('#lat').value   = editando.lat != null ? editando.lat : '';
+  $('#lon').value   = editando.lon != null ? editando.lon : '';
+  $('#web').value = editando.web || '';
+  $('#testo').value = editando.testo || '';
+  $('#lingue').value = editando.lingue || '';
+  $('#logo').value = editando.logo || '';
+  $('#publicada').checked = editando.publicada !== false;
+  if (window.__contarTexto) window.__contarTexto();
+  $('#apple').value = editando.apple || '';
+  $('#pegar').value = '';
+  $('#err-sede').textContent = '';
+  $('#barra-mapa').style.width = '0';
+  ponerMapa(editando.mapa || '');
+  var h = $('#horarios'); h.textContent = '';
+  (editando.orari && editando.orari.length ? editando.orari : [['', '']])
+    .forEach(function (o) { h.appendChild(filaHorario(o[0], o[1])); });
+  $('#borrar').style.display = sede ? '' : 'none';
+  $('#editor').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  $('#citta').focus();
+}
+function cerrarEditor() {
+  $('#editor').style.display = 'none';
+  document.body.style.overflow = '';
+  editando = null;
+}
+$('#nueva').addEventListener('click', function () { abrirEditor(null); });
+$('#cancelar').addEventListener('click', cerrarEditor);
+$('#editor').addEventListener('click', function (e) { if (e.target === $('#editor')) cerrarEditor(); });
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && $('#editor').style.display === 'block') cerrarEditor();
+});
+
+/* Las coordenadas de un enlace pegado. Apple las pone en `coordinate=`,
+   Google en `@lat,lon,` o en `query=`/`destination=`. Se prueban las tres
+   formas en vez de pedirle a nadie que busque dos numeros dentro de una URL
+   de doscientos caracteres. */
+$('#pegar').addEventListener('input', function () {
+  var t = $('#pegar').value;
+  var m = t.match(/coordinate=(-?\d+\.\d+),\s*(-?\d+\.\d+)/)
+       || t.match(/[@](-?\d+\.\d+),(-?\d+\.\d+)/)
+       || t.match(/(?:query|destination|ll|sll)=(-?\d+\.\d+)(?:,|%2C)(-?\d+\.\d+)/);
+  if (m) {
+    $('#lat').value = m[1];
+    $('#lon').value = m[2];
+    avisar('Coordinate prese dal link.');
+  }
+  /* Apple mete tambien la direccion en el enlace. Si los campos estan
+     vacios, se aprovecha. */
+  var d = t.match(/address=([^&]+)/);
+  if (d && !$('#via').value) {
+    try {
+      var txt = decodeURIComponent(d[1].replace(/\+/g, ' '));
+      var partes = txt.split(',').map(function (x) { return x.trim(); });
+      if (partes[0]) $('#via').value = partes[0];
+      if (partes[1]) $('#cap').value = partes.slice(1).join(', ').replace(/, Italia$/, '');
+    } catch (e) {}
+  }
+  var pid = t.match(/place-id=([A-Za-z0-9_-]+)/);
+  if (pid) $('#apple').value = pid[1];
+
+  var n = t.match(/[?&]name=([^&]+)/);
+  if (n && !$('#citta').value) {
+    try {
+      /* El nombre que traen las mapas es el de la ficha entera —"Gruppo
+         Cristiano Reggio Emilia"— y en la tarjeta el titulo es solo la
+         ciudad. Se le quita el nombre del grupo por delante. */
+      var nom = decodeURIComponent(n[1].replace(/\+/g, ' ')).trim();
+      $('#citta').value = nom.replace(/^gruppo\s+cristiano\s*/i, '').trim() || nom;
+    } catch (e) {}
+  }
+});
+
+$('#generar').addEventListener('click', function () {
+  var lat = parseFloat($('#lat').value), lon = parseFloat($('#lon').value);
+  if (!isFinite(lat) || !isFinite(lon)) {
+    $('#err-sede').textContent = 'Prima servono le coordinate.';
+    return;
+  }
+  $('#err-sede').textContent = '';
+  var b = $('#generar');
+  b.disabled = true; b.textContent = 'Sto scaricando la mappa…';
+  MAPA.generar(lat, lon, function (hechas, total) {
+    $('#barra-mapa').style.width = (hechas / total * 100) + '%';
+  }).then(function (url) {
+    editando.mapa = url;
+    ponerMapa(url);
+    avisar('Mappa pronta.');
+  }).catch(function (err) {
+    $('#err-sede').textContent = 'Non sono riuscito a scaricare la mappa: ' + err.message;
+  }).then(function () {
+    b.disabled = false; b.textContent = 'Genera la mappa';
+    $('#barra-mapa').style.width = '0';
+  });
+});
+
+$('#f-sede').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var citta = $('#citta').value.trim();
+  if (!citta) { $('#err-sede').textContent = 'La città serve: è il titolo della scheda.'; return; }
+
+  var orari = [];
+  $('#horarios').querySelectorAll('.horario').forEach(function (f) {
+    var i = f.querySelectorAll('input');
+    var a = i[0].value.trim(), b = i[1].value.trim();
+    if (a && b) orari.push([a, b]);
+  });
+
+  var lat = parseFloat($('#lat').value), lon = parseFloat($('#lon').value);
+  var sede = {
+    id: editando.id,
+    orden: editando.orden || Date.now(),
+    citta: citta,
+    via: $('#via').value.trim(),
+    cap: $('#cap').value.trim(),
+    lat: isFinite(lat) ? lat : null,
+    lon: isFinite(lon) ? lon : null,
+    orari: orari,
+    web: $('#web').value.trim(),
+    testo: $('#testo').value.trim(),
+    lingue: $('#lingue').value.trim(),
+    logo: $('#logo').value.trim(),
+    publicada: $('#publicada').checked,
+    apple: $('#apple').value.trim(),
+    mapa: editando.mapa || ''
+  };
+  ALMACEN.guardar(sede).then(function () {
+    cerrarEditor(); pintarLista(); avisar('Scheda salvata.');
+  }).catch(function (err) {
+    $('#err-sede').textContent = 'Non sono riuscito a salvare: ' + err.message;
+  });
+});
+
+$('#borrar').addEventListener('click', function () {
+  if (!editando || !editando.id) return;
+  if (!confirm('Elimino la scheda di ' + (editando.citta || 'questa sede') + '?')) return;
+  ALMACEN.borrar(editando.id).then(function () {
+    cerrarEditor(); pintarLista(); avisar('Scheda eliminata.');
+  });
+});
+</script>
+</body>
+</html>
