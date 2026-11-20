@@ -151,9 +151,16 @@ Los dos papeles que ellos mismos dibujaron en su mapa conceptual:
 | Dar y quitar accesos | sí | no |
 | Ver todas | sí | sí |
 
+**Galerías.** Cada iglesia tiene la suya (botón «Galleria» en su ficha del
+panel) y el grupo la suya (sección «Il sito del gruppo», solo el general):
+hasta **12 fotos**, cada una con un texto debajo de hasta 200 caracteres. En la
+web salen en rejilla en el ordenador y en una tira que se pasa con el dedo en
+el móvil; al tocar una se abre grande. Mientras una galería está vacía, su
+sección no se ve. Mismas reglas que todo: cada uno en la suya.
+
 **Las fotos tienen tope.** Cada iglesia usa dos (portada y logo), achicadas en
 el móvil: ~0,5 MB por iglesia. El panel borra solas las viejas al cambiarlas, y
-la base de datos no deja pasar de **6 archivos por carpeta** aunque alguien se
+la base de datos no deja pasar de **20 archivos por carpeta** (portada, logo y las 12 de la galería, con margen) aunque alguien se
 salte el panel. Con 1 GB del plan gratuito sobra para cientos de iglesias.
 
 **Cada uno en lo suyo.** En cuanto una iglesia tiene un responsable con el

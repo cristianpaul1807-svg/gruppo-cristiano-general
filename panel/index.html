@@ -202,6 +202,20 @@ a.btn{text-decoration:none;}
 .subida-acc{display:flex;gap:8px;flex-wrap:wrap;}
 .subida-acc label.btn{cursor:pointer;}
 
+/* --- galeria ---------------------------------------------------------------- */
+.gal-lista{display:grid;gap:12px;margin:6px 0 18px;}
+.gal-item{display:grid;grid-template-columns:132px 1fr;gap:14px;align-items:start;padding:12px;
+  border:1px solid var(--line);border-radius:6px;background:var(--ink-3);}
+.gal-item img{width:132px;aspect-ratio:4/3;object-fit:cover;border-radius:4px;display:block;}
+.gal-item textarea{width:100%;min-height:74px;resize:vertical;padding:9px 11px;background:var(--ink-2);
+  color:var(--bone);border:1px solid var(--line-strong);border-radius:4px;font:400 14px/1.5 'Inter',sans-serif;}
+.gal-item .gal-acc{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center;}
+.gal-item .gal-acc span{font-size:11.5px;color:var(--stone);margin-left:auto;}
+@media (max-width:520px){ .gal-item{grid-template-columns:92px 1fr;gap:10px;padding:10px;} .gal-item img{width:92px;} }
+.gal-vacia{padding:22px;text-align:center;color:var(--stone);font-size:14px;border:1px dashed var(--line-strong);border-radius:6px;}
+#galeria-capa .hoja{max-width:760px;}
+#galeria-capa label.btn{cursor:pointer;}
+
 /* --- capas ----------------------------------------------------------------- */
 .capa{display:none;position:fixed;inset:0;z-index:45;background:rgba(5,7,10,0.72);
   overflow-y:auto;padding:clamp(14px,6vh,70px) 14px;}
@@ -311,6 +325,14 @@ a.btn{text-decoration:none;}
         <div class="pie-hoja">
           <button class="btn piena" type="button" id="sito-salva" disabled>Salva la foto</button>
         </div>
+      </div>
+
+      <div class="hoja" style="max-width:none;margin:16px 0 0;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <b style="font-weight:500">Galleria del gruppo</b>
+          <p class="pista" style="margin:4px 0 0">Le foto con il testo sotto che escono nella pagina principale.</p>
+        </div>
+        <button class="btn piena" type="button" id="sito-galeria">Apri la galleria</button>
       </div>
 
       <form class="hoja" id="f-sito-wa" style="max-width:none;margin:16px 0 0" novalidate>
@@ -459,6 +481,30 @@ a.btn{text-decoration:none;}
 <!-- ============================================================================
      EDITOR
      ============================================================================ -->
+<!-- ============================================================================
+     GALERIA — la de una iglesia o la del grupo. Fotos con su texto debajo.
+     ============================================================================ -->
+<div class="capa" id="galeria-capa">
+  <div class="hoja">
+    <h2 id="gal-titulo">Galleria</h2>
+    <p>Fino a 12 foto, ognuna con un testo breve sotto (al massimo 200 caratteri).
+      Sul sito escono in quest'ordine. Le foto si rimpiccioliscono da sole sul telefono
+      prima di caricarle.</p>
+    <div id="gal-lista" class="gal-lista"></div>
+    <div class="subida-acc" style="align-items:center">
+      <label class="btn piena" id="gal-add">+ Aggiungi foto
+        <input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden>
+      </label>
+      <span class="pista" id="gal-cuenta" style="margin:0"></span>
+    </div>
+    <p class="error" id="err-gal" role="alert"></p>
+    <div class="pie-hoja">
+      <button class="btn" type="button" id="gal-cerrar">Chiudi</button>
+      <button class="btn piena" type="button" id="gal-salva" disabled>Salva i testi</button>
+    </div>
+  </div>
+</div>
+
 <div id="editor">
   <form class="hoja" id="f-sede" novalidate>
     <h2 id="titulo-hoja">Nuova chiesa</h2>
@@ -949,6 +995,10 @@ function pintarLista() {
         ed.className = 'btn mini'; ed.type = 'button'; ed.textContent = 'Modifica';
         ed.addEventListener('click', function () { abrirEditor(s); });
         acc.appendChild(ed);
+        var ga = document.createElement('button');
+        ga.className = 'btn mini'; ga.type = 'button'; ga.textContent = 'Galleria';
+        ga.addEventListener('click', function () { abrirGaleria(s.id, s.citta); });
+        acc.appendChild(ga);
       }
       c.appendChild(acc);
 
@@ -1258,6 +1308,145 @@ $('#f-sito-wa').addEventListener('submit', function (e) {
     err.textContent = 'Non sono riuscito a salvarlo: ' + x.message;
   }).then(function () { b.disabled = false; });
 });
+
+/* --- la galeria ------------------------------------------------------------
+   Subir es inmediato (cada foto se achica, se sube y se apunta). Los textos se
+   escriben con calma y se guardan con «Salva i testi». Subir, bajar y quitar
+   tambien son inmediatos. Las reglas de la base deciden quien puede: el
+   responsable en la suya, el general en la del grupo y en las que no tienen
+   responsable. */
+var GAL = { cartella: null, fotos: [], cambios: {} };
+var GAL_TOPE = 12;
+
+function abrirGaleria(cartella, nombre) {
+  GAL = { cartella: cartella, fotos: [], cambios: {} };
+  $('#gal-titulo').textContent = cartella === 'generale' ? 'Galleria del gruppo' : 'Galleria · ' + nombre;
+  $('#err-gal').textContent = '';
+  $('#gal-salva').disabled = true;
+  $('#gal-lista').textContent = 'Un attimo…';
+  $('#galeria-capa').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  cargarGaleria(true);
+}
+function cargarGaleria(limpiar) {
+  return ALMACEN.leerFotos(GAL.cartella).then(function (f) {
+    GAL.fotos = f || [];
+    pintarGaleria();
+    /* restos de subidas cortadas: fuera, sin esperar */
+    if (limpiar) ALMACEN.limpiarGaleria(GAL.cartella, GAL.fotos);
+  });
+}
+function cerrarGaleria() {
+  if (Object.keys(GAL.cambios).length && !confirm('Hai testi non salvati. Chiudo lo stesso?')) return;
+  $('#galeria-capa').style.display = 'none';
+  document.body.style.overflow = '';
+}
+function pintarGaleria() {
+  var cont = $('#gal-lista');
+  cont.textContent = '';
+  var n = GAL.fotos.length;
+  $('#gal-cuenta').textContent = n + ' di ' + GAL_TOPE + (n >= GAL_TOPE ? ' — galleria piena: togline una per aggiungerne altre' : '');
+  $('#gal-add').style.display = n >= GAL_TOPE ? 'none' : '';
+  if (!n) {
+    var v = document.createElement('div'); v.className = 'gal-vacia';
+    v.textContent = 'Ancora nessuna foto. Finché la galleria è vuota, sul sito non si vede.';
+    cont.appendChild(v);
+    return;
+  }
+  GAL.fotos.forEach(function (f, i) {
+    var it = document.createElement('div'); it.className = 'gal-item';
+    var img = document.createElement('img'); img.src = f.url; img.alt = ''; img.loading = 'lazy';
+    var der = document.createElement('div');
+    var ta = document.createElement('textarea');
+    ta.maxLength = 200; ta.placeholder = 'Il testo sotto la foto (facoltativo)';
+    ta.value = GAL.cambios[f.id] !== undefined ? GAL.cambios[f.id] : (f.testo || '');
+    var cuenta = document.createElement('span');
+    function contar() { cuenta.textContent = ta.value.length + '/200'; }
+    ta.addEventListener('input', function () {
+      if (ta.value === (f.testo || '')) delete GAL.cambios[f.id]; else GAL.cambios[f.id] = ta.value;
+      $('#gal-salva').disabled = !Object.keys(GAL.cambios).length;
+      contar();
+    });
+    var acc = document.createElement('div'); acc.className = 'gal-acc';
+    function boton(txt, clase, fn, off) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'btn mini' + (clase ? ' ' + clase : '');
+      b.textContent = txt; b.disabled = !!off; b.addEventListener('click', fn); acc.appendChild(b);
+    }
+    boton('↑', '', function () { mover(i, -1); }, i === 0);
+    boton('↓', '', function () { mover(i, 1); }, i === n - 1);
+    boton('Togli', 'peligro', function () { quitar(f); });
+    acc.appendChild(cuenta); contar();
+    der.appendChild(ta); der.appendChild(acc);
+    it.appendChild(img); it.appendChild(der);
+    cont.appendChild(it);
+  });
+}
+function mover(i, d) {
+  var a = GAL.fotos[i], b = GAL.fotos[i + d];
+  if (!a || !b) return;
+  var oa = a.orden, ob = b.orden;
+  if (oa === ob) ob = oa + d;
+  Promise.all([ALMACEN.cambiaFoto(a.id, { orden: ob }), ALMACEN.cambiaFoto(b.id, { orden: oa })])
+    .then(function () { return cargarGaleria(false); })
+    .catch(function (e) { $('#err-gal').textContent = 'Non sono riuscito a spostarla: ' + e.message; });
+}
+function quitar(f) {
+  if (!confirm('Tolgo questa foto dalla galleria?')) return;
+  ALMACEN.togliFoto(f).then(function () {
+    delete GAL.cambios[f.id];
+    avisar('Foto tolta.');
+    return cargarGaleria(false);
+  }).catch(function (e) { $('#err-gal').textContent = 'Non sono riuscito a toglierla: ' + e.message; });
+}
+$('#gal-add input').addEventListener('change', function () {
+  var input = this, files = Array.prototype.slice.call(input.files || []);
+  input.value = '';
+  if (!files.length) return;
+  var libres = GAL_TOPE - GAL.fotos.length;
+  var err = $('#err-gal'); err.textContent = '';
+  if (files.length > libres) {
+    err.textContent = 'Ne entrano ancora ' + libres + ': carico le prime ' + libres + '.';
+    files = files.slice(0, libres);
+  }
+  var hechas = 0, lbl = $('#gal-add');
+  lbl.style.pointerEvents = 'none'; lbl.style.opacity = '.6';
+  files.reduce(function (cadena, file) {
+    return cadena.then(function () {
+      $('#gal-cuenta').textContent = 'Carico ' + (hechas + 1) + ' di ' + files.length + '…';
+      return achicar(file, 1600, 'copertina').then(function (blob) {
+        return ALMACEN.aggiungiFoto(GAL.cartella, blob, '');
+      }).then(function (fila) { if (fila) GAL.fotos.push(fila); hechas++; pintarGaleria(); });
+    });
+  }, Promise.resolve()).then(function () {
+    avisar(hechas === 1 ? 'Foto aggiunta. Scrivi il suo testo e salva.' : hechas + ' foto aggiunte. Scrivi i testi e salva.');
+  }).catch(function (e) {
+    err.textContent = /row-level security|403|Unauthorized/i.test(e.message || '')
+      ? 'Il magazzino non ha accettato la foto: o la galleria è piena (12), o non è la tua.'
+      : 'Non sono riuscito a caricarla: ' + e.message;
+  }).then(function () {
+    lbl.style.pointerEvents = ''; lbl.style.opacity = '';
+    pintarGaleria();
+  });
+});
+$('#gal-salva').addEventListener('click', function () {
+  var b = this, ids = Object.keys(GAL.cambios);
+  b.disabled = true;
+  Promise.all(ids.map(function (id) { return ALMACEN.cambiaFoto(id, { testo: GAL.cambios[id] }); }))
+    .then(function () {
+      GAL.cambios = {};
+      avisar('Testi salvati.');
+      return cargarGaleria(false);
+    }).catch(function (e) {
+      $('#err-gal').textContent = 'Non sono riuscito a salvarli: ' + e.message;
+      b.disabled = false;
+    });
+});
+$('#gal-cerrar').addEventListener('click', cerrarGaleria);
+$('#galeria-capa').addEventListener('click', function (e) { if (e.target === this) cerrarGaleria(); });
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && $('#galeria-capa').style.display === 'block') cerrarGaleria();
+});
+$('#sito-galeria').addEventListener('click', function () { abrirGaleria('generale', ''); });
 
 /* --- la direccion de una iglesia nueva --------------------------------------
    "Massa-Carrara" -> "massa-carrara". Sin acentos —"Forlì" -> "forli"—,

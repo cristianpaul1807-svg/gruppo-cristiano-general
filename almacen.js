@@ -158,6 +158,14 @@ var ALMACEN = (function () {
       : '+' + d;
   }
 
+  /* Las galerias en modo demo (sin base): en el navegador, como lo demas. */
+  function fotosDemo(nuevas) {
+    try {
+      if (nuevas) { localStorage.setItem('gcf_foto', JSON.stringify(nuevas)); return nuevas; }
+      return JSON.parse(localStorage.getItem('gcf_foto') || '[]') || [];
+    } catch (e) { return []; }
+  }
+
   /* De lo que se guarda en `sito`, solo los campos conocidos que vengan. */
   function soloLoDado(d) {
     var o = {};
@@ -455,8 +463,99 @@ var ALMACEN = (function () {
         method: 'POST', headers: h,
         body: JSON.stringify({ prefix: carpeta + '/', limit: 100 })
       }).then(function (r) { return r.ok ? r.json() : []; }).then(function (lista) {
-        var sobran = (lista || []).map(function (o) { return carpeta + '/' + o.name; })
+        /* Solo los archivos sueltos de la carpeta: la subcarpeta galleria/ sale
+           en la lista como una entrada sin id, y se deja en paz (la galeria
+           se limpia aparte, con limpiarGaleria). */
+        var sobran = (lista || []).filter(function (o) { return o && o.id && o.name.indexOf('/') < 0; })
+          .map(function (o) { return carpeta + '/' + o.name; })
           .filter(function (n) { return usados.indexOf(n) < 0 && !/\/\.emptyFolderPlaceholder$/.test(n); });
+        if (!sobran.length) return 0;
+        return fetch(SUPABASE.url + '/storage/v1/object/media', {
+          method: 'DELETE', headers: h, body: JSON.stringify({ prefixes: sobran })
+        }).then(function () { return sobran.length; });
+      }).catch(function () { return 0; });
+    },
+
+    /* ======================================================================
+       LAS GALERIAS — fotos con su texto. Una por iglesia y la del grupo
+       ('generale'). Las reglas de la base deciden quien toca cual.
+       ====================================================================== */
+    leerFotos: function (cartella) {
+      if (conBase) {
+        return rest('foto?select=id,cartella,url,testo,orden&cartella=eq.' + encodeURIComponent(cartella)
+          + '&order=orden.asc,creada.asc', {}, false).catch(function () { return []; })
+          .then(function (f) { return f || []; });
+      }
+      return Promise.resolve(fotosDemo().filter(function (f) { return f.cartella === cartella; })
+        .sort(function (a, b) { return a.orden - b.orden; }));
+    },
+
+    /* Sube la foto (ya achicada) a <cartella>/galleria/ y la apunta. */
+    aggiungiFoto: function (cartella, blob, testo) {
+      var self = this;
+      return self.subirImagen(cartella, 'galleria/foto', blob).then(function (url) {
+        var fila = { cartella: cartella, url: url, testo: String(testo || '').slice(0, 200), orden: Date.now() };
+        if (!conBase) {
+          fila.id = 'f' + Date.now() + Math.random().toString(36).slice(2, 6);
+          var todas = fotosDemo(); todas.push(fila); fotosDemo(todas);
+          return fila;
+        }
+        return rest('foto', {
+          method: 'POST', headers: { 'Prefer': 'return=representation' }, body: JSON.stringify(fila)
+        }, true).then(function (f) { return f && f[0]; }, function (e) {
+          /* Si la base no la acepta (el tope de 12, por ejemplo), el archivo
+             no se queda huerfano en el almacen. */
+          return self.borrarImagen(url).then(function () { throw e; });
+        });
+      });
+    },
+
+    /* Cambia el texto o el orden. Devuelve error si las reglas no dejan. */
+    cambiaFoto: function (id, datos) {
+      var d = {};
+      if (datos.testo !== undefined) d.testo = String(datos.testo || '').slice(0, 200);
+      if (datos.orden !== undefined) d.orden = datos.orden;
+      if (!conBase) {
+        var todas = fotosDemo();
+        todas.forEach(function (f) { if (f.id === id) Object.assign(f, d); });
+        fotosDemo(todas);
+        return Promise.resolve();
+      }
+      return rest('foto?id=eq.' + encodeURIComponent(id), {
+        method: 'PATCH', headers: { 'Prefer': 'return=representation' }, body: JSON.stringify(d)
+      }, true).then(function (f) { if (!f || !f.length) throw new Error('non è una foto tua'); });
+    },
+
+    togliFoto: function (foto) {
+      var self = this;
+      if (!conBase) {
+        fotosDemo(fotosDemo().filter(function (f) { return f.id !== foto.id; }));
+        return Promise.resolve();
+      }
+      return rest('foto?id=eq.' + encodeURIComponent(foto.id), {
+        method: 'DELETE', headers: { 'Prefer': 'return=representation' }
+      }, true).then(function (f) {
+        if (!f || !f.length) throw new Error('non è una foto tua');
+        return self.borrarImagen(foto.url);
+      });
+    },
+
+    /* Borra de <cartella>/galleria/ los archivos que ya no estan en la galeria
+       (restos de una subida cortada). Se llama al abrir la galeria en el panel. */
+    limpiarGaleria: function (cartella, fotos) {
+      if (!conBase) return Promise.resolve(0);
+      var s = sesion();
+      if (!viva(s)) return Promise.resolve(0);
+      var h = { 'apikey': SUPABASE.key, 'Authorization': 'Bearer ' + s.access_token, 'Content-Type': 'application/json' };
+      var pre = SUPABASE.url + '/storage/v1/object/public/media/';
+      var usados = (fotos || []).map(function (f) { return decodeURIComponent(String(f.url).slice(pre.length)); });
+      var dir = cartella + '/galleria/';
+      return fetch(SUPABASE.url + '/storage/v1/object/list/media', {
+        method: 'POST', headers: h, body: JSON.stringify({ prefix: dir, limit: 100 })
+      }).then(function (r) { return r.ok ? r.json() : []; }).then(function (lista) {
+        var sobran = (lista || []).filter(function (o) { return o && o.id && o.name.indexOf('/') < 0; })
+          .map(function (o) { return dir + o.name; })
+          .filter(function (n) { return usados.indexOf(n) < 0; });
         if (!sobran.length) return 0;
         return fetch(SUPABASE.url + '/storage/v1/object/media', {
           method: 'DELETE', headers: h, body: JSON.stringify({ prefixes: sobran })

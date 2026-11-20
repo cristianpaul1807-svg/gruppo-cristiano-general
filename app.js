@@ -681,6 +681,101 @@ function MAPA_DE(sede) {
 })();
 
 /* ============================================================================
+   LA GALERIA — la del grupo en la portada, la de cada iglesia en su pagina.
+   Las fotos y su texto vienen de la base de datos; si no hay ninguna, la
+   seccion sigue escondida. Todo se pinta con nodos de texto: el texto de una
+   foto lo escribe un responsable y nunca se mete como HTML.
+   ============================================================================ */
+(function () {
+  var sec = document.getElementById('galleria');
+  var cont = document.getElementById('galleria-lista');
+  if (!sec || !cont || !window.ALMACEN || !ALMACEN.leerFotos) return;
+  var cartella = document.body.getAttribute('data-sede') || 'generale';
+  var fotos = [];
+
+  /* --- el visor ------------------------------------------------------------ */
+  var visor = null, actual = 0, xIni = null;
+  function crearVisor() {
+    visor = document.createElement('div');
+    visor.className = 'visor'; visor.setAttribute('role', 'dialog'); visor.setAttribute('aria-modal', 'true');
+    var top = document.createElement('div'); top.className = 'visor-top';
+    var cuenta = document.createElement('span'); cuenta.className = 'visor-cuenta';
+    var x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.setAttribute('aria-label', 'Chiudi');
+    top.appendChild(cuenta); top.appendChild(x);
+    var centro = document.createElement('div'); centro.className = 'visor-centro';
+    var img = document.createElement('img'); img.alt = '';
+    var ant = document.createElement('button'); ant.type = 'button'; ant.className = 'ant'; ant.textContent = '‹'; ant.setAttribute('aria-label', 'Precedente');
+    var sig = document.createElement('button'); sig.type = 'button'; sig.className = 'sig'; sig.textContent = '›'; sig.setAttribute('aria-label', 'Successiva');
+    centro.appendChild(img); centro.appendChild(ant); centro.appendChild(sig);
+    var pie = document.createElement('p'); pie.className = 'visor-pie';
+    visor.appendChild(top); visor.appendChild(centro); visor.appendChild(pie);
+    document.body.appendChild(visor);
+    x.addEventListener('click', cerrar);
+    ant.addEventListener('click', function () { ir(-1); });
+    sig.addEventListener('click', function () { ir(1); });
+    visor.addEventListener('click', function (e) { if (e.target === visor || e.target === centro) cerrar(); });
+    /* pasar con el dedo */
+    centro.addEventListener('touchstart', function (e) { xIni = e.touches[0].clientX; }, { passive: true });
+    centro.addEventListener('touchend', function (e) {
+      if (xIni === null) return;
+      var dx = e.changedTouches[0].clientX - xIni; xIni = null;
+      if (Math.abs(dx) > 50) ir(dx < 0 ? 1 : -1);
+    });
+    document.addEventListener('keydown', function (e) {
+      if (!visor.classList.contains('abierto')) return;
+      if (e.key === 'Escape') cerrar();
+      if (e.key === 'ArrowLeft') ir(-1);
+      if (e.key === 'ArrowRight') ir(1);
+    });
+  }
+  function pintarVisor() {
+    var f = fotos[actual];
+    visor.querySelector('img').src = f.src;
+    visor.querySelector('img').alt = f.testo || '';
+    visor.querySelector('.visor-pie').textContent = f.testo || '';
+    visor.querySelector('.visor-cuenta').textContent = (actual + 1) + ' / ' + fotos.length;
+    var una = fotos.length < 2;
+    visor.querySelector('.ant').hidden = una; visor.querySelector('.sig').hidden = una;
+  }
+  function abrir(i) {
+    if (!visor) crearVisor();
+    actual = i; pintarVisor();
+    visor.classList.add('abierto');
+    document.body.style.overflow = 'hidden';
+    visor.querySelector('.visor-top button').focus();
+  }
+  function cerrar() {
+    visor.classList.remove('abierto');
+    document.body.style.overflow = '';
+  }
+  function ir(d) { actual = (actual + d + fotos.length) % fotos.length; pintarVisor(); }
+
+  /* --- la rejilla ---------------------------------------------------------- */
+  ALMACEN.leerFotos(cartella).then(function (lista) {
+    fotos = (lista || []).map(function (f) { return { src: IMAGEN(f.url), testo: f.testo || '' }; })
+      .filter(function (f) { return f.src; });
+    cont.textContent = '';
+    if (!fotos.length) { sec.hidden = true; return; }
+    fotos.forEach(function (f, i) {
+      var fig = document.createElement('figure');
+      var b = document.createElement('button'); b.type = 'button';
+      b.setAttribute('aria-label', f.testo || ('Foto ' + (i + 1)));
+      var img = document.createElement('img');
+      img.src = f.src; img.alt = f.testo || ''; img.loading = 'lazy'; img.decoding = 'async';
+      b.appendChild(img);
+      b.addEventListener('click', function () { abrir(i); });
+      fig.appendChild(b);
+      if (f.testo) {
+        var cap = document.createElement('figcaption'); cap.textContent = f.testo;
+        fig.appendChild(cap);
+      }
+      cont.appendChild(fig);
+    });
+    sec.hidden = false;
+  });
+})();
+
+/* ============================================================================
    LOS PUNTOS DE FE
    ============================================================================ */
 (function () {
@@ -771,7 +866,7 @@ var I18N = {
     sp_email: "Escribir un email",
     sp_altre_h: "Las demás iglesias del grupo",
     sp_altre_p: "El mismo grupo, la misma fe, otra ciudad.",
-    sp_chi_h: "Quiénes somos",
+    sp_chi_h: "Quiénes somos", gal_eyebrow: "Galería", gal_h2: "La vida del grupo.", sp_gal_h2: "La vida de la comunidad.",
     sp_chi_p: "Esta iglesia forma parte del Gruppo Cristiano Latino Americano. La visión, los puntos de fe y la historia son los del grupo entero.",
     sp_chi_btn: "La visión del grupo",
     sp_nf_h: "Esta iglesia no está",

@@ -382,11 +382,11 @@ create policy "media: ver"
   on storage.objects for select to authenticated
   using (bucket_id = 'media');
 
--- EL TOPE: 6 archivos por carpeta. Una iglesia usa dos (portada y logo) y
--- el panel borra solo las viejas; el margen es para cambiar las dos a la vez
--- y para algun resto si se corta la red. Con 3 MB por archivo como mucho, una
--- iglesia no pasa de 18 MB aunque alguien se salte el panel; en la practica,
--- con las fotos achicadas, son unos 0,5 MB por iglesia.
+-- EL TOPE: 20 archivos por carpeta. Una iglesia usa como mucho 14: portada,
+-- logo y las 12 fotos de su galeria. El panel borra solas las viejas; el
+-- margen es para cambiar fotos y para algun resto si se corta la red. Con
+-- 3 MB por archivo como mucho, una iglesia no pasa de 60 MB aunque alguien se
+-- salte el panel; en la practica, con las fotos achicadas, unos 3 MB.
 create or replace function public.fotos_en_cartella(c text)
 returns integer language sql stable security definer set search_path = ''
 as $$
@@ -402,7 +402,7 @@ create policy "media: subir lo suyo"
   on storage.objects for insert to authenticated
   with check (bucket_id = 'media'
     and public.puo_cartella((storage.foldername(name))[1])
-    and public.fotos_en_cartella((storage.foldername(name))[1]) < 6);
+    and public.fotos_en_cartella((storage.foldername(name))[1]) < 20);
 
 create policy "media: cambiar lo suyo"
   on storage.objects for update to authenticated
@@ -412,6 +412,66 @@ create policy "media: cambiar lo suyo"
 create policy "media: borrar lo suyo"
   on storage.objects for delete to authenticated
   using (bucket_id = 'media' and public.puo_cartella((storage.foldername(name))[1]));
+
+-- ----------------------------------------------------------------------------
+-- LAS GALERIAS — fotos con su texto debajo
+--
+-- Una galeria por iglesia (cartella = su id) y una de la web del grupo
+-- (cartella = 'generale'). Las mismas reglas que todo lo demas: cada uno en
+-- la suya (puo_cartella), y la del grupo solo el general. Tope: 12 fotos por
+-- galeria. El archivo vive en el almacen, en <cartella>/galleria/, y aqui se
+-- guarda su direccion, el texto y el orden.
+-- ----------------------------------------------------------------------------
+create table if not exists public.foto (
+  id       uuid primary key default gen_random_uuid(),
+  cartella text        not null,
+  url      text        not null,
+  testo    text        not null default '' check (char_length(testo) <= 200),
+  orden    bigint      not null default 0,
+  creada   timestamptz not null default now()
+);
+create index if not exists foto_cartella_idx on public.foto (cartella, orden);
+
+comment on table public.foto is
+  'Las galerias: una por iglesia y una del grupo (cartella = generale). Tope 12 por galeria.';
+
+create or replace function public.foto_in_galleria(c text)
+returns integer language sql stable security definer set search_path = ''
+as $$ select count(*)::integer from public.foto where cartella = c; $$;
+
+alter table public.foto enable row level security;
+drop policy if exists "galeria: la ve cualquiera"  on public.foto;
+drop policy if exists "galeria: anadir a la suya"  on public.foto;
+drop policy if exists "galeria: cambiar la suya"   on public.foto;
+drop policy if exists "galeria: quitar de la suya" on public.foto;
+
+create policy "galeria: la ve cualquiera"
+  on public.foto for select to anon, authenticated
+  using (true);
+
+-- Solo fotos de SU carpeta del almacen: nadie puede colgar en su galeria una
+-- imagen de fuera ni una de la carpeta de otra iglesia.
+create policy "galeria: anadir a la suya"
+  on public.foto for insert to authenticated
+  with check (public.puo_cartella(cartella)
+    and public.foto_in_galleria(cartella) < 12
+    and url like 'https://ifmrqbnnvlmnrfbseonr.supabase.co/storage/v1/object/public/media/'
+                 || cartella || '/galleria/%');
+
+create policy "galeria: cambiar la suya"
+  on public.foto for update to authenticated
+  using      (public.puo_cartella(cartella))
+  with check (public.puo_cartella(cartella)
+    and url like 'https://ifmrqbnnvlmnrfbseonr.supabase.co/storage/v1/object/public/media/'
+                 || cartella || '/galleria/%');
+
+create policy "galeria: quitar de la suya"
+  on public.foto for delete to authenticated
+  using (public.puo_cartella(cartella));
+
+grant select                 on public.foto to anon, authenticated;
+grant insert, update, delete on public.foto to authenticated;
+grant execute on function public.foto_in_galleria(text) to authenticated;
 
 -- ----------------------------------------------------------------------------
 -- LA WEB DEL GRUPO — lo que sube el general
