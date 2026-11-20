@@ -141,9 +141,22 @@ window.__META = null;
 
         <p class="sp-testo" id="sp-testo" hidden></p>
 
-        <h2 data-i18n="sp_contatti">Parlare con questa chiesa</h2>
-        <p class="sp-p" data-i18n="sp_contatti_p">Scrivi su WhatsApp e ti rispondiamo. Se
-          preferisci venire senza avvisare, va bene uguale: non serve avvisare per entrare.</p>
+        <!-- Los pastores. Su mapa conceptual lo pide para cada comunidad
+             ("Responsabili e contatti"), y es lo que mas tranquiliza a quien
+             viene por primera vez: saber a quien va a ver. -->
+        <div id="sp-pastori-bloque" hidden>
+          <h2 data-i18n="sp_pastori">Pastori</h2>
+          <ul class="sp-pastori" id="sp-pastori"></ul>
+        </div>
+
+        <div id="sp-contatti-bloque" hidden>
+          <h2 data-i18n="sp_contatti">Parlare con questa chiesa</h2>
+          <p class="sp-p" data-i18n="sp_contatti_p">Scrivi su WhatsApp o chiama, e ti
+            rispondiamo. Se preferisci venire senza avvisare, va bene uguale: non serve
+            avvisare per entrare.</p>
+          <div class="acciones sp-contatti" id="sp-contatti"></div>
+          <div class="sp-social" id="sp-social"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -191,6 +204,13 @@ window.__META = null;
       <a href="https://www.youtube.com/@gruppocristiano" target="_blank" rel="noopener"
          aria-label="YouTube del Gruppo Cristiano">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12s0-3.3-.4-4.9a2.6 2.6 0 0 0-1.8-1.8C18.2 4.9 12 4.9 12 4.9s-6.2 0-7.8.4a2.6 2.6 0 0 0-1.8 1.8C2 8.7 2 12 2 12s0 3.3.4 4.9c.2.9.9 1.6 1.8 1.8 1.6.4 7.8.4 7.8.4s6.2 0 7.8-.4a2.6 2.6 0 0 0 1.8-1.8c.4-1.6.4-4.9.4-4.9zM10 15.2V8.8l5.2 3.2z"/></svg>
+      </a>
+      <!-- El canal de Spotify es de TODAS las iglesias, segun su documento. El
+           enlace llevaba detras un codigo de quien lo compartio por WhatsApp
+           (?si=...&utm_source=whatsapp...): se quita, es suyo, no del canal. -->
+      <a href="https://open.spotify.com/show/4XaPGtBPszdYUpb5d3tCdE" target="_blank" rel="noopener"
+         aria-label="Spotify del Gruppo Cristiano">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M7 9.6c3.4-1 7.2-.7 10.2 1"/><path d="M7.6 12.7c2.8-.8 5.8-.5 8.3.9"/><path d="M8.2 15.6c2.2-.6 4.4-.4 6.4.7"/></svg>
       </a>
     </div>
     <!-- Las ciudades las pone app.js desde las sedes publicadas: escrita a

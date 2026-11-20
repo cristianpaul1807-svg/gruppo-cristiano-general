@@ -49,6 +49,15 @@ create table if not exists public.sede (
 
 alter table public.sede add column if not exists whatsapp text not null default '';
 
+-- Lo que cada iglesia mando en su documento: sus pastores, su correo y sus
+-- redes. Van aqui y no en el codigo para que cada responsable los cambie
+-- desde el panel cuando cambien.
+--   pastori: [["Daniel Lana",""],["Samuele Lorenzini","pastore giovani"]]
+--   social:  {"instagram":"https://...","facebook":"https://...","youtube":"https://..."}
+alter table public.sede add column if not exists email   text  not null default '';
+alter table public.sede add column if not exists pastori jsonb not null default '[]'::jsonb;
+alter table public.sede add column if not exists social  jsonb not null default '{}'::jsonb;
+
 comment on table public.sede is
   'Las fichas de las iglesias del grupo. Las lee la web publica y las escribe el panel.';
 comment on column public.sede.publicada is

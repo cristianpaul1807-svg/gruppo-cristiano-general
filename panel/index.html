@@ -463,6 +463,30 @@ a.btn{text-decoration:none;}
       </div>
 
       <div class="campo">
+        <label for="email">Email di questa chiesa</label>
+        <input type="email" id="email" autocapitalize="none" spellcheck="false"
+          placeholder="gruppocristiano@gmail.com">
+      </div>
+
+      <div class="campo">
+        <label for="pastori">Pastori</label>
+        <textarea id="pastori" rows="3" placeholder="Daniel Lana&#10;Samuele Lorenzini (pastore giovani)"></textarea>
+        <p class="pista">Uno per riga. Se ha un ruolo, tra parentesi dopo il nome — come
+          «Samuele Lorenzini (pastore giovani)».</p>
+      </div>
+
+      <div class="campo">
+        <label>Social di questa chiesa</label>
+        <div class="rejilla" style="gap:8px">
+          <input type="url" id="soc-instagram" autocapitalize="none" spellcheck="false" placeholder="https://www.instagram.com/...">
+          <input type="url" id="soc-facebook" autocapitalize="none" spellcheck="false" placeholder="https://www.facebook.com/...">
+          <input type="url" id="soc-youtube" autocapitalize="none" spellcheck="false" placeholder="https://www.youtube.com/@...">
+        </div>
+        <p class="pista">Instagram, Facebook e YouTube, nell'ordine. Quelli vuoti non escono.
+          Il link intero, che comincia con https://.</p>
+      </div>
+
+      <div class="campo">
         <label for="logo">Logo di questa chiesa</label>
         <input type="text" id="logo" placeholder="media/logo-parma.png" autocapitalize="none">
         <p class="pista">Solo se questa chiesa ha un logo suo e vuole che si veda. Se è
@@ -842,6 +866,7 @@ function importar() {
       orari: (s.orari || []).map(function (o) { return [o[0], o[1]]; }),
       web: s.web || '', testo: s.testo || '', lingue: s.lingue || '',
       logo: s.logo || '', whatsapp: s.whatsapp || '', publicada: s.publicada !== false,
+      email: s.email || '', pastori: s.pastori || [], social: s.social || {},
       apple: s.apple || '',
       mapa: ''   // vacio a proposito: la ficha sigue usando el archivo de media/
     });
@@ -927,6 +952,12 @@ function abrirEditor(sede) {
   $('#lingue').value = editando.lingue || '';
   $('#logo').value = editando.logo || '';
   $('#whatsapp').value = editando.whatsapp || '';
+  $('#email').value = editando.email || '';
+  $('#pastori').value = pastoriATexto(editando.pastori);
+  var soc = editando.social || {};
+  $('#soc-instagram').value = soc.instagram || '';
+  $('#soc-facebook').value = soc.facebook || '';
+  $('#soc-youtube').value = soc.youtube || '';
   $('#publicada').checked = editando.publicada !== false;
   if (window.__contarTexto) window.__contarTexto();
   $('#apple').value = editando.apple || '';
@@ -956,6 +987,24 @@ function cerrarEditor() {
    Nunca se repite: si ya hay una "parma", la siguiente es "parma-2". Y no
    puede llamarse como una carpeta de la web: una iglesia llamada "panel"
    taparia el panel. */
+/* --- los pastores: de la lista al cuadro de texto y vuelta ----------------
+   El formato es el que usaron ellos en su documento: un nombre por linea, y
+   el papel entre parentesis si lo tiene. "Samuele Lorenzini (pastore
+   giovani)" -> ['Samuele Lorenzini', 'pastore giovani']. */
+function pastoriATexto(lista) {
+  return (Array.isArray(lista) ? lista : []).map(function (p) {
+    var n = Array.isArray(p) ? p[0] : p, r = Array.isArray(p) ? p[1] : '';
+    return r ? n + ' (' + r + ')' : n;
+  }).join('\n');
+}
+function textoAPastori(t) {
+  return String(t || '').split('\n').map(function (l) { return l.trim(); })
+    .filter(Boolean).map(function (l) {
+      var m = /^(.*?)\s*\((.*)\)\s*$/.exec(l);
+      return m ? [m[1].trim(), m[2].trim()] : [l, ''];
+    });
+}
+
 var RESERVADOS = ['panel', 'media', 'herramientas', 'sede', 'index', 'estilo', 'app', 'almacen'];
 function slug(t) {
   return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -1064,10 +1113,34 @@ $('#f-sede').addEventListener('submit', function (e) {
     if (a && b) orari.push([a, b]);
   });
 
+  /* Los enlaces y el correo se comprueban aqui, ANTES de guardar: un enlace
+     que no empiece por https:// no saldria en la web (la web los rechaza por
+     seguridad), y es mejor que lo sepa quien lo escribe que descubrir dias
+     despues que su Instagram no aparece. */
+  var social = {}, malos = [];
+  ['instagram', 'facebook', 'youtube'].forEach(function (k) {
+    var v = $('#soc-' + k).value.trim();
+    if (!v) return;
+    if (!/^https?:\/\/\S+$/i.test(v)) malos.push(k.charAt(0).toUpperCase() + k.slice(1));
+    else social[k] = v;
+  });
+  if (malos.length) {
+    $('#err-sede').textContent = 'Il link di ' + malos.join(' e ') + ' deve cominciare con https://';
+    return;
+  }
+  var correo = $('#email').value.trim();
+  if (correo && !/^[^@\s<>"']+@[^@\s<>"']+\.[^@\s<>"']+$/.test(correo)) {
+    $('#err-sede').textContent = 'L\'email non sembra giusta.';
+    return;
+  }
+
   var lat = parseFloat($('#lat').value), lon = parseFloat($('#lon').value);
   var sede = {
     id: editando.id || slugUnico(citta),
-    orden: editando.orden || Date.now(),
+    /* `!= null` y no `||`: la primera iglesia tiene orden 0, y `0 || ...`
+       trata el 0 como si no hubiera nada. Con `||`, cada vez que alguien
+       guardaba Parma, Parma saltaba al final de la lista. */
+    orden: editando.orden != null ? editando.orden : Date.now(),
     citta: citta,
     via: $('#via').value.trim(),
     cap: $('#cap').value.trim(),
@@ -1079,6 +1152,9 @@ $('#f-sede').addEventListener('submit', function (e) {
     lingue: $('#lingue').value.trim(),
     logo: $('#logo').value.trim(),
     whatsapp: $('#whatsapp').value.trim(),
+    email: correo,
+    pastori: textoAPastori($('#pastori').value),
+    social: social,
     publicada: $('#publicada').checked,
     apple: $('#apple').value.trim(),
     mapa: editando.mapa || ''

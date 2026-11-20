@@ -327,3 +327,70 @@ body{padding-bottom:38px;}
 
 #sp-chi{padding-block:clamp(52px,8vh,92px);border-top:1px solid var(--line);}
 #sp-chi .acciones{margin-top:24px;}
+
+/* --- pastores y contacto, en la pagina de cada iglesia -------------------- */
+.sp-pastori{list-style:none;display:grid;gap:10px;margin-bottom:26px;}
+.sp-pastori li{font-family:'Fraunces',Georgia,serif;font-size:19px;line-height:1.3;}
+.sp-pastori li span{display:block;margin-top:2px;font-family:'Inter',system-ui,sans-serif;
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--stone);}
+.sp-contatti{justify-content:flex-start;margin-top:18px;}
+.sp-social{display:flex;gap:12px;margin-top:18px;}
+.sp-social a{display:grid;place-items:center;width:44px;height:44px;
+  border:1px solid var(--line-strong);border-radius:10px;color:var(--bone-dim);
+  transition:color .25s,border-color .25s;}
+.sp-social a:hover{color:var(--blu-2);border-color:var(--blu);}
+.sp-social svg{width:20px;height:20px;}
+.sp-social:empty{display:none;}
+
+/* "Tutti gli incontri (7) →" al pie de los horarios de una tarjeta. */
+.sede-mas{justify-self:start;margin-top:2px;font-size:12.5px;color:var(--blu-2);
+  text-decoration:none;border-bottom:1px solid rgba(86,180,255,0.35);padding-bottom:1px;}
+.sede-mas:hover{border-bottom-color:var(--blu-2);}
+
+/* ============================================================================
+   CHI SIAMO — la historia y los fundadores (portada)
+   ============================================================================ */
+#storia{border-top:1px solid var(--line);}
+
+/* El ano grande a la izquierda y el texto a la derecha. Es el unico dato de
+   fecha que tenemos —el de la fundacion— y por eso no hay una linea de
+   tiempo: inventar anos para Fidenza o Reggio seria inventar historia. */
+.storia{display:grid;grid-template-columns:minmax(0,0.42fr) minmax(0,1fr);
+  gap:clamp(20px,5vw,72px);align-items:start;margin-top:clamp(34px,5vw,56px);}
+.storia-anno{font-family:'Fraunces',Georgia,serif;font-weight:300;line-height:.9;
+  font-size:clamp(64px,13vw,168px);color:var(--blu-2);letter-spacing:-.02em;
+  opacity:.9;}
+.storia-testo p{font-size:16px;line-height:1.85;color:var(--bone-dim);max-width:62ch;}
+.storia-testo p + p{margin-top:16px;}
+.storia-testo p:first-child{font-size:clamp(18px,2vw,21px);color:var(--bone);line-height:1.6;}
+@media (max-width:760px){
+  .storia{grid-template-columns:1fr;gap:6px;}
+}
+
+.fondatori-h{margin-top:clamp(52px,7vw,84px);font-size:11px;font-weight:500;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--stone);
+  font-family:'Inter',system-ui,sans-serif;}
+.fondatori{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:clamp(16px,2.5vw,26px);margin-top:18px;}
+@media (max-width:760px){ .fondatori{grid-template-columns:1fr;} }
+.fondatore{padding:clamp(22px,3vw,32px);border:1px solid var(--line);
+  border-radius:6px;background:var(--ink-2);}
+.fondatore h4{font-family:'Fraunces',Georgia,serif;font-weight:400;
+  font-size:clamp(22px,2.6vw,28px);line-height:1.2;margin-bottom:14px;}
+.fondatore p{font-size:14.5px;line-height:1.8;color:var(--bone-dim);}
+.fondatore p + p{margin-top:12px;}
+.fondatori-pie{margin-top:clamp(22px,3vw,30px);max-width:72ch;font-size:15px;
+  line-height:1.8;color:var(--stone);font-style:italic;
+  font-family:'Fraunces',Georgia,serif;}
+
+/* Una reunion con texto largo ("Sabato 16:30 – 18:00 · secondo calendario")
+   parte la linea, y la segunda linea se iba a la izquierda mientras las
+   demas horas van a la derecha: la columna se descuadraba. Alineada a la
+   derecha siempre, parta o no. */
+.sede-orari dd{text-align:right;}
+
+/* Aire entre bloques en la columna de datos. Sin esto, "Pastori" salia pegado
+   a la ultima reunion: los bloques que estan entre medias (idiomas,
+   descripcion) suelen ir ocultos y no dejaban hueco. */
+#sp-lingue-bloque,#sp-pastori-bloque,#sp-contatti-bloque{margin-top:38px;}
+.sp-pastori{margin-bottom:0;}

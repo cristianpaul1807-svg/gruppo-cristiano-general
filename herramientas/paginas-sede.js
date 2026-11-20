@@ -54,6 +54,8 @@ const COORD = {
   'fidenza':       [44.859535, 10.087606],
   'parma':         [44.807452, 10.293616],
   'reggio-emilia': [44.706067, 10.607343]
+  /* Massa-Carrara, cuando entre aqui: [44.041434, 10.032270] — el 45 de Via
+     Venezia en OpenStreetMap, a 30 m de la chincheta de su ficha de Google. */
 };
 
 /* --- escapar -----------------------------------------------------------------
@@ -105,6 +107,14 @@ function jsonld(s) {
   }
   const c = COORD[s.id];
   if (c) ficha.geo = { '@type': 'GeoCoordinates', latitude: c[0], longitude: c[1] };
+
+  /* Lo que mandaron ellos para cada iglesia: telefono, correo y redes. El
+     telefono en formato internacional, que es como lo pide schema.org. */
+  const tel = String(s.whatsapp || '').replace(/[^0-9+]/g, '');
+  if (tel) ficha.telephone = tel.charAt(0) === '+' ? tel : '+39' + tel;
+  if (s.email) ficha.email = s.email;
+  const redes = Object.values(s.social || {}).filter(function (u) { return /^https?:\/\//.test(u); });
+  if (redes.length) ficha.sameAs = redes;
   if (s.orari && s.orari.length) {
     /* Los horarios en texto libre ("Domenica 10:30") NO se traducen a
        openingHours: el formato de schema.org pide dia y hora en un formato
@@ -122,10 +132,15 @@ function pagina(plantilla, s, elPie) {
   /* La descripcion sale de lo que haya, en este orden: la que escribieron
      ellos, la direccion, o una general. Nunca se queda vacia: una pagina sin
      descripcion la rellena Google con lo primero que pilla. */
+  /* La primera reunion de la lista es la del domingo (asi se escriben en
+     sedi.js). Va en la descripcion porque es lo que se lee en la vista previa
+     de WhatsApp: quien recibe el enlace ve a que hora es sin abrir nada. */
+  const primera = (s.orari && s.orari[0]) ? s.orari[0][0] + ': ' + s.orari[0][1] + '. ' : '';
+
   let desc;
   if (s.testo) desc = s.testo;
   else if (dir) desc = 'Gruppo Cristiano ' + s.citta + ', chiesa evangelica in ' + s.via
-    + ', ' + s.cap + '. Orari degli incontri e come arrivare.';
+    + ', ' + s.cap + '. ' + primera + 'Orari degli incontri e come arrivare.';
   else desc = 'Gruppo Cristiano ' + s.citta + ', una delle chiese del Gruppo Cristiano '
     + 'Latino Americano in Italia.';
 
@@ -136,7 +151,7 @@ function pagina(plantilla, s, elPie) {
   let descEs;
   if (s.testo) descEs = s.testo;
   else if (dir) descEs = 'Gruppo Cristiano ' + s.citta + ', iglesia evangélica en ' + s.via
-    + ', ' + s.cap + '. Horarios de las reuniones y cómo llegar.';
+    + ', ' + s.cap + '. ' + primera + 'Horarios de las reuniones y cómo llegar.';
   else descEs = 'Gruppo Cristiano ' + s.citta + ', una de las iglesias del Gruppo Cristiano '
     + 'Latino Americano en Italia.';
   const meta = JSON.stringify({

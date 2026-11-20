@@ -107,6 +107,9 @@ var ALMACEN = (function () {
       lingue: s.lingue || '',
       logo: s.logo || '',
       whatsapp: s.whatsapp || '',
+      email: s.email || '',
+      pastori: Array.isArray(s.pastori) ? s.pastori : [],
+      social: (s.social && typeof s.social === 'object') ? s.social : {},
       lat: num(s.lat),
       lon: num(s.lon),
       orari: s.orari || [],
@@ -120,7 +123,8 @@ var ALMACEN = (function () {
     return {
       id: f.id, orden: f.orden, citta: f.citta, via: f.via, cap: f.cap,
       web: f.web, testo: f.testo, lingue: f.lingue, logo: f.logo,
-      whatsapp: f.whatsapp || '',
+      whatsapp: f.whatsapp || '', email: f.email || '',
+      pastori: f.pastori || [], social: f.social || {},
       lat: f.lat, lon: f.lon, orari: f.orari || [], apple: f.apple,
       mapa: f.mapa, publicada: f.publicada
     };

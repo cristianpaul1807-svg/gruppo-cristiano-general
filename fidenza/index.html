@@ -16,7 +16,7 @@
      se lo lleva por delante. Se corrige aqui y se vuelve a generar.
      ============================================================================ -->
 <title>Gruppo Cristiano Fidenza — Chiesa evangelica a Fidenza</title>
-<meta name="description" content="Gruppo Cristiano Fidenza, chiesa evangelica in Via Galileo Ferraris 14, 43036 Fidenza (PR). Orari degli incontri e come arrivare.">
+<meta name="description" content="Gruppo Cristiano Fidenza, chiesa evangelica in Via Galileo Ferraris 14/15, 43036 Fidenza (PR). Culto: Domenica 10:00. Orari degli incontri e come arrivare.">
 <meta name="robots" content="noindex, nofollow">
 
 <!-- La vista previa cuando alguien pega el enlace en WhatsApp, que es por
@@ -24,7 +24,7 @@
      y nadie lo abre. La imagen es el mapa de la propia iglesia. -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="Gruppo Cristiano Fidenza">
-<meta property="og:description" content="Gruppo Cristiano Fidenza, chiesa evangelica in Via Galileo Ferraris 14, 43036 Fidenza (PR). Orari degli incontri e come arrivare.">
+<meta property="og:description" content="Gruppo Cristiano Fidenza, chiesa evangelica in Via Galileo Ferraris 14/15, 43036 Fidenza (PR). Culto: Domenica 10:00. Orari degli incontri e come arrivare.">
 <meta property="og:url" content="https://www.gruppocristiano.it/fidenza/">
 <meta property="og:image" content="https://www.gruppocristiano.it/media/mappa-fidenza.jpg">
 <meta property="og:locale" content="it_IT">
@@ -52,7 +52,7 @@
   "url": "https://www.gruppocristiano.it/fidenza/",
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "Via Galileo Ferraris 14",
+    "streetAddress": "Via Galileo Ferraris 14/15",
     "postalCode": "43036",
     "addressLocality": "Fidenza",
     "addressRegion": "PR",
@@ -62,7 +62,13 @@
     "@type": "GeoCoordinates",
     "latitude": 44.859535,
     "longitude": 10.087606
-  }
+  },
+  "telephone": "+393293083663",
+  "email": "crisbus10@gmail.com",
+  "sameAs": [
+    "https://www.instagram.com/gruppo_cristiano_fidenza",
+    "https://www.facebook.com/share/1DYJvmT9N7/"
+  ]
 }
 </script>
 
@@ -77,11 +83,11 @@
 window.__META = {
   "it": {
     "t": "Gruppo Cristiano Fidenza — Chiesa evangelica a Fidenza",
-    "d": "Gruppo Cristiano Fidenza, chiesa evangelica in Via Galileo Ferraris 14, 43036 Fidenza (PR). Orari degli incontri e come arrivare."
+    "d": "Gruppo Cristiano Fidenza, chiesa evangelica in Via Galileo Ferraris 14/15, 43036 Fidenza (PR). Culto: Domenica 10:00. Orari degli incontri e come arrivare."
   },
   "es": {
     "t": "Gruppo Cristiano Fidenza — Iglesia evangélica en Fidenza",
-    "d": "Gruppo Cristiano Fidenza, iglesia evangélica en Via Galileo Ferraris 14, 43036 Fidenza (PR). Horarios de las reuniones y cómo llegar."
+    "d": "Gruppo Cristiano Fidenza, iglesia evangélica en Via Galileo Ferraris 14/15, 43036 Fidenza (PR). Culto: Domenica 10:00. Horarios de las reuniones y cómo llegar."
   }
 };
 </script>
@@ -140,7 +146,7 @@ window.__META = {
   <div class="wrap">
     <p class="eyebrow" data-i18n="sp_eyebrow">Una chiesa del gruppo</p>
     <h1>Gruppo Cristiano<br><em>Fidenza</em></h1>
-    <p class="sp-via" id="sp-via">Via Galileo Ferraris 14<span>43036 Fidenza (PR)</span></p>
+    <p class="sp-via" id="sp-via">Via Galileo Ferraris 14/15<span>43036 Fidenza (PR)</span></p>
     <div class="acciones" id="sp-acc"></div>
   </div>
 </header>
@@ -168,9 +174,22 @@ window.__META = {
 
         <p class="sp-testo" id="sp-testo" hidden></p>
 
-        <h2 data-i18n="sp_contatti">Parlare con questa chiesa</h2>
-        <p class="sp-p" data-i18n="sp_contatti_p">Scrivi su WhatsApp e ti rispondiamo. Se
-          preferisci venire senza avvisare, va bene uguale: non serve avvisare per entrare.</p>
+        <!-- Los pastores. Su mapa conceptual lo pide para cada comunidad
+             ("Responsabili e contatti"), y es lo que mas tranquiliza a quien
+             viene por primera vez: saber a quien va a ver. -->
+        <div id="sp-pastori-bloque" hidden>
+          <h2 data-i18n="sp_pastori">Pastori</h2>
+          <ul class="sp-pastori" id="sp-pastori"></ul>
+        </div>
+
+        <div id="sp-contatti-bloque" hidden>
+          <h2 data-i18n="sp_contatti">Parlare con questa chiesa</h2>
+          <p class="sp-p" data-i18n="sp_contatti_p">Scrivi su WhatsApp o chiama, e ti
+            rispondiamo. Se preferisci venire senza avvisare, va bene uguale: non serve
+            avvisare per entrare.</p>
+          <div class="acciones sp-contatti" id="sp-contatti"></div>
+          <div class="sp-social" id="sp-social"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -218,6 +237,13 @@ window.__META = {
       <a href="https://www.youtube.com/@gruppocristiano" target="_blank" rel="noopener"
          aria-label="YouTube del Gruppo Cristiano">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12s0-3.3-.4-4.9a2.6 2.6 0 0 0-1.8-1.8C18.2 4.9 12 4.9 12 4.9s-6.2 0-7.8.4a2.6 2.6 0 0 0-1.8 1.8C2 8.7 2 12 2 12s0 3.3.4 4.9c.2.9.9 1.6 1.8 1.8 1.6.4 7.8.4 7.8.4s6.2 0 7.8-.4a2.6 2.6 0 0 0 1.8-1.8c.4-1.6.4-4.9.4-4.9zM10 15.2V8.8l5.2 3.2z"/></svg>
+      </a>
+      <!-- El canal de Spotify es de TODAS las iglesias, segun su documento. El
+           enlace llevaba detras un codigo de quien lo compartio por WhatsApp
+           (?si=...&utm_source=whatsapp...): se quita, es suyo, no del canal. -->
+      <a href="https://open.spotify.com/show/4XaPGtBPszdYUpb5d3tCdE" target="_blank" rel="noopener"
+         aria-label="Spotify del Gruppo Cristiano">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M7 9.6c3.4-1 7.2-.7 10.2 1"/><path d="M7.6 12.7c2.8-.8 5.8-.5 8.3.9"/><path d="M8.2 15.6c2.2-.6 4.4-.4 6.4.7"/></svg>
       </a>
     </div>
     <!-- Las ciudades las pone app.js desde las sedes publicadas: escrita a

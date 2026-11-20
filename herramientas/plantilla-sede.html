@@ -136,9 +136,22 @@ window.__META = {{META}};
 
         <p class="sp-testo" id="sp-testo" hidden></p>
 
-        <h2 data-i18n="sp_contatti">Parlare con questa chiesa</h2>
-        <p class="sp-p" data-i18n="sp_contatti_p">Scrivi su WhatsApp e ti rispondiamo. Se
-          preferisci venire senza avvisare, va bene uguale: non serve avvisare per entrare.</p>
+        <!-- Los pastores. Su mapa conceptual lo pide para cada comunidad
+             ("Responsabili e contatti"), y es lo que mas tranquiliza a quien
+             viene por primera vez: saber a quien va a ver. -->
+        <div id="sp-pastori-bloque" hidden>
+          <h2 data-i18n="sp_pastori">Pastori</h2>
+          <ul class="sp-pastori" id="sp-pastori"></ul>
+        </div>
+
+        <div id="sp-contatti-bloque" hidden>
+          <h2 data-i18n="sp_contatti">Parlare con questa chiesa</h2>
+          <p class="sp-p" data-i18n="sp_contatti_p">Scrivi su WhatsApp o chiama, e ti
+            rispondiamo. Se preferisci venire senza avvisare, va bene uguale: non serve
+            avvisare per entrare.</p>
+          <div class="acciones sp-contatti" id="sp-contatti"></div>
+          <div class="sp-social" id="sp-social"></div>
+        </div>
       </div>
     </div>
   </div>

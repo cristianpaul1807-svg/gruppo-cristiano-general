@@ -85,11 +85,11 @@ var observarReveal;
 /* ============================================================================
    LAS FICHAS DE LAS SEDES
    ============================================================================ */
-var NOTE_IT = {
-  ora_fidenza: 'Il giorno risulta dai vostri video. L’ora no: quella manca ancora.',
-  ora_parma: 'Orari presi dal sito del Consiglio delle Chiese Cristiane di Parma. Da confermare.'
-};
-var NOTAS_SEDE = { fidenza: 'ora_fidenza', parma: 'ora_parma' };
+/* Notas de "esto no esta confirmado" que se pegan a una sede. Hoy no hay
+   ninguna: los horarios de Parma y de Fidenza ya los han dado ellos en su
+   documento. El mecanismo se queda por si vuelve a hacer falta. */
+var NOTE_IT = {};
+var NOTAS_SEDE = {};
 
 var SEDI = (window.SEDI_BASE || []).slice();
 
@@ -129,6 +129,15 @@ function RUTA(p) {
    era una peticion a un archivo que no existe CADA VEZ que salia su tarjeta:
    seis 404 solo en una visita normal. El aviso de "mapa pendiente" salia
    bien, pero cada fallo es una peticion tirada. */
+/* Un enlace que viene de la base de datos solo se usa si es una pagina web
+   normal. "javascript:..." en un href se EJECUTA al tocarlo: con los campos
+   de web y de redes editables por cada responsable, sin esto cualquiera
+   podria plantar un enlace que roba la sesion de quien lo toque. */
+function SEGURO(url) {
+  url = String(url || '').trim();
+  return /^https?:\/\/[^\s]+$/i.test(url) ? url : '';
+}
+
 function MAPA_DE(sede) {
   if (sede.mapa) return sede.mapa;
   var deArchivo = (window.SEDI_BASE || []).some(function (b) { return b.id === sede.id; });
@@ -210,7 +219,15 @@ function MAPA_DE(sede) {
 
     var via = document.createElement('p');
     via.className = 'sede-via';
-    if (dir) { via.textContent = sede.via; via.innerHTML += '<br>' + sede.cap; }
+    /* Como texto, no como HTML: la calle y el codigo postal los escribe el
+       responsable de cada iglesia desde el panel. El `innerHTML +=` de antes
+       metia el codigo postal tal cual en la pagina — cualquier codigo escrito
+       ahi se habria ejecutado en el movil de quien abriese la portada. */
+    if (dir) {
+      via.textContent = sede.via;
+      via.appendChild(document.createElement('br'));
+      via.appendChild(document.createTextNode(sede.cap));
+    }
     else {
       via.innerHTML = texto('sd_senza_via', 'Indirizzo') +
         ' <span class="x-conf">' + texto('conf', 'da confermare') + '</span>';
@@ -236,12 +253,25 @@ function MAPA_DE(sede) {
     var dl = document.createElement('dl');
     dl.className = 'sede-orari';
     if (sede.orari && sede.orari.length) {
-      sede.orari.forEach(function (o) {
+      /* En la tarjeta, DOS reuniones y no todas. Parma tiene siete: con todas,
+         su tarjeta mediria el doble que la de al lado y la rejilla se
+         desordena. La primera es siempre la del domingo —asi estan escritas
+         en sedi.js—, que es la que busca quien no ha venido nunca. Las demas
+         estan en la pagina de la iglesia, a un toque. */
+      var MAX = 2;
+      sede.orari.slice(0, MAX).forEach(function (o) {
         var fila = document.createElement('div');
         var dt = document.createElement('dt'); dt.textContent = o[0];
         var dd = document.createElement('dd'); dd.textContent = o[1];
         fila.appendChild(dt); fila.appendChild(dd); dl.appendChild(fila);
       });
+      if (sede.orari.length > MAX && pagina) {
+        var mas = document.createElement('a');
+        mas.className = 'sede-mas';
+        mas.href = pagina;
+        mas.textContent = texto('sd_tutti', 'Tutti gli incontri') + ' (' + sede.orari.length + ') →';
+        dl.appendChild(mas);
+      }
     } else {
       var fila = document.createElement('div');
       var dt = document.createElement('dt'); dt.textContent = texto('sd_orari', 'Orari');
@@ -284,9 +314,9 @@ function MAPA_DE(sede) {
         acc.appendChild(g);
       }
       /* La web propia de esa iglesia, si algun dia la tiene aparte de esta. */
-      if (sede.web) {
+      if (SEGURO(sede.web)) {
         var w = document.createElement('a');
-        w.className = 'btn'; w.href = sede.web;
+        w.className = 'btn'; w.href = SEGURO(sede.web);
         w.target = '_blank'; w.rel = 'noopener';
         w.textContent = texto('sd_sito', 'Vai al sito');
         acc.appendChild(w);
@@ -420,7 +450,7 @@ var I18N = {
     meta_title: "Gruppo Cristiano Latino Americano — Iglesias en Italia",
     meta_desc: "Gruppo Cristiano Latino Americano: iglesias evangélicas en Italia. Nuestras sedes, los horarios de las reuniones y cómo llegar. Italiano y español.",
     marca_sub: "Latino Americano",
-    nav_sedi: "Las iglesias", nav_visione: "La visión", nav_fede: "Puntos de fe", nav_domande: "Preguntas",
+    nav_sedi: "Las iglesias", nav_storia: "Quiénes somos", nav_visione: "La visión", nav_fede: "Puntos de fe", nav_domande: "Preguntas",
     hero_h1: 'Una esperanza verdadera,<br>en <em>cada ciudad</em>.',
     hero_p: "«Creemos que este mundo lleno de problemas y sufrimientos necesita una esperanza verdadera.»",
     versetto: "Isaías 55:5",
@@ -428,10 +458,7 @@ var I18N = {
     cue: "Baja",
     sd_eyebrow: "Las iglesias",
     sd_h2: "Un grupo,<br>varias iglesias.",
-    sd_p: "Una ficha por cada iglesia, con su mapa. Se toca, y se abre el navegador del móvil ya puesto en esa dirección.",
-    sd_nota_h: "Lo que falta",
-    sd_nota_p: "Las direcciones están verificadas una por una. Los horarios de Parma vienen del sitio del Consiglio delle Chiese Cristiane di Parma y tenéis que confirmarlos; de Fidenza no aparece la hora en ninguna parte.",
-    sd_nota_p2: "De cada sede necesito el nombre, la calle con el número, los días y las horas, y los idiomas que se hablan. A partir de ahí la ficha se rellena, mapa incluido.",
+    sd_p: "Una ficha por cada iglesia. Se toca, y se abre su página: horarios, pastores y cómo llegar.",
     sd_vai: "Cómo llegar", sd_sito: "Ir a su web", sd_orari: "Horarios",
     sd_ver: "La iglesia de", sd_ver_aria: "La iglesia de",
     /* --- la página de cada iglesia --- */
@@ -439,7 +466,11 @@ var I18N = {
     sp_eyebrow: "Una iglesia del grupo",
     sp_dove: "Dónde estamos", sp_quando: "Cuándo nos reunimos",
     sp_lingue: "Idiomas", sp_contatti: "Hablar con esta iglesia",
-    sp_contatti_p: "Escribe por WhatsApp y te contestamos. Si prefieres venir sin avisar, también: no hace falta avisar para entrar.",
+    sp_contatti_p: "Escribe por WhatsApp o llama, y te contestamos. Si prefieres venir sin avisar, también: no hace falta avisar para entrar.",
+    sp_pastori: "Pastores",
+    sd_tutti: "Todas las reuniones",
+    sp_chiama: "Llamar",
+    sp_email: "Escribir un email",
     sp_altre_h: "Las demás iglesias del grupo",
     sp_altre_p: "El mismo grupo, la misma fe, otra ciudad.",
     sp_chi_h: "Quiénes somos",
@@ -458,6 +489,19 @@ var I18N = {
     sd_nota_ora_fidenza: "El día sale de vuestros vídeos. La hora no: esa sigue faltando.",
     sd_nota_ora_parma: "Horarios tomados del sitio del Consiglio delle Chiese Cristiane di Parma. Por confirmar.",
     conf: "por confirmar",
+    /* --- quiénes somos: su historia, traducida del documento que mandaron --- */
+    st_eyebrow: "Quiénes somos",
+    st_h2: "Una única familia<br>de comunidades cristianas.",
+    st_p1: "En 2003, Aldo y Mariela dieron vida a la comunidad Gruppo Cristiano, con la fundación de la primera iglesia en Parma.",
+    st_p2: "Con los años, gracias al crecimiento de la comunidad y a la obra del Señor, se ha desarrollado una realidad cada vez más amplia y multicultural, capaz de acoger a personas de toda edad y procedencia: niños, jóvenes, adultos y mayores, de distintas nacionalidades.",
+    st_p3: "Este crecimiento llevó al nacimiento de nuevas comunidades en el territorio, con la apertura de otras iglesias en Fidenza, Reggio Emilia y Marina di Carrara.",
+    st_p4: "La visión misionera no se ha detenido en estas realidades. El deseo que sigue motivando a Aldo y Mariela es ver nacer nuevas comunidades cristianas en Italia, para anunciar el Evangelio, alcanzar a nuevas personas y formar discípulos de Jesucristo, contribuyendo así a la expansión del Reino de Dios.",
+    st_fond: "Fundadores y pastores principales",
+    st_aldo1: "Conoció personalmente al Señor en 1989, iniciando un camino de fe y de crecimiento espiritual que lo llevó a madurar también a través de experiencias de formación y de servicio cristiano.",
+    st_aldo2: "Durante tres años colaboró con el movimiento de Los Navegantes en Inglaterra, donde cursó y completó la escuela bíblica organizada por la asociación. En 2010 completó además la formación de la Escuela Bíblica para Responsables de Comunidad de Uomini Nuovi, en Marchirolo (Varese).",
+    st_mari1: "Originaria de la República Dominicana, conoció al Señor en 1980. Creció espiritualmente en la Comunidad Cristiana «Casa de Oración», en la República Dominicana. Paralelamente a su camino de fe, se licenció en Psicología en la Universidad Autónoma de Santo Domingo (UASD).",
+    st_mari2: "En 1990 llegó a Italia como misionera, continuando su compromiso con el servicio cristiano. En 1995 completó la escuela bíblica de Los Navegantes en Inglaterra, profundizando aún más su formación espiritual y bíblica.",
+    st_pie: "Aldo y Mariela comparten una vida dedicada a la fe, al servicio y a la misión cristiana. Son los padres de Rebecca, que junto a su marido Andrea sirve en el Gruppo Cristiano de Parma poniendo a disposición sus dones.",
     vs_eyebrow: "La visión",
     vs_h2: "Qué queremos<br>hacer, y por qué.",
     vs_p: "«Creemos que confiando la propia vida a Jesús, cada uno de nosotros puede obtener la vida eterna, ser cambiado por Dios y cambiar la sociedad.»",
@@ -484,7 +528,7 @@ var I18N = {
     dm_h2: "Lo que se pregunta<br>quien no ha<br>entrado nunca.",
     dm_p: "Quien no ha estado nunca en una iglesia evangélica no pregunta de teología: pregunta cómo hay que vestirse y cuánto dura. Las preguntas de abajo son las de verdad.",
     q1: "¿Cómo encuentro la iglesia más cercana?",
-    a1: "En la sección «Las iglesias» hay una ficha por cada una, con su mapa. Se toca y se abre el navegador del móvil.",
+    a1: "En la sección «Las iglesias» hay una ficha por cada una. Se toca y se abre su página, con los horarios, los pastores y el botón para llegar con el navegador del móvil.",
     q2: "¿Tengo que vestirme de alguna manera?",
     a2: 'No. Se entra como se está.<span class="x-conf">borrador</span>',
     q3: "¿Tengo que avisar antes de ir?",

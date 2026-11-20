@@ -60,8 +60,20 @@
        la ha cambiado despues del ultimo despliegue. */
     var via = $('#sp-via');
     if (via) {
-      if (dir) via.innerHTML = s.via + '<span>' + s.cap + '</span>';
-      else via.innerHTML = '<span class="x-conf">' + texto('conf', 'da confermare') + '</span>';
+      /* La calle y el codigo postal vienen de la base de datos, y los puede
+         escribir el responsable de la iglesia. Van como TEXTO, nunca como
+         HTML: antes iban con innerHTML, y quien escribiese codigo en la
+         direccion lo habria ejecutado en el movil de cada visitante — y en el
+         del administrador general, cuya sesion vive en este mismo dominio.
+         Asi un responsable de sede podia acabar siendo general. */
+      via.textContent = '';
+      if (dir) {
+        via.appendChild(document.createTextNode(s.via));
+        var c = document.createElement('span'); c.textContent = s.cap;
+        via.appendChild(c);
+      } else {
+        via.innerHTML = '<span class="x-conf">' + texto('conf', 'da confermare') + '</span>';
+      }
     }
 
     /* --- los botones de arriba --------------------------------------------- */
@@ -81,12 +93,17 @@
           : 'https://maps.apple.com/?address=' + q,
           'Apple Maps'));
       }
-      if (s.whatsapp) {
-        acc.appendChild(boton('btn',
-          'https://wa.me/' + String(s.whatsapp).replace(/[^0-9]/g, '')
-            + '?text=' + encodeURIComponent('Ciao, scrivo dal sito del Gruppo Cristiano ' + s.citta + '.'),
-          'WhatsApp'));
-      }
+      if (numero(s)) acc.appendChild(boton('btn', enlaceWa(s), 'WhatsApp'));
+    }
+
+    /* El boton flotante, dentro de la pagina de una iglesia, escribe a ESA
+       iglesia. En la portada no hay numero general todavia y se queda
+       apagado. */
+    var wa = document.getElementById('wa');
+    if (wa && numero(s)) {
+      wa.classList.remove('apagado');
+      wa.href = enlaceWa(s);
+      wa.target = '_blank'; wa.rel = 'noopener';
     }
 
     /* --- el mapa ------------------------------------------------------------ */
@@ -174,11 +191,96 @@
     var tx = $('#sp-testo');
     if (tx) { tx.textContent = s.testo || ''; tx.hidden = !s.testo; }
 
+    /* --- los pastores ---------------------------------------------------------
+       Nombre y, si lo tiene, su papel ("pastore giovani"). Todo como texto. */
+    var lp = $('#sp-pastori');
+    if (lp) {
+      lp.textContent = '';
+      (Array.isArray(s.pastori) ? s.pastori : []).forEach(function (p) {
+        var nombre = Array.isArray(p) ? p[0] : p;
+        var papel = Array.isArray(p) ? p[1] : '';
+        if (!nombre) return;
+        var li = document.createElement('li');
+        li.textContent = nombre;
+        if (papel) {
+          var r = document.createElement('span'); r.textContent = papel;
+          li.appendChild(r);
+        }
+        lp.appendChild(li);
+      });
+      var bp = $('#sp-pastori-bloque');
+      if (bp) bp.hidden = !lp.children.length;
+    }
+
+    /* --- hablar con la iglesia ------------------------------------------------
+       WhatsApp y llamar salen del mismo numero: si ese numero no tuviese
+       WhatsApp, llamar sigue funcionando. */
+    var cont = $('#sp-contatti'), red = $('#sp-social');
+    if (cont && red) {
+      cont.textContent = ''; red.textContent = '';
+      if (numero(s)) {
+        cont.appendChild(boton('btn piena', enlaceWa(s), 'WhatsApp'));
+        var tel = boton('btn', 'tel:+' + numero(s), texto('sp_chiama', 'Chiama'));
+        tel.removeAttribute('target'); tel.removeAttribute('rel');
+        cont.appendChild(tel);
+      }
+      if (correoValido(s.email)) {
+        var em = boton('btn', 'mailto:' + String(s.email).trim(), texto('sp_email', 'Scrivi un’email'));
+        em.removeAttribute('target'); em.removeAttribute('rel');
+        cont.appendChild(em);
+      }
+      var soc = (s.social && typeof s.social === 'object') ? s.social : {};
+      ['instagram', 'facebook', 'youtube'].forEach(function (k) {
+        var u = seguro(soc[k]);
+        if (!u) return;
+        var a = document.createElement('a');
+        a.href = u; a.target = '_blank'; a.rel = 'noopener';
+        a.setAttribute('aria-label', NOMBRES_RED[k] + ' — Gruppo Cristiano ' + s.citta);
+        a.innerHTML = ICONOS[k];   // trazo fijo nuestro, no viene de la base
+        red.appendChild(a);
+      });
+      var bc = $('#sp-contatti-bloque');
+      if (bc) bc.hidden = !(cont.children.length || red.children.length);
+    }
+
     /* --- el aviso de ficha vacia ---------------------------------------------
        Una pagina sin direccion ni horarios no puede quedarse muda: quien llega
        tiene que entender que falta por llegar, no pensar que la web esta rota. */
     var vacio = $('#sp-vacio');
     if (vacio) vacio.hidden = !!(dir || (s.orari && s.orari.length));
+  }
+
+  /* El numero, listo para wa.me y tel:. En el panel cualquiera lo escribira
+     como le salga —"348 839 3936", "+39 348...", "0039..."— y wa.me solo
+     entiende digitos con el prefijo del pais delante. Un movil italiano de 10
+     cifras que empieza por 3 sin prefijo es lo que se escribe casi siempre:
+     se le pone el 39. */
+  function numero(s) {
+    var d = String((s && s.whatsapp) || '').replace(/[^0-9]/g, '');
+    if (d.indexOf('00') === 0) d = d.slice(2);
+    if (d.length === 10 && d.charAt(0) === '3') d = '39' + d;
+    return d.length >= 8 ? d : '';
+  }
+  function enlaceWa(s) {
+    return 'https://wa.me/' + numero(s) + '?text='
+      + encodeURIComponent('Ciao, scrivo dal sito del Gruppo Cristiano ' + s.citta + '.');
+  }
+
+  /* Los iconos de las redes: los mismos trazos que el pie de la portada. */
+  var ICONOS = {
+    instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>',
+    facebook: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14 9h3V6h-3c-2.2 0-4 1.8-4 4v2H8v3h2v7h3v-7h2.6l.4-3H13v-2c0-.6.4-1 1-1z"/></svg>',
+    youtube: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 12s0-3.3-.4-4.9a2.6 2.6 0 0 0-1.8-1.8C18.2 4.9 12 4.9 12 4.9s-6.2 0-7.8.4a2.6 2.6 0 0 0-1.8 1.8C2 8.7 2 12 2 12s0 3.3.4 4.9c.2.9.9 1.6 1.8 1.8 1.6.4 7.8.4 7.8.4s6.2 0 7.8-.4a2.6 2.6 0 0 0 1.8-1.8c.4-1.6.4-4.9.4-4.9zM10 15.2V8.8l5.2 3.2z"/></svg>'
+  };
+  var NOMBRES_RED = { instagram: 'Instagram', facebook: 'Facebook', youtube: 'YouTube' };
+
+  /* Un enlace de la base de datos solo vale si es una web normal: un
+     "javascript:" en un href se ejecuta al tocarlo. Ver SEGURO en app.js. */
+  function seguro(u) {
+    return window.SEGURO ? SEGURO(u) : (/^https?:\/\/\S+$/i.test(String(u || '').trim()) ? String(u).trim() : '');
+  }
+  function correoValido(e) {
+    return /^[^@\s<>"']+@[^@\s<>"']+\.[^@\s<>"']+$/.test(String(e || '').trim());
   }
 
   function boton(clase, href, txt) {

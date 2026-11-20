@@ -17,10 +17,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 
-<!-- Ficha para buscadores y mapas. Solo lo verificado: nombre, sedes,
-     direcciones y coordenadas. Sin telefono y sin horarios de Fidenza,
-     porque no los tengo confirmados — un horario inventado aqui se lo traga
-     Google y acaba saliendo en la ficha del mapa. -->
+<!-- Ficha para buscadores y mapas. Solo lo verificado y lo que han dado
+     ellos en su documento: nombre, fundadores, ano de fundacion, sedes con
+     direccion y coordenadas, y redes.
+
+     Massa-Carrara no esta todavia: la crean ellos desde el panel. Cuando se
+     anada a sedi.js para darle su pagina propia, hay que anadirla aqui.
+
+     Los horarios NO van aqui: el formato de schema.org pide dia y hora en un
+     formato fijo, y los suyos son texto libre ("ogni 14 giorni", "secondo
+     calendario"). Convertirlos a ojo seria inventar, y Google se lo traga y lo
+     ensena en la ficha del mapa. -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -28,25 +35,83 @@
   "name": "Gruppo Cristiano Latino Americano",
   "alternateName": "Gruppo Cristiano",
   "url": "https://www.gruppocristiano.it/",
+  "email": "gruppocristiano@gmail.com",
+  "foundingDate": "2003",
+  "foundingLocation": {
+    "@type": "Place",
+    "name": "Parma"
+  },
+  "founder": [
+    {
+      "@type": "Person",
+      "name": "Leonardo Cerasino",
+      "alternateName": "Aldo Cerasino"
+    },
+    {
+      "@type": "Person",
+      "name": "Mariela De Los Santos"
+    }
+  ],
   "sameAs": [
     "https://www.instagram.com/gruppocristiano",
     "https://www.facebook.com/GruppoCristiano",
-    "https://www.youtube.com/@gruppocristiano"
+    "https://www.youtube.com/@gruppocristiano",
+    "https://open.spotify.com/show/4XaPGtBPszdYUpb5d3tCdE"
   ],
   "location": [
     {
       "@type": "Place",
-      "name": "Gruppo Cristiano Fidenza",
-      "address": { "@type": "PostalAddress", "streetAddress": "Via Galileo Ferraris 14",
-        "postalCode": "43036", "addressLocality": "Fidenza", "addressRegion": "PR", "addressCountry": "IT" },
-      "geo": { "@type": "GeoCoordinates", "latitude": 44.859535, "longitude": 10.087606 }
+      "name": "Gruppo Cristiano Parma",
+      "url": "https://www.gruppocristiano.it/parma/",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Strada Egidio Pini 6",
+        "postalCode": "43126",
+        "addressLocality": "Parma",
+        "addressRegion": "PR",
+        "addressCountry": "IT"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 44.807452,
+        "longitude": 10.293616
+      }
     },
     {
       "@type": "Place",
-      "name": "Gruppo Cristiano Parma",
-      "address": { "@type": "PostalAddress", "streetAddress": "Strada Egidio Pini 6",
-        "postalCode": "43126", "addressLocality": "Parma", "addressRegion": "PR", "addressCountry": "IT" },
-      "geo": { "@type": "GeoCoordinates", "latitude": 44.807452, "longitude": 10.293616 }
+      "name": "Gruppo Cristiano Fidenza",
+      "url": "https://www.gruppocristiano.it/fidenza/",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Via Galileo Ferraris 14/15",
+        "postalCode": "43036",
+        "addressLocality": "Fidenza",
+        "addressRegion": "PR",
+        "addressCountry": "IT"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 44.859535,
+        "longitude": 10.087606
+      }
+    },
+    {
+      "@type": "Place",
+      "name": "Gruppo Cristiano Reggio Emilia",
+      "url": "https://www.gruppocristiano.it/reggio-emilia/",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Via Arcangelo Corelli 5",
+        "postalCode": "42124",
+        "addressLocality": "Reggio Emilia",
+        "addressRegion": "RE",
+        "addressCountry": "IT"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 44.706067,
+        "longitude": 10.607343
+      }
     }
   ]
 }
@@ -67,6 +132,7 @@
   <div class="navright">
     <div class="navlinks">
       <a href="#sedi" data-i18n="nav_sedi">Le sedi</a>
+      <a href="#storia" data-i18n="nav_storia">Chi siamo</a>
       <a href="#visione" data-i18n="nav_visione">La visione</a>
       <a href="#fede" data-i18n="nav_fede">Punti di fede</a>
       <a href="#domande" data-i18n="nav_domande">Domande</a>
@@ -115,21 +181,88 @@
     <div class="sec-head reveal">
       <p class="eyebrow" data-i18n="sd_eyebrow">Le sedi</p>
       <h2 data-i18n="sd_h2">Un gruppo,<br>più chiese.</h2>
-      <p data-i18n="sd_p">Una scheda per ogni chiesa, con la sua mappa. Si tocca, e si apre
-        il navigatore del telefono già impostato su quell'indirizzo.</p>
+      <p data-i18n="sd_p">Una scheda per ogni chiesa. Si tocca, e si apre la sua pagina:
+        orari, pastori e come arrivare.</p>
     </div>
 
     <div class="sedi" id="sedi-lista"></div>
 
-    <div class="nota reveal">
-      <b data-i18n="sd_nota_h">Quello che manca</b>
-      <p data-i18n="sd_nota_p">Gli indirizzi sono verificati uno per uno. Gli orari di Parma
-        vengono dal sito del Consiglio delle Chiese Cristiane di Parma e vanno confermati da
-        voi; di Fidenza non compare l'ora da nessuna parte.</p>
-      <p data-i18n="sd_nota_p2">Di ogni sede mi servono il nome, la via con il numero civico,
-        i giorni e le ore, e le lingue che si parlano. Da lì la scheda si riempie, mappa
-        compresa.</p>
+  </div>
+</section>
+
+<!-- ============================================================================
+     CHI SIAMO — la historia y los fundadores.
+
+     Todo el texto es SUYO: el documento "Informazioni chiese Gruppo
+     Cristiano". Copiado tal cual salvo una cosa: cada biografia empezaba por
+     el nombre ("Leonardo (Aldo) Cerasino, ha conosciuto...") y el nombre ya
+     va de titulo justo encima, asi que empieza por el verbo ("Ha
+     conosciuto..."). Al quitarlo se va tambien una coma que sobraba entre
+     sujeto y verbo.
+
+     El titular tambien es suyo: "Un'unica famiglia di comunita cristiane" es
+     el lema de su mapa conceptual.
+
+     Sin fotos a proposito: no han mandado ninguna, y una foto de banco de
+     imagenes al lado del nombre de un pastor seria hacer pasar a un
+     desconocido por el.
+     ============================================================================ -->
+<section id="storia">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow" data-i18n="st_eyebrow">Chi siamo</p>
+      <h2 data-i18n="st_h2">Un’unica famiglia<br>di comunità cristiane.</h2>
     </div>
+
+    <div class="storia reveal">
+      <p class="storia-anno" aria-hidden="true">2003</p>
+      <div class="storia-testo">
+        <p data-i18n="st_p1">Nel 2003, Aldo e Mariela hanno dato vita alla comunità Gruppo
+          Cristiano, con la fondazione della prima chiesa a Parma.</p>
+        <p data-i18n="st_p2">Nel corso degli anni, grazie alla crescita della comunità e
+          all’opera del Signore, si è sviluppata una realtà sempre più ampia e multiculturale,
+          capace di accogliere persone di ogni età e provenienza: bambini, giovani, adulti e
+          anziani, appartenenti a diverse nazionalità.</p>
+        <p data-i18n="st_p3">Questa crescita ha portato alla nascita di nuove comunità sul
+          territorio, con l’apertura di altre chiese a Fidenza, Reggio Emilia e Marina di
+          Carrara.</p>
+        <p data-i18n="st_p4">La visione missionaria non si è fermata a queste realtà. Il
+          desiderio che continua a motivare Aldo e Mariela è quello di vedere nascere nuove
+          comunità cristiane in Italia, per annunciare il Vangelo, raggiungere nuove persone e
+          formare discepoli di Gesù Cristo, contribuendo così alla diffusione del Regno di
+          Dio.</p>
+      </div>
+    </div>
+
+    <h3 class="fondatori-h reveal" data-i18n="st_fond">Fondatori e pastori senior</h3>
+    <div class="fondatori">
+      <article class="fondatore reveal d1">
+        <h4>Leonardo (Aldo) Cerasino</h4>
+        <p data-i18n="st_aldo1">Ha conosciuto personalmente il Signore nel 1989, iniziando un
+          percorso di fede e crescita spirituale che lo ha portato a maturare anche attraverso
+          esperienze di formazione e servizio cristiano.</p>
+        <p data-i18n="st_aldo2">Per tre anni ha collaborato con il movimento dei Navigatori in
+          Inghilterra, dove ha frequentato e completato la scuola biblica organizzata
+          dall’associazione. Nel 2010 ha inoltre completato il percorso formativo presso la
+          Scuola Biblica per Responsabili di Comunità di Uomini Nuovi, a Marchirolo
+          (Varese).</p>
+      </article>
+      <article class="fondatore reveal d2">
+        <h4>Mariela De Los Santos</h4>
+        <p data-i18n="st_mari1">Originaria della Repubblica Dominicana, ha conosciuto il Signore
+          nel 1980. È cresciuta spiritualmente presso la Comunità Cristiana «Casa de Oración»,
+          nella Repubblica Dominicana. Parallelamente al suo cammino di fede, ha conseguito una
+          laurea in Psicologia presso l’Università Autonoma di Santo Domingo (UASD).</p>
+        <p data-i18n="st_mari2">Nel 1990 è arrivata in Italia come missionaria, proseguendo il
+          suo impegno nel servizio cristiano. Nel 1995 ha completato la scuola biblica dei
+          Navigatori in Inghilterra, approfondendo ulteriormente la propria formazione
+          spirituale e biblica.</p>
+      </article>
+    </div>
+    <p class="fondatori-pie reveal" data-i18n="st_pie">Aldo e Mariela condividono una vita
+      dedicata alla fede, al servizio e alla missione cristiana. Sono i genitori di Rebecca,
+      la quale, insieme a suo marito Andrea, serve all’interno del Gruppo Cristiano di Parma
+      mettendo a disposizione i propri doni.</p>
   </div>
 </section>
 
@@ -224,7 +357,8 @@
       <details>
         <summary data-i18n="q1">Come trovo la chiesa più vicina a me?</summary>
         <p class="risposta" data-i18n="a1">Nella sezione «Le sedi» c'è una scheda per ogni
-          chiesa, con la mappa. Si tocca e si apre il navigatore del telefono.</p>
+          chiesa. Si tocca e si apre la sua pagina, con gli orari, i pastori e il bottone per
+          arrivarci col navigatore del telefono.</p>
       </details>
       <details>
         <summary data-i18n="q2">Devo vestirmi in un modo particolare?</summary>
@@ -275,6 +409,13 @@
       <a href="https://www.youtube.com/@gruppocristiano" target="_blank" rel="noopener"
          aria-label="YouTube del Gruppo Cristiano">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M22 12s0-3.3-.4-4.9a2.6 2.6 0 0 0-1.8-1.8C18.2 4.9 12 4.9 12 4.9s-6.2 0-7.8.4a2.6 2.6 0 0 0-1.8 1.8C2 8.7 2 12 2 12s0 3.3.4 4.9c.2.9.9 1.6 1.8 1.8 1.6.4 7.8.4 7.8.4s6.2 0 7.8-.4a2.6 2.6 0 0 0 1.8-1.8c.4-1.6.4-4.9.4-4.9zM10 15.2V8.8l5.2 3.2z"/></svg>
+      </a>
+      <!-- El canal de Spotify es de TODAS las iglesias, segun su documento. El
+           enlace llevaba detras un codigo de quien lo compartio por WhatsApp
+           (?si=...&utm_source=whatsapp...): se quita, es suyo, no del canal. -->
+      <a href="https://open.spotify.com/show/4XaPGtBPszdYUpb5d3tCdE" target="_blank" rel="noopener"
+         aria-label="Spotify del Gruppo Cristiano">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M7 9.6c3.4-1 7.2-.7 10.2 1"/><path d="M7.6 12.7c2.8-.8 5.8-.5 8.3.9"/><path d="M8.2 15.6c2.2-.6 4.4-.4 6.4.7"/></svg>
       </a>
     </div>
     <!-- Las ciudades las pone app.js desde las sedes publicadas: escrita a
