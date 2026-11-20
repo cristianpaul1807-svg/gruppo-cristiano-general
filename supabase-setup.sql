@@ -331,6 +331,19 @@ create policy "el general invita"
   using      (public.es_generale())
   with check (public.es_generale());
 
+-- LOS PERMISOS DE BASE. Los proyectos nuevos de Supabase ya no los dan solos
+-- sobre las tablas nuevas: sin esto, la web recibe "permission denied" aunque
+-- las reglas de arriba la dejen. Esto abre la puerta; las reglas (RLS)
+-- deciden quien pasa y que filas ve.
+grant usage on schema public to anon, authenticated;
+grant select                         on public.sede    to anon, authenticated;
+grant insert, update, delete         on public.sede    to authenticated;
+grant select                         on public.profilo to authenticated;
+grant select, insert, update, delete on public.invito  to authenticated;
+grant execute on function public.es_generale(), public.mia_sede(), public.ha_accesso(),
+  public.ha_responsabile(text), public.puo_sede(text), public.puo_cartella(text)
+  to anon, authenticated;
+
 -- Que el general solo pueda cambiar `attivo` en profilo, y nada mas.
 revoke update on public.profilo from authenticated;
 grant  update (attivo) on public.profilo to authenticated;
@@ -418,6 +431,9 @@ create policy "solo el general lo cambia"
   on public.sito for update to authenticated
   using      (public.es_generale())
   with check (public.es_generale());
+
+grant select on public.sito to anon, authenticated;
+grant update on public.sito to authenticated;
 
 -- Una iglesia no puede llamarse como la carpeta del general: subiria sus fotos
 -- dentro de la suya. El panel ya lo evita; esto, por si alguien se salta el panel.
