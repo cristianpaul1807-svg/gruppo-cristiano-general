@@ -55,6 +55,22 @@
     var dir = s.via && s.cap ? s.via + ', ' + s.cap + ', Italia' : '';
     var q = encodeURIComponent(dir);
 
+    /* --- su foto de portada y su logo, si los ha subido ----------------------
+       Las dos vienen de la base de datos: pasan por imagen(), que solo deja
+       direcciones https (o una imagen metida en la ficha, en la demo). Sin foto, la portada es la franja crema de siempre. */
+    var cop = $('#sp-copertina'), lg = $('#sp-logo'), cab = $('#sp-hero');
+    var urlCop = imagen(s.copertina), urlLogo = imagen(s.logo);
+    if (cop && cab) {
+      if (urlCop) { cop.src = urlCop; cop.hidden = false; cab.classList.add('con-foto'); }
+      else { cop.hidden = true; cop.removeAttribute('src'); cab.classList.remove('con-foto'); }
+    }
+    if (lg) {
+      if (urlLogo) {
+        lg.src = urlLogo; lg.hidden = false;
+        lg.alt = texto('sd_alt_logo', 'Logo della chiesa di') + ' ' + s.citta;
+      } else { lg.hidden = true; lg.removeAttribute('src'); }
+    }
+
     /* --- la direccion, bajo el titulo --------------------------------------
        El generador ya la ha escrito. Se vuelve a escribir aqui por si el panel
        la ha cambiado despues del ultimo despliegue. */
@@ -279,6 +295,8 @@
   function seguro(u) {
     return window.SEGURO ? SEGURO(u) : (/^https?:\/\/\S+$/i.test(String(u || '').trim()) ? String(u).trim() : '');
   }
+  /* El origen de una imagen: ver IMAGEN en app.js. */
+  function imagen(u) { return window.IMAGEN ? IMAGEN(u) : seguro(u); }
   function correoValido(e) {
     return /^[^@\s<>"']+@[^@\s<>"']+\.[^@\s<>"']+$/.test(String(e || '').trim());
   }

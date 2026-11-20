@@ -54,6 +54,10 @@ alter table public.sede add column if not exists whatsapp text not null default 
 -- desde el panel cuando cambien.
 --   pastori: [["Daniel Lana",""],["Samuele Lorenzini","pastore giovani"]]
 --   social:  {"instagram":"https://...","facebook":"https://...","youtube":"https://..."}
+-- La foto de portada que sube cada iglesia desde el panel (direccion de la
+-- imagen en el almacen de abajo). El logo va en la columna `logo`, que ya
+-- existia.
+alter table public.sede add column if not exists copertina text not null default '';
 alter table public.sede add column if not exists email   text  not null default '';
 alter table public.sede add column if not exists pastori jsonb not null default '[]'::jsonb;
 alter table public.sede add column if not exists social  jsonb not null default '{}'::jsonb;
@@ -86,9 +90,15 @@ create trigger sede_tocada before update on public.sede
 -- (gestisce il sito principale) y "Responsabili di comunita" (gestiscono i
 -- contenuti della propria sede).
 --
---   generale  -> puede todo: crear iglesias, borrarlas, tocar cualquiera, y
---                dar y quitar accesos.
+--   generale  -> lo del grupo: crear iglesias, dar y quitar accesos, y la
+--                portada de la web general. Una iglesia la lleva SOLO
+--                mientras no tiene responsable.
 --   sede      -> cambia LA SUYA. Ni crear ni borrar ninguna.
+--
+-- CADA UNO EN LO SUYO: en cuanto una iglesia tiene un responsable con el
+-- acceso activo, es de esa persona y el general ya no puede cambiarla, ni sus
+-- fotos, ni borrarla. Si hace falta, el general le quita el acceso y la
+-- iglesia vuelve a ser suya. Asi nunca hay dos personas tocando lo mismo.
 --
 -- Crear una iglesia es decidir que comunidad entra en el grupo, y eso no es
 -- una decision de contenido: por eso el responsable de sede no puede.
@@ -146,6 +156,34 @@ as $$
     select 1 from public.profilo p
     where p.utente = (select auth.uid()) and p.attivo
   );
+$$;
+
+-- ¿Tiene esta iglesia un responsable con el acceso activo?
+create or replace function public.ha_responsabile(s text)
+returns boolean language sql stable security definer set search_path = ''
+as $$
+  select exists (
+    select 1 from public.profilo p
+    where p.ruolo = 'sede' and p.sede = s and p.attivo
+  );
+$$;
+
+-- ¿Puede quien ha entrado cambiar esta iglesia? Su responsable, si o si. El
+-- general, solo si no tiene responsable. Nadie mas.
+create or replace function public.puo_sede(s text)
+returns boolean language sql stable security definer set search_path = ''
+as $$
+  select coalesce(s = public.mia_sede(), false)
+      or (public.es_generale() and not public.ha_responsabile(s));
+$$;
+
+-- Lo mismo para las carpetas del almacen de fotos. La carpeta `generale` es la
+-- del general (la portada de la web del grupo) y no la toca nadie mas.
+create or replace function public.puo_cartella(c text)
+returns boolean language sql stable security definer set search_path = ''
+as $$
+  select case when c = 'generale' then public.es_generale()
+              else public.puo_sede(c) end;
 $$;
 
 -- ----------------------------------------------------------------------------
@@ -254,16 +292,19 @@ create policy "solo el general crea"
   on public.sede for insert to authenticated
   with check (public.es_generale());
 
--- El general, cualquiera. El de sede, la suya — y el `with check` le impide
--- cambiarle el id a su ficha para apoderarse de otra.
-create policy "el general o el de esa sede"
+-- Cada uno en lo suyo (ver puo_sede arriba). El `with check` impide ademas
+-- cambiarle el id a una ficha para apoderarse de otra.
+drop policy if exists "cada uno la suya" on public.sede;
+create policy "cada uno la suya"
   on public.sede for update to authenticated
-  using      (public.es_generale() or id = public.mia_sede())
-  with check (public.es_generale() or id = public.mia_sede());
+  using      (public.puo_sede(id))
+  with check (public.puo_sede(id));
 
+-- Borrar: el general, y solo una iglesia sin responsable. Una que tiene
+-- responsable no desaparece sin que antes se le quite el acceso.
 create policy "solo el general borra"
   on public.sede for delete to authenticated
-  using (public.es_generale());
+  using (public.es_generale() and not public.ha_responsabile(id));
 
 -- Cada uno lee su propia fila: es como el panel sabe que ensenar.
 create policy "cada uno ve su perfil"
@@ -294,6 +335,97 @@ create policy "el general invita"
 revoke update on public.profilo from authenticated;
 grant  update (attivo) on public.profilo to authenticated;
 
+-- ----------------------------------------------------------------------------
+-- LAS FOTOS Y LOS LOGOS DE CADA IGLESIA
+--
+-- Un almacen de archivos ("bucket") llamado media. Publico para LEER: las
+-- fotos se ven en la web sin entrar en ningun sitio. Para SUBIR, las reglas de
+-- siempre: cada iglesia en SU carpeta (media/parma/..., media/fidenza/...), y
+-- el general en cualquiera.
+--
+-- El propio almacen pone dos topes, que no dependen del panel:
+--   - solo JPEG, PNG y WebP. Fuera SVG: un SVG puede llevar codigo dentro, y
+--     servido desde aqui se ejecutaria.
+--   - 3 MB por archivo. El panel ya achica las fotos en el movil antes de
+--     subirlas (una foto de movil son 4 MB y el plan gratuito da 1 GB), pero
+--     el tope esta aqui por si alguien se salta el panel.
+-- ----------------------------------------------------------------------------
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('media', 'media', true, 3145728, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do update
+  set public = excluded.public,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "media: ver"            on storage.objects;
+drop policy if exists "media: subir lo suyo"  on storage.objects;
+drop policy if exists "media: cambiar lo suyo" on storage.objects;
+drop policy if exists "media: borrar lo suyo" on storage.objects;
+
+-- Leer: cualquiera que haya entrado (borrar exige poder ver lo que se borra).
+-- Los visitantes no lo necesitan: el almacen es publico y ven las fotos por
+-- su direccion directa.
+create policy "media: ver"
+  on storage.objects for select to authenticated
+  using (bucket_id = 'media');
+
+-- (storage.foldername(name))[1] es la primera carpeta de la ruta:
+-- para "parma/copertina-1732.jpg" es "parma". Cada carpeta, con la misma
+-- regla que su ficha (puo_cartella, arriba).
+create policy "media: subir lo suyo"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'media' and public.puo_cartella((storage.foldername(name))[1]));
+
+create policy "media: cambiar lo suyo"
+  on storage.objects for update to authenticated
+  using      (bucket_id = 'media' and public.puo_cartella((storage.foldername(name))[1]))
+  with check (bucket_id = 'media' and public.puo_cartella((storage.foldername(name))[1]));
+
+create policy "media: borrar lo suyo"
+  on storage.objects for delete to authenticated
+  using (bucket_id = 'media' and public.puo_cartella((storage.foldername(name))[1]));
+
+-- ----------------------------------------------------------------------------
+-- LA WEB DEL GRUPO — lo que sube el general
+--
+-- Una sola fila. Por ahora, la foto de portada de la pagina principal; si no
+-- hay, la web usa la que trae de serie. La lee todo el mundo; la cambia solo
+-- el general.
+-- ----------------------------------------------------------------------------
+create table if not exists public.sito (
+  id        boolean primary key default true check (id),   -- solo puede haber una fila
+  copertina text        not null default '',
+  tocada    timestamptz not null default now()
+);
+insert into public.sito (id) values (true) on conflict (id) do nothing;
+
+comment on table public.sito is
+  'Lo de la web general que cambia el administrador general desde el panel. Una sola fila.';
+
+drop trigger if exists sito_tocada on public.sito;
+create trigger sito_tocada before update on public.sito
+  for each row execute function public.tocar_sede();
+
+alter table public.sito enable row level security;
+drop policy if exists "cualquiera lee el sitio"   on public.sito;
+drop policy if exists "solo el general lo cambia" on public.sito;
+
+create policy "cualquiera lee el sitio"
+  on public.sito for select to anon, authenticated
+  using (true);
+
+create policy "solo el general lo cambia"
+  on public.sito for update to authenticated
+  using      (public.es_generale())
+  with check (public.es_generale());
+
+-- Una iglesia no puede llamarse como la carpeta del general: subiria sus fotos
+-- dentro de la suya. El panel ya lo evita; esto, por si alguien se salta el panel.
+do $$ begin
+  alter table public.sede add constraint sede_id_no_riservato
+    check (id not in ('generale', 'sito', 'panel', 'media'));
+exception when duplicate_object then null; end $$;
+
 -- ============================================================================
 -- DESPUES DE EJECUTAR ESTO — en este orden
 --
@@ -320,7 +452,9 @@ grant  update (attivo) on public.profilo to authenticated;
 --    "Accessi", elige la iglesia, escribe correo y contrasena, y listo.
 --
 -- 4. Comprobar: entrar con la cuenta de un responsable de sede y ver que solo
---    aparece SU iglesia. Si aparecen todas, algo no se ha aplicado.
+--    aparece SU iglesia. Si aparecen todas, algo no se ha aplicado. Y con
+--    la del general: una iglesia con responsable dice "Gestita da ..." y no
+--    tiene boton "Modifica".
 --
 -- SI ALGUIEN OLVIDA SU CONTRASENA (mientras no haya correo con codigo):
 --

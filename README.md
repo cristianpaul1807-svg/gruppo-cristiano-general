@@ -144,9 +144,18 @@ Los dos papeles que ellos mismos dibujaron en su mapa conceptual:
 | | Administrador general | Responsable de comunidad |
 |---|---|---|
 | Crear una iglesia | sí | no |
-| Borrar una iglesia | sí | no |
-| Cambiar cualquiera | sí | solo la suya |
+| Borrar una iglesia | solo si no tiene responsable | no |
+| Cambiar una iglesia (datos, foto, logo) | solo si no tiene responsable | solo la suya |
+| Foto de portada de la web del grupo | sí | no |
+| Dar y quitar accesos | sí | no |
 | Ver todas | sí | sí |
+
+**Cada uno en lo suyo.** En cuanto una iglesia tiene un responsable con el
+acceso activo, es de esa persona: el general ya no puede cambiarla, ni subir
+fotos en su carpeta, ni borrarla. Si hiciera falta, le quita el acceso y la
+iglesia vuelve a él. Mientras no tiene responsable, la lleva el general. Lo
+del general es la web del grupo: su sección «Il sito del gruppo» del panel
+(la foto de portada, en la tabla `sito` y la carpeta `generale/` del almacén).
 
 Crear o borrar una iglesia es decidir qué comunidad entra en el grupo, y eso
 no es una decisión de contenido — por eso el responsable de sede no puede.

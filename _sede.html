@@ -81,12 +81,15 @@ window.__META = null;
 
 <nav>
   <a class="brand" href="../">
-    <img src="../media/simbolo-256.png" width="256" height="126" alt="">
+    <!-- El pez con los colores OFICIALES del logo. El de media/simbolo-256.png es
+         la version aclarada para fondo oscuro: sobre esta barra blanca salia
+         desvaido. -->
+    <img src="../media/simbolo-ufficiale-256.png" width="256" height="126" alt="">
     <span class="brand-text">Gruppo Cristiano<b data-i18n="marca_sub">Latino Americano</b></span>
   </a>
   <div class="navright">
     <div class="navlinks">
-      <a href="../#sedi" data-i18n="sp_torna">Tutte le chiese</a>
+      <a href="../#sedi" data-i18n="sp_torna">Tutte le comunità</a>
       <a href="../#visione" data-i18n="nav_visione">La visione</a>
       <a href="../#fede" data-i18n="nav_fede">Punti di fede</a>
       <a href="../#domande" data-i18n="nav_domande">Domande</a>
@@ -109,8 +112,15 @@ window.__META = null;
      JavaScript: son lo que tiene que leerse aunque el JavaScript falle, y lo
      que lee Google. Lo demas lo pinta sede.js desde los datos vivos.
      ============================================================================ -->
-<header class="hero hero-sede">
+<!-- Solo "hero-sede", sin "hero": "hero" es ahora la portada del grupo, que
+     mide 230 pantallas y lleva el efecto al bajar. Con las dos clases, cada
+     iglesia habria heredado ese efecto sin foto. -->
+<header class="hero-sede" id="sp-hero">
+  <!-- La foto de portada y el logo que sube cada iglesia desde el panel. Sin
+       foto, la franja crema; sin logo, solo el nombre. Los pone sede.js. -->
+  <img class="sp-copertina" id="sp-copertina" alt="" hidden>
   <div class="wrap">
+    <img class="sp-logo" id="sp-logo" alt="" hidden>
     <p class="eyebrow" data-i18n="sp_eyebrow">Una chiesa del gruppo</p>
     <h1>Gruppo Cristiano<br><em></em></h1>
     <p class="sp-via" id="sp-via"></p>

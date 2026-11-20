@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
-"""Genera el mapa oscuro de una sede, igual que el de Fidenza.
+"""Genera el mapa de una sede, en el estilo claro de la web.
 
     python3 -I herramientas/mapa-sede.py parma 44.801485 10.327904
 
-Deja el JPG en prototipi/gcf/media/mappa-<nombre>.jpg, listo para ponerlo en
-el array SEDI de la pagina.
+Deja el JPG en media/mappa-<nombre>.jpg.
 
 Por que una imagen y no un mapa incrustado:
   - Un iframe que no carga —red de oficina, bloqueador, conexion mala— deja
     el icono de pagina rota en medio del diseno. Una imagen o se ve o se ve.
   - Ni una peticion a terceros desde la pagina del visitante.
-  - El color: las teselas de OpenStreetMap son claras y la pagina es oscura.
-    Aqui se oscurecen UNA vez, al montarlas. Un filtro CSS habria invertido
-    tambien el marcador.
+  - El color: las teselas de OpenStreetMap vienen muy saturadas —verdes,
+    amarillos, rosas— y en una pagina blanca, azul marino y dorada gritan. Aqui
+    se suavizan UNA vez, al montarlas: un poco de gris y un poco del blanco
+    calido de la pagina. Un filtro CSS habria tenido el marcador tambien.
+
+    (Hasta el rediseno en claro se oscurecian, para la pagina negra.)
 
 Las teselas son de OpenStreetMap y hay que citarlas: la pagina lleva
 "Mappa (c) contributori di OpenStreetMap" debajo de cada mapa. Son unas pocas
@@ -63,22 +65,30 @@ def descargar(z, x, y):
     return Image.open(io.BytesIO(r.stdout)).convert('RGB')
 
 
-def oscurecer(img):
-    """Invierte, dessatura y tira hacia el azul de la pagina (#0b0d12)."""
+# Las MISMAS cifras que mapa.js, que hace lo mismo en el movil desde el panel.
+# Si se cambian aqui, se cambian alli: una iglesia creada desde el panel tiene
+# que verse igual que las de aqui al lado.
+GRIS = 0.38                                    # cuanto se desatura
+FONDO = np.array([0.984, 0.980, 0.969])        # #fbfaf7, el fondo de la pagina
+VELO = 0.12                                    # cuanto se tira hacia el
+
+
+def aclarar(img):
+    """Desatura un poco y lleva hacia el blanco calido de la pagina."""
     a = np.asarray(img).astype(float) / 255.0
-    inv = 1.0 - a
-    gris = inv.mean(axis=2, keepdims=True)
-    a = inv * 0.45 + gris * 0.55
-    a = a * 0.78 + np.array([0.043, 0.055, 0.078]) * 0.9
+    gris = a.mean(axis=2, keepdims=True)
+    a = a * (1 - GRIS) + gris * GRIS
+    a = a * (1 - VELO) + FONDO * VELO
     return Image.fromarray((np.clip(a, 0, 1) * 255).astype('uint8'))
 
 
 def marcador(img, px, py):
     d = ImageDraw.Draw(img, 'RGBA')
-    for r, alfa in ((38, 38), (27, 68), (17, 118)):
-        d.ellipse((px - r, py - r, px + r, py + r), fill=(66, 148, 245, alfa))
-    d.ellipse((px - 8, py - 8, px + 8, py + 8), fill=(255, 255, 255, 255))
-    d.ellipse((px - 5.5, py - 5.5, px + 5.5, py + 5.5), fill=(62, 139, 223, 255))
+    # el azul oscuro del logo (#034c82), que sobre el mapa claro se ve de lejos
+    for r, alfa in ((38, 34), (27, 60), (17, 105)):
+        d.ellipse((px - r, py - r, px + r, py + r), fill=(3, 76, 130, alfa))
+    d.ellipse((px - 9, py - 9, px + 9, py + 9), fill=(255, 255, 255, 255))
+    d.ellipse((px - 6, py - 6, px + 6, py + 6), fill=(3, 76, 130, 255))
 
 
 def main():
@@ -98,7 +108,7 @@ def main():
     px, py = (fx - x0) * 256, (fy - y0) * 256
     izq = max(0, min(lienzo.size[0] - ANCHO, int(px - ANCHO / 2)))
     arr = max(0, min(lienzo.size[1] - ALTO, int(py - ALTO / 2)))
-    recorte = oscurecer(lienzo.crop((izq, arr, izq + ANCHO, arr + ALTO)))
+    recorte = aclarar(lienzo.crop((izq, arr, izq + ANCHO, arr + ALTO)))
     marcador(recorte, px - izq, py - arr)
 
     DESTINO.mkdir(parents=True, exist_ok=True)

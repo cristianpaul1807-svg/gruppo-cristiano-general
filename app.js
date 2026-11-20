@@ -44,13 +44,126 @@ var observarReveal;
     var total = h.scrollHeight - h.clientHeight;
     var r = total > 0 ? Math.min(Math.max(h.scrollTop / total, 0), 1) : 0;
     barra.style.width = (r * 100) + '%';
-    if (cue) cue.style.opacity = h.scrollTop > 40 ? '0' : '1';
+    /* el aviso de "Scorri" lo apaga el efecto de la portada, mas abajo */
+    if (cue && !$('#hero .hero-pin')) cue.style.opacity = h.scrollTop > 40 ? '0' : '1';
   }
   document.addEventListener('scroll', function () {
     if (!tic) { requestAnimationFrame(function () { pintar(); tic = false; }); tic = true; }
   }, { passive: true });
   window.addEventListener('resize', pintar);
   pintar();
+})();
+
+/* ============================================================================
+   LA PORTADA — al bajar, la foto se acerca, se oscurece y sale el logo.
+
+   La portada mide 230svh y por dentro lleva una caja pegada arriba. Mientras
+   se baja por ella, la caja no se mueve y lo que cambia es lo de dentro, segun
+   cuanto se ha bajado (p, de 0 a 1):
+
+     0.00 – 1.00   la foto se acerca un 14 %
+     0.10 – 0.42   el titular y los botones se van hacia arriba
+     0.32 – 0.80   todo se oscurece hacia el azul marino
+     0.55 – 0.88   aparece el logo, con las ciudades debajo
+
+   Con "reducir movimiento" no hay nada de esto: el CSS deja la portada de una
+   pantalla y se ve el texto.
+   ============================================================================ */
+(function () {
+  var hero = $('#hero');
+  var pin = hero && hero.querySelector('.hero-pin');
+  if (!pin || reducido) return;
+
+  var video = hero.querySelector('.hero-foto video');
+  var medio = video || hero.querySelector('.hero-foto img');
+  var oscuro = hero.querySelector('.hero-oscuro');
+  var contenido = hero.querySelector('.hero-contenido');
+  var final = hero.querySelector('.hero-final');
+  var cue = $('#cue');
+
+  function tramo(p, a, b) { return Math.min(Math.max((p - a) / (b - a), 0), 1); }
+  function suave(t) { return t * t * (3 - 2 * t); }
+
+  /* SI ALGUN DIA ES UN VIDEO — tres reglas aprendidas en produccion, que no se
+     tocan aunque parezcan raras:
+       1. Nunca .pause(). Safari pinta su boton de "play" encima de cualquier
+          video pausado, llegue como llegue a pausa. El video se queda
+          "reproduciendo" a velocidad 0.
+       2. playbackRate = 0 DESPUES de que play() se resuelva, no antes.
+       3. Nunca llevarlo al final exacto: al llegar salta 'ended' y se para. */
+  var listo = false;
+  if (video) {
+    video.muted = true; video.playsInline = true;
+    var cebar = function () {
+      var pr = video.play();
+      if (pr && pr.then) pr.then(function () { video.playbackRate = 0; listo = true; }).catch(function () {});
+      else { video.playbackRate = 0; listo = true; }
+    };
+    video.addEventListener('loadedmetadata', cebar);
+    /* si el navegador lo pausa por su cuenta, se vuelve a cebar */
+    video.addEventListener('pause', function () { if (listo) cebar(); });
+    if (video.readyState >= 1) cebar();
+    /* iOS a veces no deja arrancar un video hasta el primer toque */
+    ['touchstart', 'click'].forEach(function (ev) {
+      window.addEventListener(ev, cebar, { once: true, passive: true });
+    });
+  }
+
+  var tic = false;
+  function pintar() {
+    var r = hero.getBoundingClientRect();
+    if (r.bottom < 0) return;                 // ya ha pasado: nada que mover
+    var recorrido = hero.offsetHeight - window.innerHeight;
+    var p = recorrido > 0 ? Math.min(Math.max(-r.top / recorrido, 0), 1) : 0;
+
+    medio.style.transform = 'scale(' + (1 + 0.14 * suave(p)) + ')';
+
+    var t = suave(tramo(p, 0.10, 0.42));
+    contenido.style.opacity = String(1 - t);
+    contenido.style.transform = 'translateY(' + (-40 * t) + 'px)';
+    /* Sin esto, los botones ya invisibles seguirian recibiendo toques encima
+       del logo. */
+    contenido.style.pointerEvents = t > 0.6 ? 'none' : '';
+
+    oscuro.style.opacity = String(0.9 * suave(tramo(p, 0.32, 0.80)));
+
+    var l = suave(tramo(p, 0.55, 0.88));
+    final.style.opacity = String(l);
+    final.firstElementChild.style.transform = 'scale(' + (0.94 + 0.06 * l) + ')';
+
+    if (cue) cue.style.opacity = p > 0.03 ? '0' : '1';
+
+    if (video && listo && video.duration) {
+      try { video.currentTime = Math.min(tramo(p, 0, 0.85) * video.duration, video.duration - 0.05); }
+      catch (e) {}
+    }
+  }
+  document.addEventListener('scroll', function () {
+    if (!tic) { requestAnimationFrame(function () { pintar(); tic = false; }); tic = true; }
+  }, { passive: true });
+  window.addEventListener('resize', pintar);
+  pintar();
+})();
+
+/* --- la foto de portada que sube el general -----------------------------------
+   Si el general ha subido una desde el panel, sale esa; si no, la de serie. La
+   nueva se descarga primero y se cambia cuando ya esta: asi no hay un momento
+   con la portada en blanco, y si falla se queda la de serie. */
+(function () {
+  var img = document.querySelector('#hero .hero-foto img');
+  if (!img || !window.ALMACEN || !ALMACEN.leerSito) return;
+  ALMACEN.leerSito().then(function (s) {
+    var url = s && IMAGEN(s.copertina);
+    if (!url) return;
+    var nueva = new Image();
+    nueva.onload = function () {
+      var pic = img.parentNode;
+      Array.prototype.slice.call(pic.querySelectorAll('source')).forEach(function (x) { pic.removeChild(x); });
+      img.removeAttribute('srcset'); img.removeAttribute('sizes');
+      img.src = url;
+    };
+    nueva.src = url;
+  });
 })();
 
 /* --- menu del movil -------------------------------------------------------- */
@@ -138,6 +251,20 @@ function SEGURO(url) {
   return /^https?:\/\/[^\s]+$/i.test(url) ? url : '';
 }
 
+/* Lo mismo para el ORIGEN DE UNA IMAGEN (la foto de portada y el logo de cada
+   iglesia). Aqui se acepta ademas una imagen metida en la propia ficha
+   (data:image/...), que es como las guarda el modo demo: en el src de una
+   imagen no puede ejecutar nada. En un enlace no se acepta nunca: un
+   "data:text/html" en un href es una pagina falsa servida desde nuestro
+   dominio. Y las rutas de sedi.js ("media/...") se sirven desde aqui. */
+function IMAGEN(url) {
+  url = String(url || '').trim();
+  if (/^data:image\/(png|jpeg|webp);base64,[a-z0-9+\/=]+$/i.test(url)) return url;
+  if (SEGURO(url)) return url;
+  if (/^media\/[a-z0-9._\/-]+$/i.test(url)) return RUTA(url);
+  return '';
+}
+
 function MAPA_DE(sede) {
   if (sede.mapa) return sede.mapa;
   var deArchivo = (window.SEDI_BASE || []).some(function (b) { return b.id === sede.id; });
@@ -168,17 +295,40 @@ function MAPA_DE(sede) {
        el aviso — nunca un hueco negro, que parece un fallo de carga. */
     var fuenteMapa = MAPA_DE(sede);
     var pagina = PAGINA(sede);
+    /* Lo de arriba de la tarjeta, por orden de preferencia:
+         1. la FOTO de portada que ha subido esa iglesia, con su logo encima;
+         2. solo su logo, si no hay foto;
+         3. el mapa, que es lo normal;
+         4. la trama de "mapa pendiente", si no hay ni direccion.
+       Las imagenes que vienen de la base de datos pasan por SEGURO: solo se
+       aceptan direcciones https, nada de "javascript:" ni rutas raras. */
+    var copertina = IMAGEN(sede.copertina);
+    var logo = IMAGEN(sede.logo);
     var cabecera;
-    if (sede.logo) {
+    if (copertina) {
+      cabecera = document.createElement(pagina ? 'a' : 'div');
+      cabecera.className = 'sede-mappa foto';
+      var ic = document.createElement('img');
+      ic.src = copertina; ic.loading = 'lazy'; ic.width = 1120; ic.height = 700;
+      ic.alt = texto('sd_alt_foto', 'La chiesa di') + ' ' + sede.citta;
+      cabecera.appendChild(ic);
+      if (logo) {
+        var se = document.createElement('img');
+        se.className = 'sello'; se.src = logo; se.loading = 'lazy';
+        se.alt = texto('sd_alt_logo', 'Logo della chiesa di') + ' ' + sede.citta;
+        cabecera.appendChild(se);
+      }
+    } else if (logo) {
       cabecera = document.createElement(pagina ? 'a' : 'div');
       cabecera.className = 'sede-mappa logo';
       var il = document.createElement('img');
-      il.src = RUTA(sede.logo); il.loading = 'lazy';
+      il.src = logo; il.loading = 'lazy';
       il.alt = texto('sd_alt_logo', 'Logo della chiesa di') + ' ' + sede.citta;
       cabecera.appendChild(il);
     } else if (fuenteMapa && dir) {
       cabecera = document.createElement(pagina ? 'a' : 'div');
-      cabecera.className = 'sede-mappa';
+      /* "mapa": el anillo que late sobre el marcador solo va en los mapas */
+      cabecera.className = 'sede-mappa mapa';
       var im = document.createElement('img');
       im.width = 1120; im.height = 700; im.loading = 'lazy';
       im.alt = texto('sd_alt', 'Mappa della chiesa di') + ' ' + sede.citta;
@@ -187,6 +337,7 @@ function MAPA_DE(sede) {
       im.onerror = (function (cab) {
         return function () {
           cab.textContent = texto('sd_senza_mappa', 'Mappa in attesa dell’indirizzo');
+          cab.classList.remove('mapa');
           cab.classList.add('vuota');
         };
       })(cabecera);
@@ -302,7 +453,9 @@ function MAPA_DE(sede) {
       if (pagina) {
         var v = document.createElement('a');
         v.className = 'btn piena'; v.href = pagina;
-        v.textContent = texto('sd_ver', 'La chiesa di') + ' ' + sede.citta;
+        /* corto y igual en todas: "La chiesa di Reggio Emilia" empujaba el
+           otro boton a una segunda linea y las tarjetas no cuadraban */
+        v.textContent = texto('sd_ver', 'Vedi la chiesa');
         acc.appendChild(v);
       }
       if (dir) {
@@ -360,9 +513,10 @@ function MAPA_DE(sede) {
        medio escribir desde el panel. */
     SEDI.filter(function (s) { return s.publicada !== false && s.id !== YO; })
         .forEach(function (s, i) { lista.appendChild(tarjeta(s, i)); });
-    /* La invitacion a mandar los datos de las demas solo tiene sentido en la
-       portada. Dentro de una iglesia, lo de al lado son sus hermanas. */
-    if (!YO) lista.appendChild(espera());
+    /* La tarjeta de "Le altre chiese" (la que pedia los datos de las demas
+       iglesias) ya no sale: era para ellos, cuando faltaban datos, y en una
+       web publica queda como una tarjeta a medio hacer. Las comunidades
+       nuevas las crean desde el panel y salen aqui solas. */
     if (observarReveal) observarReveal(lista);
   }
 
@@ -379,7 +533,114 @@ function MAPA_DE(sede) {
     if (ciudades.length) pie.textContent = ciudades.join(' · ');
   }
 
-  var dibujarTodo = function () { dibujar(); pintarPie(); };
+  /* Las publicadas que tienen coordenadas: las que caben en el mapa y entre
+     las que se busca la mas cercana. */
+  function conPunto() {
+    return SEDI.filter(function (s) {
+      return s.publicada !== false && isFinite(parseFloat(s.lat)) && isFinite(parseFloat(s.lon));
+    });
+  }
+
+  /* Bajo el logo, al final del efecto de la portada: las ciudades. Igual que
+     el pie, sale de la lista y no se escribe a mano. */
+  function pintarCiudades() {
+    var p = document.getElementById('hero-citta');
+    if (!p) return;
+    p.textContent = SEDI.filter(function (s) { return s.publicada !== false; })
+      .map(function (s) { return s.citta; }).filter(Boolean).join(' · ');
+  }
+
+  /* --- el mapa de la region ------------------------------------------------
+     Cada chincheta es un ENLACE a la pagina de esa comunidad, colocado encima
+     de la imagen con su latitud y su longitud. La imagen esta en Mercator
+     —la proyeccion de los mapas web—: en horizontal la longitud es lineal,
+     en vertical no, y por eso la cuenta de la y lleva el logaritmo. */
+  function pintarMapa() {
+    var reg = document.getElementById('regione');
+    if (!reg) return;
+    reg.querySelectorAll('.pin').forEach(function (p) { p.remove(); });
+    var N = +reg.dataset.lat0, S = +reg.dataset.lat1, O = +reg.dataset.lon0, E = +reg.dataset.lon1;
+    function merc(la) { return Math.log(Math.tan(Math.PI / 4 + la * Math.PI / 360)); }
+    var puestos = [];
+    conPunto().forEach(function (s) {
+      var x = (parseFloat(s.lon) - O) / (E - O);
+      var y = (merc(N) - merc(parseFloat(s.lat))) / (merc(N) - merc(S));
+      /* una comunidad fuera del encuadre (si un dia nace en Milan) sale en
+         la lista y en "la mas cercana", pero no en este mapa */
+      if (x < 0 || x > 1 || y < 0 || y > 1) return;
+      var a = document.createElement('a');
+      a.className = 'pin'; a.href = PAGINA(s); a.setAttribute('data-id', s.id);
+      a.style.left = (x * 100).toFixed(2) + '%';
+      a.style.top = (y * 100).toFixed(2) + '%';
+      a.setAttribute('aria-label', texto('sd_ver_aria', 'La chiesa di') + ' ' + s.citta);
+      var et = document.createElement('span'); et.textContent = s.citta;
+      a.appendChild(et);
+      a.appendChild(document.createElement('i'));
+      puestos.push({ el: a, x: x, y: y });
+      reg.appendChild(a);
+    });
+    /* Fidenza y Parma estan a 20 km: en un movil sus nombres se pisarian. Si
+       dos chinchetas estan muy juntas, la de mas abajo lleva el nombre
+       debajo en vez de encima. */
+    puestos.forEach(function (p) {
+      var pegada = puestos.some(function (q) {
+        return q !== p && Math.abs(q.x - p.x) < 0.16 && Math.abs(q.y - p.y) < 0.10 && q.y < p.y;
+      });
+      p.el.classList.toggle('abajo', pegada);
+    });
+  }
+
+  var dibujarTodo = function () { dibujar(); pintarPie(); pintarCiudades(); pintarMapa(); };
+
+  /* --- "Usa la mia posizione": cual queda mas cerca -------------------------
+     La posicion se pide al telefono y se usa ahi mismo: la cuenta de la
+     distancia se hace en el propio movil y no se manda a ningun sitio. */
+  (function () {
+    var boton = document.getElementById('vicina');
+    var esito = document.getElementById('trova-esito');
+    if (!boton || !esito) return;
+    if (!('geolocation' in navigator)) { boton.hidden = true; return; }
+
+    /* distancia en linea recta (haversine). Por carretera es mas: por eso el
+       texto dice "in linea d'aria". */
+    function km(la1, lo1, la2, lo2) {
+      var r = Math.PI / 180, dla = (la2 - la1) * r, dlo = (lo2 - lo1) * r;
+      var a = Math.sin(dla / 2) * Math.sin(dla / 2)
+        + Math.cos(la1 * r) * Math.cos(la2 * r) * Math.sin(dlo / 2) * Math.sin(dlo / 2);
+      return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    boton.addEventListener('click', function () {
+      esito.textContent = texto('tr_cerco', 'Cerco la tua posizione…');
+      boton.disabled = true;
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        boton.disabled = false;
+        var la = pos.coords.latitude, lo = pos.coords.longitude;
+        var lista = conPunto().map(function (s) {
+          return { s: s, d: km(la, lo, parseFloat(s.lat), parseFloat(s.lon)) };
+        }).sort(function (a, b) { return a.d - b.d; });
+        if (!lista.length) { esito.textContent = texto('tr_nessuna', 'Non trovo nessuna comunità sulla mappa.'); return; }
+        var c = lista[0];
+        /* El nombre viene de la base de datos: va como texto, no como HTML. */
+        esito.textContent = texto('tr_res1', 'La più vicina è') + ' ';
+        var b = document.createElement('b'); b.textContent = 'Gruppo Cristiano ' + c.s.citta;
+        esito.appendChild(b);
+        esito.appendChild(document.createTextNode(', ' + texto('tr_res2', 'a circa') + ' '
+          + Math.max(1, Math.round(c.d)) + ' ' + texto('tr_res3', 'km in linea d’aria.') + ' '));
+        var ir = document.createElement('a');
+        ir.href = PAGINA(c.s); ir.textContent = texto('tr_apri', 'Apri la sua pagina →');
+        esito.appendChild(ir);
+        document.querySelectorAll('#regione .pin').forEach(function (p) {
+          p.classList.toggle('cerca', p.getAttribute('data-id') === c.s.id);
+        });
+      }, function (err) {
+        boton.disabled = false;
+        esito.textContent = err && err.code === 1
+          ? texto('tr_negato', 'Non hai dato il permesso di usare la posizione. Puoi guardare la mappa qui accanto.')
+          : texto('tr_errore', 'Non sono riuscito a sapere dove sei. Guarda la mappa qui accanto.');
+      }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 600000 });
+    });
+  })();
   dibujarTodo();
   window.__dibujarSedi = dibujarTodo;
 
@@ -450,24 +711,44 @@ var I18N = {
     meta_title: "Gruppo Cristiano Latino Americano — Iglesias en Italia",
     meta_desc: "Gruppo Cristiano Latino Americano: iglesias evangélicas en Italia. Nuestras sedes, los horarios de las reuniones y cómo llegar. Italiano y español.",
     marca_sub: "Latino Americano",
-    nav_sedi: "Las iglesias", nav_storia: "Quiénes somos", nav_visione: "La visión", nav_fede: "Puntos de fe", nav_domande: "Preguntas",
-    hero_h1: 'Una esperanza verdadera,<br>en <em>cada ciudad</em>.',
+    nav_sedi: "Las comunidades", nav_storia: "Quiénes somos", nav_visione: "La visión", nav_fede: "Puntos de fe", nav_domande: "Preguntas",
+    hero_h1: "Una única familia de comunidades cristianas.",
     hero_p: "«Creemos que este mundo lleno de problemas y sufrimientos necesita una esperanza verdadera.»",
     versetto: "Isaías 55:5",
-    hero_cta1: "Encuentra la iglesia más cercana", hero_cta2: "Nuestra visión",
+    hero_cta1: "Encuentra una comunidad", hero_cta2: "Quiénes somos",
     cue: "Baja",
-    sd_eyebrow: "Las iglesias",
-    sd_h2: "Un grupo,<br>varias iglesias.",
-    sd_p: "Una ficha por cada iglesia. Se toca, y se abre su página: horarios, pastores y cómo llegar.",
+    sd_eyebrow: "Las comunidades",
+    sd_h2: "Nuestras comunidades",
+    sd_p: "Toca una ficha y se abre la página de esa iglesia: horarios, pastores y cómo llegar.",
     sd_vai: "Cómo llegar", sd_sito: "Ir a su web", sd_orari: "Horarios",
-    sd_ver: "La iglesia de", sd_ver_aria: "La iglesia de",
+    sd_ver: "Ver la iglesia", sd_ver_aria: "La iglesia de",
     /* --- la página de cada iglesia --- */
-    sp_torna: "Todas las iglesias",
+    sp_torna: "Todas las comunidades",
     sp_eyebrow: "Una iglesia del grupo",
     sp_dove: "Dónde estamos", sp_quando: "Cuándo nos reunimos",
     sp_lingue: "Idiomas", sp_contatti: "Hablar con esta iglesia",
     sp_contatti_p: "Escribe por WhatsApp o llama, y te contestamos. Si prefieres venir sin avisar, también: no hace falta avisar para entrar.",
     sp_pastori: "Pastores",
+    nav_pred: "Predicaciones",
+    sd_alt_foto: "La iglesia de",
+    /* --- encuentra tu comunidad --- */
+    tr_eyebrow: "Encuentra tu comunidad",
+    tr_h2: "¿Cuál te queda más&nbsp;cerca?",
+    tr_p: "Pulsa el botón: el teléfono te dice qué iglesia del grupo tienes más cerca, y a cuántos kilómetros.",
+    tr_btn: "Usar mi ubicación",
+    tr_priv: "Tu ubicación se queda en tu teléfono: nadie la recibe ni la guarda.",
+    tr_cerco: "Buscando tu ubicación…",
+    tr_res1: "La más cercana es",
+    tr_res2: "a unos",
+    tr_res3: "km en línea recta.",
+    tr_apri: "Abrir su página →",
+    tr_negato: "No has dado permiso para usar la ubicación. Puedes mirar el mapa de al lado.",
+    tr_errore: "No he podido saber dónde estás. Mira el mapa de al lado.",
+    tr_nessuna: "No encuentro ninguna comunidad en el mapa.",
+    /* --- predicaciones --- */
+    pr_eyebrow: "Predicaciones",
+    pr_h2: "Escucha y vuelve a ver los mensajes.",
+    pr_p: "Las reuniones y los mensajes del Gruppo Cristiano: en vídeo en YouTube y en audio en Spotify.",
     sd_tutti: "Todas las reuniones",
     sp_chiama: "Llamar",
     sp_email: "Escribir un email",
@@ -491,7 +772,7 @@ var I18N = {
     conf: "por confirmar",
     /* --- quiénes somos: su historia, traducida del documento que mandaron --- */
     st_eyebrow: "Quiénes somos",
-    st_h2: "Una única familia<br>de comunidades cristianas.",
+    st_h2: "Nuestra historia.",
     st_p1: "En 2003, Aldo y Mariela dieron vida a la comunidad Gruppo Cristiano, con la fundación de la primera iglesia en Parma.",
     st_p2: "Con los años, gracias al crecimiento de la comunidad y a la obra del Señor, se ha desarrollado una realidad cada vez más amplia y multicultural, capaz de acoger a personas de toda edad y procedencia: niños, jóvenes, adultos y mayores, de distintas nacionalidades.",
     st_p3: "Este crecimiento llevó al nacimiento de nuevas comunidades en el territorio, con la apertura de otras iglesias en Fidenza, Reggio Emilia y Marina di Carrara.",

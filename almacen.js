@@ -108,6 +108,7 @@ var ALMACEN = (function () {
       logo: s.logo || '',
       whatsapp: s.whatsapp || '',
       email: s.email || '',
+      copertina: s.copertina || '',
       pastori: Array.isArray(s.pastori) ? s.pastori : [],
       social: (s.social && typeof s.social === 'object') ? s.social : {},
       lat: num(s.lat),
@@ -123,7 +124,7 @@ var ALMACEN = (function () {
     return {
       id: f.id, orden: f.orden, citta: f.citta, via: f.via, cap: f.cap,
       web: f.web, testo: f.testo, lingue: f.lingue, logo: f.logo,
-      whatsapp: f.whatsapp || '', email: f.email || '',
+      whatsapp: f.whatsapp || '', email: f.email || '', copertina: f.copertina || '',
       pastori: f.pastori || [], social: f.social || {},
       lat: f.lat, lon: f.lon, orari: f.orari || [], apple: f.apple,
       mapa: f.mapa, publicada: f.publicada
@@ -335,6 +336,102 @@ var ALMACEN = (function () {
       /* Si lo que fallo fue la propia invitacion no habia nada que limpiar,
          pero borrar algo que no existe no hace dano: un solo camino de error
          es mas facil de seguir que dos. */
+    },
+
+    /* ======================================================================
+       LAS FOTOS — la portada y el logo de cada iglesia
+       ====================================================================== */
+
+    /* Sube una imagen YA ACHICADA (lo hace el panel) a la carpeta de esa
+       iglesia y devuelve su direccion publica.
+
+       Nombre con la hora dentro (copertina-1732112345.jpg) y no siempre el
+       mismo: asi una foto nueva tiene direccion nueva y ningun movil se queda
+       ensenando la vieja guardada. La vieja se borra despues de guardar.
+
+       Sin base de datos (demo), la imagen va dentro de la ficha como data URL,
+       igual que el mapa: no hay donde subirla. */
+    subirImagen: function (sedeId, tipo, blob) {
+      if (!conBase) {
+        return new Promise(function (ok, mal) {
+          var fr = new FileReader();
+          fr.onload = function () { ok(fr.result); };
+          fr.onerror = function () { mal(fr.error); };
+          fr.readAsDataURL(blob);
+        });
+      }
+      var s = sesion();
+      if (!viva(s)) return Promise.reject(new Error('Sessione scaduta.'));
+      var ext = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : 'jpg';
+      var ruta = encodeURIComponent(sedeId) + '/' + tipo + '-' + Date.now() + '.' + ext;
+      return fetch(SUPABASE.url + '/storage/v1/object/media/' + ruta, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE.key,
+          'Authorization': 'Bearer ' + s.access_token,
+          'Content-Type': blob.type,
+          'cache-control': '31536000'
+        },
+        body: blob
+      }).then(function (r) {
+        return r.text().then(function (t) {
+          if (!r.ok) {
+            var m = t; try { var j = JSON.parse(t); m = j.message || j.error || t; } catch (e) {}
+            throw new Error(m || ('HTTP ' + r.status));
+          }
+          return SUPABASE.url + '/storage/v1/object/public/media/' + ruta;
+        });
+      });
+    },
+
+    /* Borra una imagen que ya no se usa. Solo si es de NUESTRO almacen: una
+       direccion de fuera, o un archivo de media/ de la web, no se toca. Si
+       falla no pasa nada: queda un archivo de mas, no una ficha rota. */
+    borrarImagen: function (url) {
+      if (!conBase || !url) return Promise.resolve();
+      var pre = SUPABASE.url + '/storage/v1/object/public/media/';
+      if (url.indexOf(pre) !== 0) return Promise.resolve();
+      var s = sesion();
+      if (!viva(s)) return Promise.resolve();
+      return fetch(SUPABASE.url + '/storage/v1/object/media/' + url.slice(pre.length), {
+        method: 'DELETE',
+        headers: { 'apikey': SUPABASE.key, 'Authorization': 'Bearer ' + s.access_token }
+      }).catch(function () {});
+    },
+
+    /* ======================================================================
+       LA WEB DEL GRUPO — lo que sube el general (por ahora, la portada)
+       ====================================================================== */
+
+    /* Devuelve {copertina: '...'} o null si no hay nada (y entonces la web
+       usa la foto que trae de serie). Sin red, null: nunca deja la portada
+       en blanco por un fallo. */
+    leerSito: function () {
+      if (conBase) {
+        return rest('sito?select=copertina&limit=1', {}, false)
+          .then(function (f) { return (f && f[0]) || null; })
+          .catch(function () { return null; });
+      }
+      try { return Promise.resolve(JSON.parse(localStorage.getItem('gcf_sito') || 'null')); }
+      catch (e) { return Promise.resolve(null); }
+    },
+
+    /* Solo el general: la base de datos rechaza a cualquier otro. Se pide la
+       fila de vuelta para saber si de verdad se cambio: si las reglas no le
+       dejan, PostgREST no da error, devuelve cero filas. */
+    guardarSito: function (datos) {
+      if (conBase) {
+        return rest('sito?id=eq.true', {
+          method: 'PATCH',
+          headers: { 'Prefer': 'return=representation' },
+          body: JSON.stringify({ copertina: datos.copertina || '' })
+        }, true).then(function (f) {
+          if (!f || !f.length) throw new Error('solo l\'amministratore generale può cambiarla');
+          return f[0];
+        });
+      }
+      try { localStorage.setItem('gcf_sito', JSON.stringify({ copertina: datos.copertina || '' })); } catch (e) {}
+      return Promise.resolve(datos);
     },
 
     /* Anular una invitacion que se quedo a medias. */

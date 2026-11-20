@@ -1,5 +1,5 @@
 /* ============================================================================
-   MAPA — el mismo mapa oscuro que genera herramientas/mapa-sede.py, pero
+   MAPA — el mismo mapa claro que genera herramientas/mapa-sede.py, pero
    hecho en el navegador para que quien use el panel no necesite nada
    instalado: pone la coordenada y sale la imagen.
 
@@ -11,9 +11,9 @@
      - Un recuadro incorporado que no carga deja el icono de pagina rota en
        medio del diseno. Una imagen o se ve o se ve.
      - Ni una peticion a terceros desde la pagina del visitante.
-     - El color: las teselas de OpenStreetMap son claras y la pagina es
-       oscura. Aqui se oscurecen UNA vez. Un filtro CSS habria invertido
-       tambien el marcador.
+     - El color: las teselas de OpenStreetMap vienen muy saturadas, y en una
+       pagina blanca, azul marino y dorada gritan. Aqui se suavizan UNA vez.
+       Un filtro CSS habria tenido tambien el marcador.
 
    Las teselas son de OpenStreetMap y hay que citarlas: cada ficha lleva
    "Mappa © contributori di OpenStreetMap" debajo. Son 36 teselas por sede,
@@ -46,20 +46,22 @@ var MAPA = (function () {
     });
   }
 
-  /* Invierte, dessatura y tira hacia el azul de la pagina (#0b0d12). Son las
-     mismas constantes que el script de Python. */
-  function oscurecer(ctx, w, h) {
+  /* Desatura un poco y lleva hacia el blanco calido de la pagina (#fbfaf7).
+     LAS MISMAS CIFRAS que herramientas/mapa-sede.py: una iglesia creada desde
+     el panel tiene que verse igual que las de al lado. */
+  var GRIS = 0.38, VELO = 0.12, FONDO = [0.984, 0.980, 0.969];
+  function aclarar(ctx, w, h) {
     var d = ctx.getImageData(0, 0, w, h);
     var p = d.data;
     for (var i = 0; i < p.length; i += 4) {
-      var r = 1 - p[i] / 255, g = 1 - p[i + 1] / 255, b = 1 - p[i + 2] / 255;
+      var r = p[i] / 255, g = p[i + 1] / 255, b = p[i + 2] / 255;
       var gris = (r + g + b) / 3;
-      r = r * 0.45 + gris * 0.55;
-      g = g * 0.45 + gris * 0.55;
-      b = b * 0.45 + gris * 0.55;
-      r = r * 0.78 + 0.043 * 0.9;
-      g = g * 0.78 + 0.055 * 0.9;
-      b = b * 0.78 + 0.078 * 0.9;
+      r = r * (1 - GRIS) + gris * GRIS;
+      g = g * (1 - GRIS) + gris * GRIS;
+      b = b * (1 - GRIS) + gris * GRIS;
+      r = r * (1 - VELO) + FONDO[0] * VELO;
+      g = g * (1 - VELO) + FONDO[1] * VELO;
+      b = b * (1 - VELO) + FONDO[2] * VELO;
       p[i]     = Math.max(0, Math.min(255, r * 255));
       p[i + 1] = Math.max(0, Math.min(255, g * 255));
       p[i + 2] = Math.max(0, Math.min(255, b * 255));
@@ -68,14 +70,14 @@ var MAPA = (function () {
   }
 
   function marcador(ctx, px, py) {
-    [[38, 0.15], [27, 0.27], [17, 0.46]].forEach(function (a) {
+    [[38, 0.133], [27, 0.235], [17, 0.41]].forEach(function (a) {
       ctx.beginPath();
-      ctx.fillStyle = 'rgba(66,148,245,' + a[1] + ')';
+      ctx.fillStyle = 'rgba(3,76,130,' + a[1] + ')';
       ctx.arc(px, py, a[0], 0, Math.PI * 2);
       ctx.fill();
     });
-    ctx.beginPath(); ctx.fillStyle = '#ffffff'; ctx.arc(px, py, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.fillStyle = '#3e8bdf'; ctx.arc(px, py, 5.5, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.fillStyle = '#ffffff'; ctx.arc(px, py, 9, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.fillStyle = '#034c82'; ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.fill();
   }
 
   return {
@@ -115,7 +117,7 @@ var MAPA = (function () {
         fin.width = ANCHO; fin.height = ALTO;
         var c2 = fin.getContext('2d');
         c2.drawImage(lienzo, izq, arr, ANCHO, ALTO, 0, 0, ANCHO, ALTO);
-        oscurecer(c2, ANCHO, ALTO);
+        aclarar(c2, ANCHO, ALTO);
         marcador(c2, px - izq, py - arr);
         return fin.toDataURL('image/jpeg', 0.84);
       });

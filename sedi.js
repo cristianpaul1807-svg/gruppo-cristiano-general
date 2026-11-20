@@ -33,6 +33,9 @@
                 [['Daniel Lana', ''], ['Samuele Lorenzini', 'pastore giovani']]
      social     { instagram, facebook, youtube } — los que tenga. Los que
                 falten no salen.
+     lat, lon   donde cae en el mapa. Las usa "Trova la tua comunita" para
+                poner su chincheta en el mapa de la region y para calcular
+                cual tiene mas cerca quien pulsa "Usa la mia posizione".
      orari      lista de pares [que, cuando]
      lingue     que idiomas se hablan en esa sede. No es un adorno en este
                 grupo: se llaman Latino Americano y para una familia recien
@@ -72,6 +75,7 @@ var SEDI_BASE = [
 
        Las redes de Parma son las del grupo entero: es la iglesia madre. */
     id: 'parma',
+    lat: 44.807452, lon: 10.293616,
     citta: 'Parma',
     via: 'Strada Egidio Pini 6',
     cap: '43126 Parma (PR)',
@@ -112,6 +116,7 @@ var SEDI_BASE = [
        El correo es personal (de su pastor), no uno de la iglesia como los de
        las otras tres. Esta porque lo han dado ellos para esto. */
     id: 'fidenza',
+    lat: 44.859535, lon: 10.087606,
     citta: 'Fidenza',
     via: 'Via Galileo Ferraris 14/15',
     cap: '43036 Fidenza (PR)',
@@ -143,6 +148,7 @@ var SEDI_BASE = [
        chincheta de su ficha de Google cae EXACTAMENTE en el punto que yo
        habia encontrado en Apple Maps, a 0 m. Sale de borrador. */
     id: 'reggio-emilia',
+    lat: 44.706067, lon: 10.607343,
     citta: 'Reggio Emilia',
     via: 'Via Arcangelo Corelli 5',
     cap: '42124 Reggio Emilia (RE)',

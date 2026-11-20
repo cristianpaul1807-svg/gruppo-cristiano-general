@@ -185,6 +185,23 @@ a.btn{text-decoration:none;}
 .datos dt{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--stone);}
 .datos dd{font-size:17px;word-break:break-all;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
 
+/* --- subir foto y logo ------------------------------------------------------ */
+.subida{display:flex;gap:14px;align-items:center;flex-wrap:wrap;}
+.subida-previa{width:168px;aspect-ratio:16/10;border-radius:6px;overflow:hidden;flex:none;
+  border:1px solid var(--line-strong);background:var(--ink-3);display:grid;place-items:center;}
+.subida.logo .subida-previa{width:92px;aspect-ratio:1;background:#fff;border-radius:50%;
+  border:3px solid #fff;box-shadow:0 0 0 2px #d4a843;}
+.subida-previa img{width:100%;height:100%;object-fit:cover;}
+.subida.logo .subida-previa img{object-fit:contain;padding:8px;}
+.subida-previa span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--stone);
+  text-align:center;padding:6px;}
+.subida.logo .subida-previa span{color:#7d8898;}
+#sub-sito .subida-previa{position:relative;width:240px;}
+#sub-sito .subida-previa span{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.6);
+  color:#fff;border-radius:3px;padding:3px 7px;}
+.subida-acc{display:flex;gap:8px;flex-wrap:wrap;}
+.subida-acc label.btn{cursor:pointer;}
+
 /* --- capas ----------------------------------------------------------------- */
 .capa{display:none;position:fixed;inset:0;z-index:45;background:rgba(5,7,10,0.72);
   overflow-y:auto;padding:clamp(14px,6vh,70px) 14px;}
@@ -267,6 +284,36 @@ a.btn{text-decoration:none;}
          varias cuentas desde el mismo movil. -->
     <p class="quien" id="quien" hidden></p>
 
+    <!-- ========================================================================
+         IL SITO DEL GRUPPO — solo el general. Lo suyo es la web general: por
+         ahora, la foto grande de la portada. Las iglesias suben la suya en su
+         ficha; esta es la del grupo.
+         ======================================================================== -->
+    <section id="sito" hidden>
+      <div class="barra" style="margin-top:26px">
+        <h2>Il sito del gruppo</h2>
+      </div>
+      <p class="pista-sec">La foto grande della pagina principale. Se non ne carichi una,
+        il sito usa quella di adesso. Ogni chiesa carica la sua foto nella sua scheda.</p>
+      <div class="hoja" style="max-width:none;margin:0">
+        <div class="subida" id="sub-sito">
+          <div class="subida-previa"><img alt="" hidden><span>Foto di serie</span></div>
+          <div class="subida-acc">
+            <label class="btn mini">Scegli foto
+              <input type="file" accept="image/jpeg,image/png,image/webp" hidden>
+            </label>
+            <button class="btn mini peligro" type="button" data-togli hidden>Torna a quella di serie</button>
+          </div>
+        </div>
+        <p class="pista">Meglio orizzontale, con le persone al centro: sul telefono si
+          vede solo la parte di mezzo.</p>
+        <p class="error" id="err-sito" role="alert"></p>
+        <div class="pie-hoja">
+          <button class="btn piena" type="button" id="sito-salva" disabled>Salva la foto</button>
+        </div>
+      </div>
+    </section>
+
     <div class="barra" style="margin-top:26px">
       <h2 id="titulo-lista">Le chiese</h2>
       <div class="acc">
@@ -301,9 +348,10 @@ a.btn{text-decoration:none;}
       <div class="barra" style="margin-top:48px">
         <h2>Accessi</h2>
       </div>
-      <p class="pista-sec">Chi può entrare in questo pannello e cosa può toccare.
-        L'amministratore generale tocca tutto. Il responsabile di una chiesa tocca solo
-        la sua: non può crearne né eliminarne nessuna.</p>
+      <p class="pista-sec">Chi può entrare in questo pannello e cosa può toccare. Ognuno
+        lavora sul suo: il responsabile di una chiesa tocca solo la sua; l'amministratore
+        generale crea le chiese, dà gli accessi e cura il sito del gruppo. Una chiesa con
+        responsabile la modifica solo lui: se gli togli l'accesso, torna a te.</p>
 
       <div id="lista-accessi" class="accessi"></div>
 
@@ -486,11 +534,37 @@ a.btn{text-decoration:none;}
           Il link intero, che comincia con https://.</p>
       </div>
 
+      <!-- LA FOTO DE PORTADA Y EL LOGO. Se eligen del movil, se achican en el
+           propio movil y se suben al guardar. Los dos campos ocultos guardan
+           la direccion de lo que hay ahora. -->
       <div class="campo">
-        <label for="logo">Logo di questa chiesa</label>
-        <input type="text" id="logo" placeholder="media/logo-parma.png" autocapitalize="none">
-        <p class="pista">Solo se questa chiesa ha un logo suo e vuole che si veda. Se è
-          vuoto, nella scheda compare la mappa — che è il normale.</p>
+        <label>Foto di copertina</label>
+        <div class="subida" id="sub-copertina">
+          <div class="subida-previa"><img alt="" hidden><span>Nessuna foto</span></div>
+          <div class="subida-acc">
+            <label class="btn mini">Scegli una foto<input type="file" accept="image/jpeg,image/png,image/webp" hidden></label>
+            <button class="btn mini peligro" type="button" data-togli hidden>Togli</button>
+          </div>
+        </div>
+        <input type="hidden" id="copertina">
+        <p class="pista">Esce in alto nella pagina della chiesa e nella sua scheda. Meglio
+          orizzontale, e meglio se la gente è di spalle: chi si riconosce in faccia deve
+          aver dato il permesso — e per i bambini, i genitori. La foto si rimpicciolisce
+          da sola prima di caricarla.</p>
+      </div>
+
+      <div class="campo">
+        <label>Logo di questa chiesa</label>
+        <div class="subida logo" id="sub-logo">
+          <div class="subida-previa"><img alt="" hidden><span>Nessun logo</span></div>
+          <div class="subida-acc">
+            <label class="btn mini">Scegli il logo<input type="file" accept="image/png,image/jpeg,image/webp" hidden></label>
+            <button class="btn mini peligro" type="button" data-togli hidden>Togli</button>
+          </div>
+        </div>
+        <input type="hidden" id="logo">
+        <p class="pista">Solo se questa chiesa ha un logo suo. Meglio un PNG con lo sfondo
+          trasparente. Se non c'è, va bene così.</p>
       </div>
 
       <div class="campo">
@@ -645,6 +719,8 @@ function aplicarRuolo() {
   $('#titulo-lista').textContent = gen ? 'Le chiese' : 'La tua chiesa';
   $('#mia-pass').hidden = !CONECTADO;
   $('#accessi').hidden = !(gen && CONECTADO);
+  $('#sito').hidden = !gen;
+  if (gen) cargarSito();
 
   if (CONECTADO && YO.email) {
     var q = $('#quien');
@@ -722,6 +798,9 @@ if (CONECTADO) {
 var editando = null;
 
 var ACCESSI = { attivi: [], inviti: [] };
+function responsablesDe(id) {
+  return ACCESSI.attivi.filter(function (a) { return a.ruolo === 'sede' && a.sede === id && a.attivo; });
+}
 
 function pintarLista() {
   var lista = $('#lista');
@@ -828,25 +907,34 @@ function pintarLista() {
 
       /* Quien lleva esta iglesia. Solo lo ve el general, que es quien da los
          accesos: asi de un vistazo sabe que ficha tiene responsable y cual no. */
+      /* Cada uno en lo suyo: en cuanto una iglesia tiene responsable con el
+         acceso activo, es de esa persona y el general ya no la toca (la base de
+         datos tampoco le dejaria). Mientras no tiene, la lleva el general. */
+      var suyos = (esGenerale() && CONECTADO) ? responsablesDe(s.id) : [];
       if (esGenerale() && CONECTADO) {
         var resp = document.createElement('p'); resp.className = 'resp';
-        var suyos = ACCESSI.attivi.filter(function (a) { return a.ruolo === 'sede' && a.sede === s.id && a.attivo; });
         if (suyos.length) {
-          resp.textContent = 'Responsabile: ';
+          resp.textContent = 'Gestita da ';
           var rb = document.createElement('b');
           rb.textContent = suyos.map(function (a) { return a.email; }).join(', ');
           resp.appendChild(rb);
         } else {
-          resp.textContent = 'Nessun responsabile';
+          resp.textContent = 'Nessun responsabile: per ora la gestisci tu';
         }
         c.appendChild(resp);
       }
 
       var acc = document.createElement('div'); acc.className = 'acc';
-      var ed = document.createElement('button');
-      ed.className = 'btn mini'; ed.type = 'button'; ed.textContent = 'Modifica';
-      ed.addEventListener('click', function () { abrirEditor(s); });
-      acc.appendChild(ed);
+      if (suyos.length) {
+        var nota = document.createElement('p'); nota.className = 'hor';
+        nota.textContent = 'La modifica il suo responsabile. Se gli togli l\'accesso, torna a te.';
+        acc.appendChild(nota);
+      } else {
+        var ed = document.createElement('button');
+        ed.className = 'btn mini'; ed.type = 'button'; ed.textContent = 'Modifica';
+        ed.addEventListener('click', function () { abrirEditor(s); });
+        acc.appendChild(ed);
+      }
       c.appendChild(acc);
 
       f.appendChild(c);
@@ -878,8 +966,8 @@ $('#restaurar').addEventListener('click', function () {
      de datos borra lo de este movil. Con base de datos borra las fichas DE
      TODOS, y eso hay que decirlo con esas palabras antes de preguntar. */
   var pregunta = CONECTADO
-    ? 'Attenzione: elimina tutte le schede dalla banca dati, per tutti. '
-      + 'Il sito torna a mostrare quelle scritte nella pagina. Procedo?'
+    ? 'Attenzione: elimina dalla banca dati tutte le schede che gestisci tu '
+      + '(quelle senza responsabile). Quelle che hanno un responsabile restano. Procedo?'
     : 'Elimina tutte le schede create qui. Il sito torna a mostrare quelle '
       + 'scritte nella pagina. Procedo?';
   if (!confirm(pregunta)) return;
@@ -951,6 +1039,10 @@ function abrirEditor(sede) {
   $('#testo').value = editando.testo || '';
   $('#lingue').value = editando.lingue || '';
   $('#logo').value = editando.logo || '';
+  $('#copertina').value = editando.copertina || '';
+  FOTOS_PENDIENTES = {};
+  pintarSubida('copertina', editando.copertina || '');
+  pintarSubida('logo', editando.logo || '');
   $('#whatsapp').value = editando.whatsapp || '';
   $('#email').value = editando.email || '';
   $('#pastori').value = pastoriATexto(editando.pastori);
@@ -980,6 +1072,153 @@ function cerrarEditor() {
   document.body.style.overflow = '';
   editando = null;
 }
+/* --- la foto de portada y el logo ---------------------------------------------
+   Se eligen del movil y se ACHICAN EN EL MOVIL antes de subirlas: una foto de
+   telefono son 3–5 MB y 4000 px; la portada se ve como mucho a 1600, y el plan
+   gratuito de Supabase da 1 GB para todo. Achicada, una portada son ~250 KB.
+
+   Al elegir, solo se prepara y se ensena. Se sube al pulsar "Salva": si se
+   cancela el editor, no queda nada subido a medias. */
+var FOTOS_PENDIENTES = {};   // tipo -> Blob a subir, o 'quitar'
+var TAMANOS = { copertina: 1600, logo: 512 };
+
+function achicar(file, lado, tipo) {
+  /* Logo: PNG si lo era (para no perder el fondo transparente); la portada
+     siempre JPEG, que para fotos pesa una fraccion. */
+  var salida = (tipo === 'logo' && /png|webp/.test(file.type)) ? 'image/png' : 'image/jpeg';
+  function dibujar(fuente, w, h) {
+    var f = Math.min(1, lado / Math.max(w, h));
+    var c = document.createElement('canvas');
+    c.width = Math.round(w * f); c.height = Math.round(h * f);
+    var ctx = c.getContext('2d');
+    if (salida === 'image/jpeg') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); }
+    ctx.drawImage(fuente, 0, 0, c.width, c.height);
+    return new Promise(function (ok, mal) {
+      c.toBlob(function (b) { b ? ok(b) : mal(new Error('non riesco a leggere la foto')); },
+        salida, salida === 'image/jpeg' ? 0.82 : undefined);
+    });
+  }
+  /* createImageBitmap con 'from-image' respeta la orientacion que guarda el
+     movil: sin eso, las fotos hechas en vertical salen tumbadas. */
+  if (window.createImageBitmap) {
+    return createImageBitmap(file, { imageOrientation: 'from-image' })
+      .then(function (bm) { return dibujar(bm, bm.width, bm.height); })
+      .catch(function () { return porImagen(); });
+  }
+  return porImagen();
+  function porImagen() {
+    return new Promise(function (ok, mal) {
+      var u = URL.createObjectURL(file), im = new Image();
+      im.onload = function () { dibujar(im, im.naturalWidth, im.naturalHeight).then(ok, mal); URL.revokeObjectURL(u); };
+      im.onerror = function () { URL.revokeObjectURL(u); mal(new Error('Questo file non è una foto che riesco a leggere.')); };
+      im.src = u;
+    });
+  }
+}
+
+function pintarSubida(tipo, url) {
+  var caja = $('#sub-' + tipo), img = caja.querySelector('img'), txt = caja.querySelector('span');
+  var togli = caja.querySelector('[data-togli]');
+  if (url) { img.src = url; img.hidden = false; txt.hidden = true; togli.hidden = false; }
+  else { img.removeAttribute('src'); img.hidden = true; txt.hidden = false; togli.hidden = true; }
+}
+
+['copertina', 'logo'].forEach(function (tipo) {
+  var caja = $('#sub-' + tipo);
+  var input = caja.querySelector('input[type=file]');
+  input.addEventListener('change', function () {
+    var f = input.files && input.files[0];
+    input.value = '';                     // para poder elegir la misma otra vez
+    if (!f) return;
+    $('#err-sede').textContent = '';
+    achicar(f, TAMANOS[tipo], tipo).then(function (blob) {
+      FOTOS_PENDIENTES[tipo] = blob;
+      pintarSubida(tipo, URL.createObjectURL(blob));
+    }).catch(function (e) {
+      $('#err-sede').textContent = e.message;
+    });
+  });
+  caja.querySelector('[data-togli]').addEventListener('click', function () {
+    FOTOS_PENDIENTES[tipo] = 'quitar';
+    pintarSubida(tipo, '');
+  });
+});
+
+/* Sube lo que haya pendiente y deja en la ficha la direccion nueva. */
+function subirFotos(sede) {
+  return ['copertina', 'logo'].reduce(function (cadena, tipo) {
+    return cadena.then(function () {
+      var p = FOTOS_PENDIENTES[tipo];
+      if (p === 'quitar') { sede[tipo] = ''; return; }
+      if (!(p instanceof Blob)) return;
+      return ALMACEN.subirImagen(sede.id, tipo, p).then(function (url) { sede[tipo] = url; });
+    });
+  }, Promise.resolve()).catch(function (e) {
+    throw new Error('la foto non si è caricata (' + e.message + ')');
+  });
+}
+
+/* --- la portada de la web del grupo (solo el general) ------------------------
+   Mismo camino que las fotos de las iglesias: se achica en el movil, se sube a
+   la carpeta `generale` del almacen, y la direccion se guarda en la tabla
+   `sito`. La vieja se borra solo cuando la nueva ya esta guardada. */
+var SITO = { copertina: '' }, SITO_PENDIENTE = null;   // Blob, 'quitar' o null
+
+/* Sin foto propia se ensena la de serie, con el letrero encima: asi se ve que
+   foto sale ahora en la web, no un hueco vacio. */
+function pintarSito(url) {
+  var caja = $('#sub-sito'), img = caja.querySelector('img'), txt = caja.querySelector('span');
+  img.src = url || '../media/portada-800.jpg';
+  img.hidden = false;
+  txt.hidden = !!url;
+  caja.querySelector('[data-togli]').hidden = !url;
+}
+function cargarSito() {
+  ALMACEN.leerSito().then(function (s) {
+    SITO = { copertina: (s && s.copertina) || '' };
+    SITO_PENDIENTE = null;
+    $('#sito-salva').disabled = true;
+    pintarSito(SITO.copertina);
+  });
+}
+(function () {
+  var caja = $('#sub-sito'), input = caja.querySelector('input[type=file]');
+  input.addEventListener('change', function () {
+    var f = input.files && input.files[0];
+    input.value = '';
+    if (!f) return;
+    $('#err-sito').textContent = '';
+    achicar(f, 1920, 'copertina').then(function (blob) {
+      SITO_PENDIENTE = blob;
+      pintarSito(URL.createObjectURL(blob));
+      $('#sito-salva').disabled = false;
+    }).catch(function (e) { $('#err-sito').textContent = e.message; });
+  });
+  caja.querySelector('[data-togli]').addEventListener('click', function () {
+    SITO_PENDIENTE = 'quitar';
+    pintarSito('');
+    $('#sito-salva').disabled = false;
+  });
+  $('#sito-salva').addEventListener('click', function () {
+    var b = $('#sito-salva'), vieja = SITO.copertina;
+    if (!SITO_PENDIENTE) return;
+    b.disabled = true; b.textContent = 'Carico…';
+    var paso = SITO_PENDIENTE === 'quitar'
+      ? Promise.resolve('')
+      : ALMACEN.subirImagen('generale', 'copertina', SITO_PENDIENTE);
+    paso.then(function (url) {
+      return ALMACEN.guardarSito({ copertina: url }).then(function () { return url; });
+    }).then(function (url) {
+      if (vieja && vieja !== url) ALMACEN.borrarImagen(vieja);
+      avisar(url ? 'Foto del sito salvata.' : 'Il sito torna alla foto di serie.');
+      cargarSito();
+    }).catch(function (e) {
+      $('#err-sito').textContent = 'Non sono riuscito a salvarla: ' + e.message;
+      b.disabled = false;
+    }).then(function () { b.textContent = 'Salva la foto'; });
+  });
+})();
+
 /* --- la direccion de una iglesia nueva --------------------------------------
    "Massa-Carrara" -> "massa-carrara". Sin acentos —"Forlì" -> "forli"—,
    porque una direccion con acento se rompe al pegarla en algunos sitios.
@@ -1005,7 +1244,10 @@ function textoAPastori(t) {
     });
 }
 
-var RESERVADOS = ['panel', 'media', 'herramientas', 'sede', 'index', 'estilo', 'app', 'almacen'];
+/* 'generale' tambien: es la carpeta de fotos del general en el almacen, y una
+   iglesia con ese id subiria sus fotos dentro de la suya. */
+var RESERVADOS = ['panel', 'media', 'herramientas', 'sede', 'index', 'estilo', 'app',
+  'almacen', 'generale', 'sito'];
 function slug(t) {
   return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
     .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -1151,6 +1393,7 @@ $('#f-sede').addEventListener('submit', function (e) {
     testo: $('#testo').value.trim(),
     lingue: $('#lingue').value.trim(),
     logo: $('#logo').value.trim(),
+    copertina: $('#copertina').value.trim(),
     whatsapp: $('#whatsapp').value.trim(),
     email: correo,
     pastori: textoAPastori($('#pastori').value),
@@ -1159,8 +1402,23 @@ $('#f-sede').addEventListener('submit', function (e) {
     apple: $('#apple').value.trim(),
     mapa: editando.mapa || ''
   };
-  ALMACEN.guardar(sede).then(function () {
-    var eraNueva = !editando.id;
+  /* Primero suben las fotos nuevas (a la carpeta de ESTA iglesia: por eso el
+     id se calcula antes), luego se guarda la ficha, y solo cuando la ficha ya
+     apunta a las nuevas se borran las viejas. En otro orden, un fallo a
+     medias dejaria la ficha apuntando a una foto borrada. */
+  var eraNueva = !editando.id;
+  var viejas = { copertina: editando.copertina || '', logo: editando.logo || '' };
+  var botonGuardar = $('#f-sede button[type=submit]');
+  botonGuardar.disabled = true;
+  if (FOTOS_PENDIENTES.copertina instanceof Blob || FOTOS_PENDIENTES.logo instanceof Blob) {
+    botonGuardar.textContent = 'Carico le foto…';
+  }
+  subirFotos(sede).then(function () {
+    return ALMACEN.guardar(sede);
+  }).then(function () {
+    ['copertina', 'logo'].forEach(function (t) {
+      if (viejas[t] && viejas[t] !== sede[t]) ALMACEN.borrarImagen(viejas[t]);
+    });
     cerrarEditor(); pintarLista();
     avisar(eraNueva ? 'Chiesa creata. La sua pagina: /' + sede.id + '/' : 'Scheda salvata.');
   }).catch(function (err) {
@@ -1172,7 +1430,17 @@ $('#f-sede').addEventListener('submit', function (e) {
         + 'quello che hai scritto resta qui finché non chiudi la pagina.';
       return;
     }
+    /* La correccion no encontro nada que pudiera tocar y el intento de crear
+       choco con la que ya existe: es una iglesia que ya tiene responsable
+       (se lo dieron mientras este editor estaba abierto). */
+    if (!eraNueva && /duplicate key|23505|already exists/i.test(err.message || '')) {
+      $('#err-sede').textContent = 'Questa chiesa adesso ha un responsabile: la modifica solo lui. '
+        + 'Se serve, togligli l\'accesso e torna a te.';
+      return;
+    }
     $('#err-sede').textContent = 'Non sono riuscito a salvare: ' + err.message;
+  }).then(function () {
+    botonGuardar.disabled = false; botonGuardar.textContent = 'Salva';
   });
 });
 

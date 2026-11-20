@@ -126,13 +126,17 @@
 
 <nav>
   <a class="brand" href="#hero">
-    <img src="media/simbolo-256.png" width="256" height="126" alt="">
+    <!-- El pez con los colores OFICIALES del logo. El de media/simbolo-256.png es
+         la version aclarada para fondo oscuro: sobre esta barra blanca salia
+         desvaido. -->
+    <img src="media/simbolo-ufficiale-256.png" width="256" height="126" alt="">
     <span class="brand-text">Gruppo Cristiano<b data-i18n="marca_sub">Latino Americano</b></span>
   </a>
   <div class="navright">
     <div class="navlinks">
-      <a href="#sedi" data-i18n="nav_sedi">Le sedi</a>
+      <a href="#sedi" data-i18n="nav_sedi">Le comunità</a>
       <a href="#storia" data-i18n="nav_storia">Chi siamo</a>
+      <a href="#predicazioni" data-i18n="nav_pred">Predicazioni</a>
       <a href="#visione" data-i18n="nav_visione">La visione</a>
       <a href="#fede" data-i18n="nav_fede">Punti di fede</a>
       <a href="#domande" data-i18n="nav_domande">Domande</a>
@@ -149,44 +153,116 @@
 </nav>
 
 <!-- ============================================================================
-     PORTADA. El logo va aclarado: el oficial, tal cual, da 1,04:1 de
-     contraste contra este fondo y "CRISTIANO" desaparece. El aclarado
-     conserva el tono —sigue siendo su azul— y mide 4,25:1.
+     PORTADA — su foto, y al bajar: se acerca, se oscurece y sale el logo.
+
+     La foto es SUYA: un culto, la gente de espaldas con las manos levantadas.
+     Que no se reconozcan caras es a proposito, es lo que se puede publicar sin
+     pedir permiso a cada persona.
+
+     Llego como captura de un carrusel de Instagram, con la pastilla "6/10"
+     encima: se ha tapado con herramientas/portada.py. Mide 1206 px de ancho,
+     y en un ordenador grande se nota algo blanda: cuando manden el original
+     del fotografo, se cambia aqui y ya esta.
+
+     PREPARADA PARA VIDEO: en vez del <picture>, un
+       <video class="hero-video" muted playsinline preload="auto">…</video>
+     y app.js hace que el video avance al bajar. El que mandaron (una grabacion
+     de pantalla) no sirve: esta medido 8 veces menos nitido que esta foto.
+     Hace falta el archivo original del movil que lo grabo.
      ============================================================================ -->
 <header class="hero" id="hero">
-  <div class="wrap">
-    <img class="hero-logo" src="media/logo.png" width="900" height="606"
-         alt="Gruppo Cristiano Latino Americano">
-    <h1 data-i18n="hero_h1">Una speranza vera,<br>in <em>ogni città</em>.</h1>
-    <!-- Palabras suyas, del documento de visión. Donde hay texto de ellos,
-         va el suyo. -->
-    <p class="hero-p" data-i18n="hero_p">«Crediamo che questo mondo pieno di problemi e
-      sofferenze abbia bisogno di una speranza vera.»</p>
-    <p class="versetto" data-i18n="versetto">Isaia 55:5</p>
-    <div class="acciones">
-      <a class="btn piena" href="#sedi" data-i18n="hero_cta1">Trova la chiesa più vicina</a>
-      <a class="btn" href="#visione" data-i18n="hero_cta2">La nostra visione</a>
+  <div class="hero-pin">
+    <picture class="hero-foto">
+      <source type="image/webp" srcset="media/portada-800.webp 800w, media/portada.webp 1206w" sizes="100vw">
+      <img src="media/portada.jpg" srcset="media/portada-800.jpg 800w, media/portada.jpg 1206w"
+           sizes="100vw" width="1206" height="747" fetchpriority="high"
+           alt="Persone in preghiera, con le mani alzate, durante un incontro del Gruppo Cristiano">
+    </picture>
+    <div class="hero-velo"></div>
+    <div class="hero-oscuro"></div>
+
+    <div class="wrap hero-contenido">
+      <!-- Su lema, de su mapa conceptual y de su imagen de ejemplo. -->
+      <h1 data-i18n="hero_h1">Un’unica famiglia di comunità cristiane.</h1>
+      <!-- Palabras suyas, del documento de visión. -->
+      <p class="hero-p" data-i18n="hero_p">«Crediamo che questo mondo pieno di problemi e
+        sofferenze abbia bisogno di una speranza vera.»</p>
+      <div class="acciones">
+        <a class="btn oro" href="#sedi" data-i18n="hero_cta1">Trova una comunità</a>
+        <a class="btn velo" href="#storia" data-i18n="hero_cta2">Chi siamo</a>
+      </div>
     </div>
+
+    <!-- El final del efecto: todo azul marino y el logo en medio. Debajo, las
+         ciudades, que pone app.js con las comunidades publicadas. -->
+    <div class="hero-final" aria-hidden="true">
+      <div>
+        <img src="media/logo.png" width="900" height="606" alt="">
+        <p id="hero-citta"></p>
+      </div>
+    </div>
+
+    <div class="cue" id="cue"><span data-i18n="cue">Scorri</span><i></i></div>
   </div>
-  <div class="cue" id="cue"><span data-i18n="cue">Scorri</span><i></i></div>
 </header>
 
 <!-- ============================================================================
-     LE SEDI — el corazón de esta web. Una ficha por iglesia, el mapa es lo
-     que se toca, y cuando esa iglesia tenga su propia web la ficha lleva
-     tambien a ella.
+     LE COMUNITA — "comunita" y no "sedi": es su palabra, la de su mapa
+     conceptual y la de su imagen de ejemplo.
      ============================================================================ -->
 <section id="sedi">
   <div class="wrap">
-    <div class="sec-head reveal">
-      <p class="eyebrow" data-i18n="sd_eyebrow">Le sedi</p>
-      <h2 data-i18n="sd_h2">Un gruppo,<br>più chiese.</h2>
-      <p data-i18n="sd_p">Una scheda per ogni chiesa. Si tocca, e si apre la sua pagina:
-        orari, pastori e come arrivare.</p>
+    <div class="sec-head centro reveal">
+      <p class="eyebrow" data-i18n="sd_eyebrow">Le comunità</p>
+      <h2 data-i18n="sd_h2">Le nostre comunità</h2>
+      <!-- No dice "quattro": el numero lo pone la lista. Escrito a mano, se
+           queda viejo el dia que nace una comunidad nueva. -->
+      <p data-i18n="sd_p">Tocca una scheda e si apre la pagina di quella chiesa: orari,
+        pastori e come arrivare.</p>
     </div>
 
     <div class="sedi" id="sedi-lista"></div>
+  </div>
+</section>
 
+<!-- ============================================================================
+     TROVA LA TUA COMUNITA — el mapa de la region y "la mas cercana".
+
+     En su imagen de ejemplo era un buscador por ciudad o codigo postal. Aqui es
+     un boton: en el movil, pulsar es mas facil que escribir un codigo postal,
+     y el telefono ya sabe donde esta. La posicion se usa en el propio movil y
+     no sale de el: no hay servidor al que mandarla.
+
+     Las chinchetas las pone app.js con la latitud y la longitud de cada
+     comunidad: una creada desde el panel tambien sale. Los cuatro data-* son
+     el trozo de mundo que cubre la imagen (herramientas/mapa-regione.py).
+     ============================================================================ -->
+<section id="trova">
+  <div class="wrap trova">
+    <div class="reveal">
+      <p class="eyebrow" data-i18n="tr_eyebrow">Trova la tua comunità</p>
+      <h2 data-i18n="tr_h2">Qual è la più vicina a&nbsp;te?</h2>
+      <p class="sub" data-i18n="tr_p">Premi il bottone: il telefono ti dice quale chiesa
+        del gruppo hai più vicino, e a quanti chilometri.</p>
+      <div class="acciones">
+        <button class="btn oro" type="button" id="vicina">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+          <span data-i18n="tr_btn">Usa la mia posizione</span>
+        </button>
+      </div>
+      <p class="trova-esito" id="trova-esito" aria-live="polite"></p>
+      <p class="trova-privacy" data-i18n="tr_priv">La tua posizione resta sul tuo
+        telefono: non la riceve e non la salva nessuno.</p>
+    </div>
+    <div class="regione reveal d1" id="regione"
+         data-lat0="45.02" data-lat1="43.86" data-lon0="9.3" data-lon1="11.12">
+      <picture>
+        <source type="image/webp" srcset="media/mappa-regione.webp">
+        <img src="media/mappa-regione.jpg" width="1325" height="1183" loading="lazy"
+             alt="Mappa dell'Emilia e della costa apuana con le chiese del gruppo">
+      </picture>
+      <p class="sede-cap" data-i18n="sd_attr">Mappa © contributori di OpenStreetMap</p>
+    </div>
   </div>
 </section>
 
@@ -211,7 +287,7 @@
   <div class="wrap">
     <div class="sec-head reveal">
       <p class="eyebrow" data-i18n="st_eyebrow">Chi siamo</p>
-      <h2 data-i18n="st_h2">Un’unica famiglia<br>di comunità cristiane.</h2>
+      <h2 data-i18n="st_h2">La nostra storia.</h2>
     </div>
 
     <div class="storia reveal">
@@ -263,6 +339,32 @@
       dedicata alla fede, al servizio e alla missione cristiana. Sono i genitori di Rebecca,
       la quale, insieme a suo marito Andrea, serve all’interno del Gruppo Cristiano di Parma
       mettendo a disposizione i propri doni.</p>
+  </div>
+</section>
+
+<!-- ============================================================================
+     PREDICAZIONI — lo que ya tienen: su canal de YouTube y su Spotify.
+
+     Su imagen de ejemplo pide una biblioteca de predicaciones. Montarla aqui
+     seria subir cada video dos veces y pagar el espacio; ya estan en YouTube.
+     Se enlaza lo que existe, y punto.
+     ============================================================================ -->
+<section id="predicazioni">
+  <div class="wrap predica">
+    <div class="reveal">
+      <p class="eyebrow" data-i18n="pr_eyebrow">Predicazioni</p>
+      <h2 data-i18n="pr_h2">Ascolta e rivedi i messaggi.</h2>
+      <p data-i18n="pr_p">Gli incontri e i messaggi del Gruppo Cristiano: in video su
+        YouTube e in audio su Spotify.</p>
+    </div>
+    <div class="acciones reveal d1">
+      <a class="btn oro" href="https://www.youtube.com/@gruppocristiano" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 12s0-3.3-.4-4.9a2.6 2.6 0 0 0-1.8-1.8C18.2 4.9 12 4.9 12 4.9s-6.2 0-7.8.4a2.6 2.6 0 0 0-1.8 1.8C2 8.7 2 12 2 12s0 3.3.4 4.9c.2.9.9 1.6 1.8 1.8 1.6.4 7.8.4 7.8.4s6.2 0 7.8-.4a2.6 2.6 0 0 0 1.8-1.8c.4-1.6.4-4.9.4-4.9zM10 15.2V8.8l5.2 3.2z"/></svg>
+        YouTube</a>
+      <a class="btn velo" href="https://open.spotify.com/show/4XaPGtBPszdYUpb5d3tCdE" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M7 9.6c3.4-1 7.2-.7 10.2 1"/><path d="M7.6 12.7c2.8-.8 5.8-.5 8.3.9"/><path d="M8.2 15.6c2.2-.6 4.4-.4 6.4.7"/></svg>
+        Spotify</a>
+    </div>
   </div>
 </section>
 
