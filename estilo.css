@@ -411,12 +411,6 @@ nav::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
 footer{background:var(--marino);color:#c9d3e3;padding:56px 0 68px;text-align:center;}
 /* el logo aclarado: el oficial sobre marino no se lee (medido, 1,04:1) */
 footer .marchio img{width:min(58vw,240px);margin:0 auto;}
-footer .sociali{display:flex;justify-content:center;gap:12px;margin-top:28px;flex-wrap:wrap;}
-footer .sociali a{display:grid;place-items:center;width:42px;height:42px;
-  border:1px solid rgba(255,255,255,.22);border-radius:10px;color:#fff;
-  transition:background .2s,border-color .2s;}
-footer .sociali a:hover{background:rgba(255,255,255,.1);border-color:#fff;}
-footer .sociali svg{width:19px;height:19px;}
 footer .pie-dir{margin-top:24px;font-size:14px;color:#c9d3e3;}
 footer .pie-min{margin-top:10px;font-size:12px;color:#93a3bd;}
 footer .pie-panel{margin-top:18px;font-size:12px;}
