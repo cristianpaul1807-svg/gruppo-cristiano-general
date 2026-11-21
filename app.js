@@ -911,8 +911,8 @@ var I18N = {
     tr_nessuna: "No encuentro ninguna comunidad en el mapa.",
     /* --- predicaciones --- */
     pr_eyebrow: "Predicaciones",
-    pr_h2: "Escucha y vuelve a ver los mensajes.",
-    pr_p: "Las reuniones y los mensajes del Gruppo Cristiano: en vídeo en YouTube y en audio en Spotify.",
+    pr_h2: "Escucha los mensajes.", pr_btn: "Escúchalos en Spotify",
+    pr_p: "Las reuniones y los mensajes del Gruppo Cristiano, en audio en Spotify: para escucharlos cuando quieras, también en el coche o mientras caminas.",
     sd_tutti: "Todas las reuniones",
     sp_chiama: "Llamar",
     sp_email: "Escribir un email",
