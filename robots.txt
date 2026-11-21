@@ -1,7 +1,7 @@
-# La web todavia vive en un dominio que no es suyo y esta sin terminar.
-# Hasta que este en gruppocristiano.it, no entra en ningun buscador.
-#
-# Esto se quita el dia que se mude, Y ADEMAS hay que quitar la etiqueta
-# noindex del index.html y del panel: las dos cosas, no una.
+# gruppocristiano.it: la web abierta a los buscadores, menos el panel.
+# (En la direccion provisional de Easypanel se sirve robots-provisional.txt,
+#  que lo cierra todo: lo decide nginx.conf segun el dominio.)
 User-agent: *
-Disallow: /
+Disallow: /panel/
+
+Sitemap: https://www.gruppocristiano.it/sitemap.xml

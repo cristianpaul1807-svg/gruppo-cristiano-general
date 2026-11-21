@@ -1,0 +1,4 @@
+# Direccion provisional: fuera de los buscadores. La de verdad es
+# www.gruppocristiano.it.
+User-agent: *
+Disallow: /

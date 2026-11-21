@@ -271,6 +271,18 @@ const comodin = plantilla.replace(/\{\{([A-Z_]+)\}\}/g, function (todo, clave) {
   return v[clave];
 });
 fs.writeFileSync(path.join(RAIZ, '_sede.html'), comodin, 'utf8');
+
+/* --- el mapa del sitio para Google ------------------------------------------
+   La portada y la pagina de cada iglesia publicada. Las creadas desde el panel
+   que aun no estan aqui las encuentra Google por los enlaces de la portada. */
+const hoy = new Date().toISOString().slice(0, 10);
+const urls = [DOMINIO + '/'].concat(leerSedi().filter(function (s) { return s.publicada !== false; })
+  .map(function (s) { return DOMINIO + '/' + s.id + '/'; }));
+fs.writeFileSync(path.join(RAIZ, 'sitemap.xml'),
+  '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+  + urls.map(function (u) { return '  <url><loc>' + u + '</loc><lastmod>' + hoy + '</lastmod></url>'; }).join('\n')
+  + '\n</urlset>\n', 'utf8');
+console.log('  sitemap.xml   (' + urls.length + ' direcciones)');
 console.log('  _sede.html   (comodin para las creadas desde el panel)');
 
 /* Una pagina que sobra es peor que una que falta: queda viva, en Google, con

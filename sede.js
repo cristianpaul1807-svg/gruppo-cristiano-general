@@ -341,6 +341,10 @@
       var e = document.querySelector(sel); if (e) e.hidden = true;
     });
     document.title = 'Gruppo Cristiano';
+    /* Una direccion que no es ninguna iglesia no debe acabar en Google. */
+    if (!document.querySelector('meta[name="robots"]')) {
+      var m = document.createElement('meta'); m.name = 'robots'; m.content = 'noindex'; document.head.appendChild(m);
+    }
     window.__dibujarSede = noEncontrada;   // al cambiar de idioma, el aviso, no la ficha
   }
 
