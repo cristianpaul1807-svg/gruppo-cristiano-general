@@ -230,6 +230,19 @@ a.btn{text-decoration:none;}
 .faq-item .faq-acc label{display:flex;gap:6px;align-items:center;margin:0 auto 0 0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--bone-dim);}
 .faq-num{font-size:11px;letter-spacing:.12em;color:var(--stone);margin-bottom:8px;text-transform:uppercase;}
 
+/* --- vision y fundadores ----------------------------------------------------- */
+#vis-capa .hoja,#sto-capa .hoja{max-width:820px;}
+.ed-bloque{margin-top:22px;}
+.ed-bloque > h3{font-family:'Fraunces',serif;font-weight:400;font-size:20px;margin-bottom:10px;}
+.faq-item .lado textarea.alta{min-height:150px;}
+.fund-foto{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+.fund-foto .circ{width:84px;height:84px;border-radius:50%;background:var(--ink-2);border:3px solid #fff;
+  box-shadow:0 0 0 2px #d4a843;overflow:hidden;display:grid;place-items:center;flex:none;
+  font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--stone);text-align:center;}
+.fund-foto .circ img{width:100%;height:100%;object-fit:cover;}
+.fund-foto label.btn{cursor:pointer;}
+.faq-item input.nome{font-size:16px;margin-bottom:10px;}
+
 /* --- capas ----------------------------------------------------------------- */
 .capa{display:none;position:fixed;inset:0;z-index:45;background:rgba(5,7,10,0.72);
   overflow-y:auto;padding:clamp(14px,6vh,70px) 14px;}
@@ -355,6 +368,22 @@ a.btn{text-decoration:none;}
           <p class="pista" style="margin:4px 0 0" id="faq-estado">Le domande e risposte della pagina principale.</p>
         </div>
         <button class="btn piena" type="button" id="sito-faq">Modifica le domande</button>
+      </div>
+
+      <div class="hoja" style="max-width:none;margin:16px 0 0;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <b style="font-weight:500">La visione</b>
+          <p class="pista" style="margin:4px 0 0" id="vis-estado">I punti della visione della pagina principale.</p>
+        </div>
+        <button class="btn piena" type="button" id="sito-vis">Modifica la visione</button>
+      </div>
+
+      <div class="hoja" style="max-width:none;margin:16px 0 0;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <b style="font-weight:500">Chi siamo e fondatori</b>
+          <p class="pista" style="margin:4px 0 0" id="sto-estado">La storia del gruppo e i fondatori, con la loro foto.</p>
+        </div>
+        <button class="btn piena" type="button" id="sito-sto">Modifica storia e fondatori</button>
       </div>
 
       <form class="hoja" id="f-sito-wa" style="max-width:none;margin:16px 0 0" novalidate>
@@ -548,6 +577,39 @@ a.btn{text-decoration:none;}
   </div>
 </div>
 
+<!-- ============================================================================
+     LA VISIONE y CHI SIAMO — solo el general.
+     ============================================================================ -->
+<div class="capa" id="vis-capa">
+  <div class="hoja">
+    <h2>La visione</h2>
+    <p>Ogni testo in italiano e in spagnolo (se lo spagnolo resta vuoto, esce l'italiano).
+      Una riga che comincia con «- » diventa un punto di un elenco; una riga vuota separa i paragrafi.</p>
+    <div id="vis-cuerpo"></div>
+    <p class="error" id="err-vis" role="alert"></p>
+    <div class="pie-hoja">
+      <button class="btn mini peligro izq" type="button" id="vis-serie">Torna a quella di serie</button>
+      <button class="btn" type="button" id="vis-cerrar">Chiudi</button>
+      <button class="btn piena" type="button" id="vis-salva" disabled>Salva la visione</button>
+    </div>
+  </div>
+</div>
+
+<div class="capa" id="sto-capa">
+  <div class="hoja">
+    <h2>Chi siamo e fondatori</h2>
+    <p>Ogni testo in italiano e in spagnolo (se lo spagnolo resta vuoto, esce l'italiano).
+      Una riga vuota separa i paragrafi. La foto di ogni fondatore esce in un cerchio.</p>
+    <div id="sto-cuerpo"></div>
+    <p class="error" id="err-sto" role="alert"></p>
+    <div class="pie-hoja">
+      <button class="btn mini peligro izq" type="button" id="sto-serie">Torna a quella di serie</button>
+      <button class="btn" type="button" id="sto-cerrar">Chiudi</button>
+      <button class="btn piena" type="button" id="sto-salva" disabled>Salva</button>
+    </div>
+  </div>
+</div>
+
 <div id="editor">
   <form class="hoja" id="f-sede" novalidate>
     <h2 id="titulo-hoja">Nuova chiesa</h2>
@@ -730,6 +792,7 @@ a.btn{text-decoration:none;}
 <script src="../sedi.js"></script>
 <script src="../almacen.js"></script>
 <script src="../domande.js"></script>
+<script src="../contenuti.js"></script>
 <script src="../mapa.js"></script>
 <script>
 'use strict';
@@ -1292,6 +1355,12 @@ function cargarSito() {
     $('#faq-estado').textContent = SITO.domande
       ? SITO.domande.length + ' domande, scritte da te.'
       : 'Per ora escono quelle di serie (' + (window.DOMANDE_BASE || []).length + '). Aprile per cambiarle.';
+    SITO.visione = (s && s.visione && typeof s.visione === 'object') ? s.visione : null;
+    SITO.storia = (s && s.storia && typeof s.storia === 'object') ? s.storia : null;
+    $('#vis-estado').textContent = SITO.visione
+      ? (SITO.visione.punti || []).length + ' punti, scritti da te.' : 'Per ora esce quella di serie. Aprila per cambiarla.';
+    $('#sto-estado').textContent = SITO.storia
+      ? (SITO.storia.fondatori || []).length + ' fondatori, scritti da te.' : 'Per ora esce quella di serie. Aprila per cambiarla.';
     $('#sito-wa').value = SITO.whatsapp;
     SITO_PENDIENTE = null;
     $('#sito-salva').disabled = true;
@@ -1617,6 +1686,195 @@ document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape' && $('#faq-capa').style.display === 'block') cerrarFaq();
 });
 $('#sito-faq').addEventListener('click', abrirFaq);
+
+/* --- piezas comunes de los editores de contenido ----------------------------
+   Un campo de texto o de varias lineas, con su etiqueta, que escribe en el
+   objeto que se le da y avisa de que hay cambios sin guardar. */
+function campoEd(cont, etiqueta, obj, clave, opc, alCambiar) {
+  opc = opc || {};
+  if (etiqueta) { var lb = document.createElement('label'); lb.textContent = etiqueta; cont.appendChild(lb); }
+  var el = document.createElement(opc.multi ? 'textarea' : 'input');
+  if (!opc.multi) el.type = 'text';
+  if (opc.clase) el.className = opc.clase;
+  el.maxLength = opc.max || 300; el.placeholder = opc.ph || '';
+  el.value = obj[clave] || '';
+  el.addEventListener('input', function () { obj[clave] = el.value; alCambiar(); });
+  cont.appendChild(el);
+  return el;
+}
+function ladoEd(cont, obj, campos, alCambiar) {
+  var lado = document.createElement('div'); lado.className = 'lado';
+  [['it', 'Italiano'], ['es', 'Español']].forEach(function (l) {
+    var col = document.createElement('div');
+    var lb = document.createElement('label'); lb.textContent = l[1]; col.appendChild(lb);
+    campos.forEach(function (c) {
+      campoEd(col, '', obj, c.k + '_' + l[0], { multi: c.multi, max: c.max, clase: c.clase,
+        ph: (l[0] === 'it' ? c.ph : c.phEs || (c.ph + ' (facoltativo)')) }, alCambiar);
+    });
+    lado.appendChild(col);
+  });
+  cont.appendChild(lado);
+}
+function botonesEd(acc, lista, i, repintar, alCambiar, quitarTxt) {
+  function b(txt, clase, fn, off) {
+    var x = document.createElement('button'); x.type = 'button'; x.className = 'btn mini' + (clase ? ' ' + clase : '');
+    x.textContent = txt; x.disabled = !!off; x.addEventListener('click', fn); acc.appendChild(x);
+  }
+  b('↑', '', function () { var x = lista[i]; lista[i] = lista[i - 1]; lista[i - 1] = x; alCambiar(); repintar(); }, i === 0);
+  b('↓', '', function () { var x = lista[i]; lista[i] = lista[i + 1]; lista[i + 1] = x; alCambiar(); repintar(); }, i === lista.length - 1);
+  b('Togli', 'peligro', function () { if (!confirm(quitarTxt)) return; lista.splice(i, 1); alCambiar(); repintar(); });
+}
+function copia(o) { return JSON.parse(JSON.stringify(o || null)); }
+/* Abrir, cerrar con aviso si hay cambios, guardar y volver a lo de serie: igual
+   para los dos editores. */
+function editorCapa(pre, campo, base, pintar, validar, titulos) {
+  var E = { datos: null, sucio: false };
+  function marcar() { E.sucio = true; $('#' + pre + '-salva').disabled = false; }
+  function abrir() {
+    E.datos = copia(SITO[campo] || base()); E.sucio = false;
+    $('#err-' + pre).textContent = '';
+    $('#' + pre + '-salva').disabled = true;
+    $('#' + pre + '-serie').hidden = !SITO[campo];
+    pintar(E, marcar);
+    $('#' + pre + '-capa').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+  function cerrar(forzar) {
+    if (!forzar && E.sucio && !confirm('Hai modifiche non salvate. Chiudo lo stesso?')) return;
+    $('#' + pre + '-capa').style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  function guardar(valor, msg) {
+    var dat = {}; dat[campo] = valor;
+    return ALMACEN.guardarSito(dat).then(function (r) {
+      E.sucio = false; avisar(msg); cerrar(true); cargarSito(); return r;
+    });
+  }
+  $('#' + pre + '-salva').addEventListener('click', function () {
+    var err = validar(E.datos);
+    if (err) { $('#err-' + pre).textContent = err; return; }
+    var b = this; b.disabled = true;
+    guardar(E.datos, titulos.ok).then(function () {
+      if (titulos.despues) titulos.despues(E.datos);
+    }).catch(function (e) { $('#err-' + pre).textContent = 'Non sono riuscito a salvare: ' + e.message; b.disabled = false; });
+  });
+  $('#' + pre + '-serie').addEventListener('click', function () {
+    if (!confirm('Il sito torna al testo di serie e il tuo si perde. Procedo?')) return;
+    guardar(null, 'Il sito usa di nuovo il testo di serie.')
+      .catch(function (e) { $('#err-' + pre).textContent = 'Non ci sono riuscito: ' + e.message; });
+  });
+  $('#' + pre + '-cerrar').addEventListener('click', function () { cerrar(false); });
+  $('#' + pre + '-capa').addEventListener('click', function (e) { if (e.target === this) cerrar(false); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && $('#' + pre + '-capa').style.display === 'block') cerrar(false);
+  });
+  return abrir;
+}
+
+/* --- la vision ----------------------------------------------------------- */
+var abrirVis = editorCapa('vis', 'visione', function () { return window.VISIONE_BASE || { punti: [] }; },
+  function pintarVis(E, marcar) {
+    var c = $('#vis-cuerpo'); c.textContent = '';
+    var v = E.datos; v.punti = v.punti || [];
+    function repintar() { pintarVis(E, marcar); }
+    var b1 = document.createElement('div'); b1.className = 'ed-bloque';
+    var h1 = document.createElement('h3'); h1.textContent = 'La frase di apertura'; b1.appendChild(h1);
+    var it0 = document.createElement('div'); it0.className = 'faq-item';
+    ladoEd(it0, v, [{ k: 'intro', multi: true, max: 600, ph: '«Crediamo che…»' }], marcar);
+    b1.appendChild(it0); c.appendChild(b1);
+    var b2 = document.createElement('div'); b2.className = 'ed-bloque';
+    var h2 = document.createElement('h3'); h2.textContent = 'I punti'; b2.appendChild(h2);
+    v.punti.forEach(function (q, i) {
+      var it = document.createElement('div'); it.className = 'faq-item';
+      var n = document.createElement('p'); n.className = 'faq-num'; n.textContent = 'Punto ' + (i + 1); it.appendChild(n);
+      ladoEd(it, q, [{ k: 't', max: 120, ph: 'Il titolo' }, { k: 'p', multi: true, max: 1500, ph: 'Il testo' }], marcar);
+      var acc = document.createElement('div'); acc.className = 'faq-acc';
+      var sp = document.createElement('span'); sp.style.marginRight = 'auto'; acc.appendChild(sp);
+      botonesEd(acc, v.punti, i, repintar, marcar, 'Tolgo questo punto?');
+      it.appendChild(acc); b2.appendChild(it);
+    });
+    if (v.punti.length < 12) {
+      var add = document.createElement('button'); add.type = 'button'; add.className = 'btn piena';
+      add.style.marginTop = '12px'; add.textContent = '+ Aggiungi punto';
+      add.addEventListener('click', function () { v.punti.push({ t_it: '', p_it: '', t_es: '', p_es: '' }); marcar(); repintar(); });
+      b2.appendChild(add);
+    }
+    c.appendChild(b2);
+  },
+  function (v) {
+    var mal = (v.punti || []).findIndex(function (q) { return !String(q.t_it || '').trim(); });
+    return mal >= 0 ? 'Al punto ' + (mal + 1) + ' manca il titolo in italiano.' : '';
+  },
+  { ok: 'Visione salvata: la vedi già sul sito.' });
+$('#sito-vis').addEventListener('click', abrirVis);
+
+/* --- chi siamo y los fundadores ------------------------------------------- */
+var abrirSto = editorCapa('sto', 'storia', function () { return window.STORIA_BASE || { fondatori: [] }; },
+  function pintarSto(E, marcar) {
+    var c = $('#sto-cuerpo'); c.textContent = '';
+    var s = E.datos; s.fondatori = s.fondatori || [];
+    function repintar() { pintarSto(E, marcar); }
+    var b1 = document.createElement('div'); b1.className = 'ed-bloque';
+    var h1 = document.createElement('h3'); h1.textContent = 'La storia'; b1.appendChild(h1);
+    var it0 = document.createElement('div'); it0.className = 'faq-item';
+    ladoEd(it0, s, [{ k: 'testo', multi: true, max: 4000, clase: 'alta', ph: 'Nel 2003…' }], marcar);
+    b1.appendChild(it0); c.appendChild(b1);
+    var b2 = document.createElement('div'); b2.className = 'ed-bloque';
+    var h2 = document.createElement('h3'); h2.textContent = 'I fondatori'; b2.appendChild(h2);
+    s.fondatori.forEach(function (f, i) {
+      var it = document.createElement('div'); it.className = 'faq-item';
+      var ff = document.createElement('div'); ff.className = 'fund-foto';
+      var circ = document.createElement('div'); circ.className = 'circ';
+      if (f.foto) { var im = document.createElement('img'); im.src = f.foto; im.alt = ''; circ.appendChild(im); }
+      else circ.textContent = 'Senza foto';
+      ff.appendChild(circ);
+      var lb = document.createElement('label'); lb.className = 'btn mini'; lb.textContent = f.foto ? 'Cambia foto' : 'Scegli foto';
+      var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/jpeg,image/png,image/webp'; inp.hidden = true;
+      lb.appendChild(inp); ff.appendChild(lb);
+      inp.addEventListener('change', function () {
+        var file = inp.files && inp.files[0]; inp.value = '';
+        if (!file) return;
+        $('#err-sto').textContent = '';
+        lb.textContent = 'Carico…';
+        achicar(file, 800, 'copertina').then(function (blob) {
+          return ALMACEN.subirImagen('generale', 'fondatori/foto', blob);
+        }).then(function (url) { f.foto = url; marcar(); repintar(); })
+          .catch(function (e) { $('#err-sto').textContent = 'La foto non si è caricata: ' + e.message; repintar(); });
+      });
+      if (f.foto) {
+        var tq = document.createElement('button'); tq.type = 'button'; tq.className = 'btn mini peligro'; tq.textContent = 'Togli foto';
+        tq.addEventListener('click', function () { f.foto = ''; marcar(); repintar(); });
+        ff.appendChild(tq);
+      }
+      it.appendChild(ff);
+      campoEd(it, 'Nome', f, 'nome', { max: 120, clase: 'nome', ph: 'Nome e cognome' }, marcar);
+      ladoEd(it, f, [{ k: 't', multi: true, max: 3000, clase: 'alta', ph: 'Chi è, la sua storia' }], marcar);
+      var acc = document.createElement('div'); acc.className = 'faq-acc';
+      var sp = document.createElement('span'); sp.style.marginRight = 'auto'; acc.appendChild(sp);
+      botonesEd(acc, s.fondatori, i, repintar, marcar, 'Tolgo questo fondatore?');
+      it.appendChild(acc); b2.appendChild(it);
+    });
+    if (s.fondatori.length < 6) {
+      var add = document.createElement('button'); add.type = 'button'; add.className = 'btn piena';
+      add.style.marginTop = '12px'; add.textContent = '+ Aggiungi fondatore';
+      add.addEventListener('click', function () { s.fondatori.push({ nome: '', foto: '', t_it: '', t_es: '' }); marcar(); repintar(); });
+      b2.appendChild(add);
+    }
+    c.appendChild(b2);
+    var b3 = document.createElement('div'); b3.className = 'ed-bloque';
+    var h3 = document.createElement('h3'); h3.textContent = 'La frase finale'; b3.appendChild(h3);
+    var it3 = document.createElement('div'); it3.className = 'faq-item';
+    ladoEd(it3, s, [{ k: 'pie', multi: true, max: 1000, ph: 'Aldo e Mariela condividono…' }], marcar);
+    b3.appendChild(it3); c.appendChild(b3);
+  },
+  function (s) {
+    var mal = (s.fondatori || []).findIndex(function (f) { return !String(f.nome || '').trim(); });
+    return mal >= 0 ? 'Al fondatore ' + (mal + 1) + ' manca il nome.' : '';
+  },
+  { ok: 'Salvato: lo vedi già sul sito.',
+    /* las fotos que ya no usa ningun fundador, fuera del almacen */
+    despues: function (s) { ALMACEN.limpiarSubcarpeta('generale', 'fondatori', (s.fondatori || []).map(function (f) { return f.foto; })); } });
+$('#sito-sto').addEventListener('click', abrirSto);
 
 /* --- la direccion de una iglesia nueva --------------------------------------
    "Massa-Carrara" -> "massa-carrara". Sin acentos —"Forlì" -> "forli"—,

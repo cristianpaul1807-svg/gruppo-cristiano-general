@@ -382,10 +382,11 @@ create policy "media: ver"
   on storage.objects for select to authenticated
   using (bucket_id = 'media');
 
--- EL TOPE: 20 archivos por carpeta. Una iglesia usa como mucho 14: portada,
--- logo y las 12 fotos de su galeria. El panel borra solas las viejas; el
+-- EL TOPE: 30 archivos por carpeta. Una iglesia usa como mucho 14: portada,
+-- logo y las 12 fotos de su galeria; el general, ademas, las fotos de los
+-- fundadores. El panel borra solas las viejas; el
 -- margen es para cambiar fotos y para algun resto si se corta la red. Con
--- 3 MB por archivo como mucho, una iglesia no pasa de 60 MB aunque alguien se
+-- 3 MB por archivo como mucho, una carpeta no pasa de 90 MB aunque alguien se
 -- salte el panel; en la practica, con las fotos achicadas, unos 3 MB.
 create or replace function public.fotos_en_cartella(c text)
 returns integer language sql stable security definer set search_path = ''
@@ -402,7 +403,7 @@ create policy "media: subir lo suyo"
   on storage.objects for insert to authenticated
   with check (bucket_id = 'media'
     and public.puo_cartella((storage.foldername(name))[1])
-    and public.fotos_en_cartella((storage.foldername(name))[1]) < 20);
+    and public.fotos_en_cartella((storage.foldername(name))[1]) < 30);
 
 create policy "media: cambiar lo suyo"
   on storage.objects for update to authenticated
@@ -497,6 +498,19 @@ alter table public.sito add column if not exists whatsapp text not null default 
 -- {d_it, r_it, d_es, r_es, conf}; tope de 30 preguntas para que nadie llene la
 -- fila por error.
 alter table public.sito add column if not exists domande jsonb;
+
+-- La vision y «Chi siamo» (historia + fundadores con su foto), que cambia el
+-- general. null = los de serie (contenuti.js).
+alter table public.sito add column if not exists visione jsonb;
+alter table public.sito add column if not exists storia  jsonb;
+do $$ begin
+  alter table public.sito add constraint sito_visione_valida check (
+    visione is null or (jsonb_typeof(visione) = 'object' and octet_length(visione::text) < 60000));
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter table public.sito add constraint sito_storia_valida check (
+    storia is null or (jsonb_typeof(storia) = 'object' and octet_length(storia::text) < 60000));
+exception when duplicate_object then null; end $$;
 do $$ begin
   alter table public.sito add constraint sito_domande_valide check (
     domande is null or (jsonb_typeof(domande) = 'array'

@@ -179,6 +179,31 @@ var ALMACEN = (function () {
           return { d_it: c(q.d_it, 300), r_it: c(q.r_it, 1500), d_es: c(q.d_es, 300), r_es: c(q.r_es, 1500), conf: !!q.conf };
         }).filter(function (q) { return q.d_it || q.d_es; });
     }
+    function c(v, n) { return String(v || '').trim().slice(0, n); }
+    /* La vision: una frase de entrada y los puntos (titulo + texto). */
+    if (d && d.visione !== undefined) {
+      var v = d.visione;
+      o.visione = v === null ? null : {
+        intro_it: c(v.intro_it, 600), intro_es: c(v.intro_es, 600),
+        punti: (Array.isArray(v.punti) ? v.punti : []).slice(0, 12).map(function (q) {
+          return { t_it: c(q.t_it, 120), p_it: c(q.p_it, 1500), t_es: c(q.t_es, 120), p_es: c(q.p_es, 1500) };
+        }).filter(function (q) { return q.t_it || q.p_it || q.t_es || q.p_es; })
+      };
+    }
+    /* «Chi siamo»: la historia, los fundadores (con su foto, solo de NUESTRO
+       almacen) y la frase de cierre. */
+    if (d && d.storia !== undefined) {
+      var s = d.storia, pre = SUPABASE.url + '/storage/v1/object/public/media/generale/';
+      o.storia = s === null ? null : {
+        testo_it: c(s.testo_it, 4000), testo_es: c(s.testo_es, 4000),
+        fondatori: (Array.isArray(s.fondatori) ? s.fondatori : []).slice(0, 6).map(function (f) {
+          var foto = String(f.foto || '');
+          if (conBase ? foto.indexOf(pre) !== 0 : !/^data:image\//.test(foto)) foto = '';
+          return { nome: c(f.nome, 120), foto: foto, t_it: c(f.t_it, 3000), t_es: c(f.t_es, 3000) };
+        }).filter(function (f) { return f.nome; }),
+        pie_it: c(s.pie_it, 1000), pie_es: c(s.pie_es, 1000)
+      };
+    }
     return o;
   }
 
@@ -551,14 +576,18 @@ var ALMACEN = (function () {
 
     /* Borra de <cartella>/galleria/ los archivos que ya no estan en la galeria
        (restos de una subida cortada). Se llama al abrir la galeria en el panel. */
-    limpiarGaleria: function (cartella, fotos) {
+    limpiarSubcarpeta: function (cartella, sub, urlsEnUso) {
+      return this.limpiarGaleria(cartella, (urlsEnUso || []).filter(Boolean).map(function (u) { return { url: u }; }), sub);
+    },
+
+    limpiarGaleria: function (cartella, fotos, sub) {
       if (!conBase) return Promise.resolve(0);
       var s = sesion();
       if (!viva(s)) return Promise.resolve(0);
       var h = { 'apikey': SUPABASE.key, 'Authorization': 'Bearer ' + s.access_token, 'Content-Type': 'application/json' };
       var pre = SUPABASE.url + '/storage/v1/object/public/media/';
       var usados = (fotos || []).map(function (f) { return decodeURIComponent(String(f.url).slice(pre.length)); });
-      var dir = cartella + '/galleria/';
+      var dir = cartella + '/' + (sub || 'galleria') + '/';
       return fetch(SUPABASE.url + '/storage/v1/object/list/media', {
         method: 'POST', headers: h, body: JSON.stringify({ prefix: dir, limit: 100 })
       }).then(function (r) { return r.ok ? r.json() : []; }).then(function (lista) {
@@ -581,7 +610,7 @@ var ALMACEN = (function () {
        en blanco por un fallo. */
     leerSito: function () {
       if (conBase) {
-        return rest('sito?select=copertina,whatsapp,domande&limit=1', {}, false)
+        return rest('sito?select=copertina,whatsapp,domande,visione,storia&limit=1', {}, false)
           .then(function (f) { return (f && f[0]) || null; })
           .catch(function () { return null; });
       }
@@ -606,7 +635,7 @@ var ALMACEN = (function () {
       }
       var antes = {};
       try { antes = JSON.parse(localStorage.getItem('gcf_sito') || '{}') || {}; } catch (e) {}
-      var todo = Object.assign({ copertina: '', whatsapp: '', domande: null }, antes, soloLoDado(datos));
+      var todo = Object.assign({ copertina: '', whatsapp: '', domande: null, visione: null, storia: null }, antes, soloLoDado(datos));
       try { localStorage.setItem('gcf_sito', JSON.stringify(todo)); } catch (e) {}
       return Promise.resolve(todo);
     },

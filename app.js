@@ -19,6 +19,35 @@ var WHATSAPP = '';
 var WA_MENSAJE = 'Ciao, scrivo dal sito del Gruppo Cristiano.';
 
 var reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Lo que guarda el general (portada, WhatsApp, preguntas, vision, historia):
+   se pide UNA vez y lo usan todos los trozos de la pagina que lo necesitan. */
+var SITO_P = null;
+function SITO_UNA_VEZ() {
+  if (!SITO_P) SITO_P = (window.ALMACEN && ALMACEN.leerSito) ? ALMACEN.leerSito() : Promise.resolve(null);
+  return SITO_P;
+}
+
+/* Un texto escrito en el panel -> parrafos y listas, siempre como texto (nunca
+   HTML). Linea en blanco = parrafo nuevo; linea que empieza por "- " = punto
+   de una lista. */
+function BLOQUES(cont, texto) {
+  var p = null, ul = null;
+  String(texto || '').split(/\r?\n/).forEach(function (l) {
+    var lin = l.trim();
+    if (!lin) { p = null; ul = null; return; }
+    var m = /^[-•]\s+(.*)$/.exec(lin);
+    if (m) {
+      p = null;
+      if (!ul) { ul = document.createElement('ul'); cont.appendChild(ul); }
+      var li = document.createElement('li'); li.textContent = m[1]; ul.appendChild(li);
+      return;
+    }
+    ul = null;
+    if (!p) { p = document.createElement('p'); cont.appendChild(p); p.textContent = lin; }
+    else p.textContent += ' ' + lin;
+  });
+}
 var $ = function (s) { return document.querySelector(s); };
 
 /* --- movimiento al bajar ----------------------------------------------------
@@ -203,7 +232,7 @@ var observarReveal;
 (function () {
   var img = document.querySelector('#hero .hero-foto img');
   if (!img || !window.ALMACEN || !ALMACEN.leerSito) return;
-  ALMACEN.leerSito().then(function (s) {
+  SITO_UNA_VEZ().then(function (s) {
     var url = s && IMAGEN(s.copertina);
     if (!url) return;
     var nueva = new Image();
@@ -255,7 +284,7 @@ function NUMERO_WA(t) {
   }
   if (NUMERO_WA(WHATSAPP)) encender(NUMERO_WA(WHATSAPP));
   if (window.ALMACEN && ALMACEN.leerSito) {
-    ALMACEN.leerSito().then(function (s) {
+    SITO_UNA_VEZ().then(function (s) {
       var n = NUMERO_WA(s && s.whatsapp);
       if (n) encender(n);
     });
@@ -860,10 +889,72 @@ function MAPA_DE(sede) {
   window.__dibujarFaq = dibujar;
   dibujar();
   if (window.ALMACEN && ALMACEN.leerSito) {
-    ALMACEN.leerSito().then(function (s) {
+    SITO_UNA_VEZ().then(function (s) {
       if (s && Array.isArray(s.domande)) { lista = s.domande; dibujar(); }
     });
   }
+})();
+
+/* ============================================================================
+   LA HISTORIA, LOS FUNDADORES Y LA VISION — de serie (contenuti.js) o los que
+   guarde el general (sito.storia, sito.visione). En español, la version
+   española de cada texto si la tiene; si no, la italiana.
+   ============================================================================ */
+(function () {
+  var stTesto = document.getElementById('storia-testo'), fond = document.getElementById('fondatori');
+  var pie = document.getElementById('fondatori-pie');
+  var vIntro = document.getElementById('visione-intro'), vLista = document.getElementById('visione-lista');
+  if (!stTesto && !vLista) return;
+  var storia = window.STORIA_BASE || null, visione = window.VISIONE_BASE || null;
+  function en(o, k) {
+    var es = document.documentElement.lang === 'es';
+    return (es && o[k + '_es']) ? o[k + '_es'] : (o[k + '_it'] || '');
+  }
+  function dibujar() {
+    if (storia && stTesto) {
+      stTesto.textContent = ''; BLOQUES(stTesto, en(storia, 'testo'));
+      fond.textContent = '';
+      (storia.fondatori || []).forEach(function (f, i) {
+        var a = document.createElement('article');
+        a.className = 'fondatore reveal ' + (i % 2 ? 'der d2' : 'izq d1');
+        var src = IMAGEN(f.foto);
+        if (src) {
+          var im = document.createElement('img'); im.className = 'fondatore-foto';
+          im.src = src; im.alt = f.nome || ''; im.loading = 'lazy'; a.appendChild(im);
+        }
+        var h = document.createElement('h4'); h.textContent = f.nome || ''; a.appendChild(h);
+        var cuerpo = document.createElement('div'); BLOQUES(cuerpo, en(f, 't')); a.appendChild(cuerpo);
+        fond.appendChild(a);
+      });
+      var fh = document.querySelector('.fondatori-h');
+      if (fh) fh.hidden = !(storia.fondatori || []).length;
+      pie.textContent = en(storia, 'pie'); pie.hidden = !pie.textContent;
+      if (observarReveal) observarReveal(fond);
+    }
+    if (visione && vLista) {
+      vIntro.textContent = en(visione, 'intro'); vIntro.hidden = !vIntro.textContent;
+      vLista.textContent = '';
+      (visione.punti || []).forEach(function (q, i) {
+        var d = document.createElement('div');
+        d.className = 'punto reveal' + (i % 3 ? ' d' + (i % 3) : '');
+        d.setAttribute('data-n', i + 1);
+        var h = document.createElement('h3'); h.textContent = en(q, 't'); d.appendChild(h);
+        BLOQUES(d, en(q, 'p'));
+        vLista.appendChild(d);
+      });
+      var sec = document.getElementById('visione');
+      if (sec) sec.hidden = !(visione.punti || []).length;
+      if (observarReveal) observarReveal(vLista);
+    }
+  }
+  window.__dibujarContenidos = dibujar;
+  dibujar();
+  SITO_UNA_VEZ().then(function (s) {
+    var cambio = false;
+    if (s && s.storia && typeof s.storia === 'object') { storia = s.storia; cambio = true; }
+    if (s && s.visione && typeof s.visione === 'object') { visione = s.visione; cambio = true; }
+    if (cambio) dibujar();
+  });
 })();
 
 /* ============================================================================
@@ -976,36 +1067,9 @@ var I18N = {
     /* --- quiénes somos: su historia, traducida del documento que mandaron --- */
     st_eyebrow: "Quiénes somos",
     st_h2: "Nuestra historia.",
-    st_p1: "En 2003, Aldo y Mariela dieron vida a la comunidad Gruppo Cristiano, con la fundación de la primera iglesia en Parma.",
-    st_p2: "Con los años, gracias al crecimiento de la comunidad y a la obra del Señor, se ha desarrollado una realidad cada vez más amplia y multicultural, capaz de acoger a personas de toda edad y procedencia: niños, jóvenes, adultos y mayores, de distintas nacionalidades.",
-    st_p3: "Este crecimiento llevó al nacimiento de nuevas comunidades en el territorio, con la apertura de otras iglesias en Fidenza, Reggio Emilia y Marina di Carrara.",
-    st_p4: "La visión misionera no se ha detenido en estas realidades. El deseo que sigue motivando a Aldo y Mariela es ver nacer nuevas comunidades cristianas en Italia, para anunciar el Evangelio, alcanzar a nuevas personas y formar discípulos de Jesucristo, contribuyendo así a la expansión del Reino de Dios.",
     st_fond: "Fundadores y pastores principales",
-    st_aldo1: "Conoció personalmente al Señor en 1989, iniciando un camino de fe y de crecimiento espiritual que lo llevó a madurar también a través de experiencias de formación y de servicio cristiano.",
-    st_aldo2: "Durante tres años colaboró con el movimiento de Los Navegantes en Inglaterra, donde cursó y completó la escuela bíblica organizada por la asociación. En 2010 completó además la formación de la Escuela Bíblica para Responsables de Comunidad de Uomini Nuovi, en Marchirolo (Varese).",
-    st_mari1: "Originaria de la República Dominicana, conoció al Señor en 1980. Creció espiritualmente en la Comunidad Cristiana «Casa de Oración», en la República Dominicana. Paralelamente a su camino de fe, se licenció en Psicología en la Universidad Autónoma de Santo Domingo (UASD).",
-    st_mari2: "En 1990 llegó a Italia como misionera, continuando su compromiso con el servicio cristiano. En 1995 completó la escuela bíblica de Los Navegantes en Inglaterra, profundizando aún más su formación espiritual y bíblica.",
-    st_pie: "Aldo y Mariela comparten una vida dedicada a la fe, al servicio y a la misión cristiana. Son los padres de Rebecca, que junto a su marido Andrea sirve en el Gruppo Cristiano de Parma poniendo a disposición sus dones.",
     vs_eyebrow: "La visión",
     vs_h2: "Qué queremos<br>hacer, y por qué.",
-    vs_p: "«Creemos que confiando la propia vida a Jesús, cada uno de nosotros puede obtener la vida eterna, ser cambiado por Dios y cambiar la sociedad.»",
-    v1_h: "Alcanzar",
-    v1_p: "Alcanzar a toda persona no creyente en Italia, a través de su Palabra, llevando el mensaje de Salvación en Cristo Jesús.",
-    v2_h: "Equipar",
-    v2_p: "Equipar a cada individuo para hacerlo un cristiano maduro, un instrumento de Dios en cualquier parte del mundo, y una persona preparada para la obra del ministerio.",
-    v3_h: "Formar",
-    v3_p: "El Gruppo Cristiano Latino Americano pone a disposición de cada creyente:",
-    v3_l1: "discipulado — cursos básicos y avanzados",
-    v3_l2: "estudios bíblicos",
-    v3_l3: "participación en distintas áreas ministeriales",
-    v4_h: "Fundar iglesias",
-    v4_p: "Tenemos la visión de fundar iglesias, en Italia o en el extranjero, donde Dios nos dé la posibilidad de obrar.",
-    v5_h: "La iglesia",
-    v5_p: "El cuerpo de Cristo y la comunión de los creyentes: un lugar donde crecer y disfrutar de comunión fraterna, y donde poner a disposición los propios dones.",
-    v6_h: "Invertir en el Reino",
-    v6_p: "Creemos que el Señor es quien provee a nuestras necesidades, por eso somos gozosos de poder dar lo que tenemos para la edificación de su iglesia — a través del amor, el servicio y la fraternidad.",
-    v7_h: "Punto de apoyo",
-    v7_p: "Ser un punto de apoyo para quien quiera venir a Italia como misionero, dándole los medios para obrar adecuadamente en nuestra nación.",
     fd_eyebrow: "Puntos de fe",
     fd_h2: "En qué<br>creemos.",
     dm_eyebrow: "Preguntas",
@@ -1045,6 +1109,7 @@ function aplicarIdioma(lang) {
   if (window.__dibujarSedi) window.__dibujarSedi();
   if (window.__dibujarFede) window.__dibujarFede();
   if (window.__dibujarFaq) window.__dibujarFaq();
+  if (window.__dibujarContenidos) window.__dibujarContenidos();
   if (window.__dibujarSede) window.__dibujarSede();
   try { localStorage.setItem('gc_lang', lang); } catch (e) {}
 }
