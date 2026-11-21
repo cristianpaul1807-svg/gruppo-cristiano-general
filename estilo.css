@@ -423,6 +423,10 @@ footer .pie-panel a:hover{color:#fff;}
   background:var(--oro);color:var(--marino);text-align:center;font-size:11px;font-weight:700;
   letter-spacing:0.1em;text-transform:uppercase;}
 body{padding-bottom:38px;}
+/* en su dominio no hay franja de prototipo (la clase la pone el <head>) */
+html.dominio{--banda:0px;}
+html.dominio .banda{display:none;}
+html.dominio body{padding-bottom:0;}
 
 /* --- movimiento al bajar ------------------------------------------------------
    Cada pieza ENTRA desvanecida (desde abajo, desde un lado, o creciendo) cuando
