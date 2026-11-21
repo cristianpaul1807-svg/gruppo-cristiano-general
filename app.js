@@ -828,6 +828,45 @@ function MAPA_DE(sede) {
 })();
 
 /* ============================================================================
+   LAS PREGUNTAS — las del general si las ha guardado (sito.domande), si no
+   las de serie (domande.js). Texto puro, nunca HTML: las escribe una persona
+   desde el panel. En español, la version española si la tiene; si no, la
+   italiana, mejor que un hueco.
+   ============================================================================ */
+(function () {
+  var cont = document.getElementById('faq');
+  if (!cont) return;
+  var lista = window.DOMANDE_BASE || [];
+  function dibujar() {
+    var es = document.documentElement.lang === 'es';
+    cont.textContent = '';
+    var sec = document.getElementById('domande');
+    if (sec) sec.hidden = !lista.length;
+    lista.forEach(function (q) {
+      var d = (es && q.d_es) ? q.d_es : q.d_it, r = (es && q.r_es) ? q.r_es : q.r_it;
+      if (!d) return;
+      var det = document.createElement('details');
+      var s = document.createElement('summary'); s.textContent = d;
+      var p = document.createElement('p'); p.className = 'risposta'; p.textContent = r || '';
+      if (q.conf) {
+        var x = document.createElement('span'); x.className = 'x-conf';
+        x.textContent = es ? ((window.__T && window.__T.faq_conf) || 'por confirmar') : 'da confermare';
+        p.appendChild(x);
+      }
+      det.appendChild(s); det.appendChild(p);
+      cont.appendChild(det);
+    });
+  }
+  window.__dibujarFaq = dibujar;
+  dibujar();
+  if (window.ALMACEN && ALMACEN.leerSito) {
+    ALMACEN.leerSito().then(function (s) {
+      if (s && Array.isArray(s.domande)) { lista = s.domande; dibujar(); }
+    });
+  }
+})();
+
+/* ============================================================================
    LOS PUNTOS DE FE
    ============================================================================ */
 (function () {
@@ -971,21 +1010,7 @@ var I18N = {
     fd_h2: "En qué<br>creemos.",
     dm_eyebrow: "Preguntas",
     dm_h2: "Lo que se pregunta<br>quien no ha<br>entrado nunca.",
-    dm_p: "Quien no ha estado nunca en una iglesia evangélica no pregunta de teología: pregunta cómo hay que vestirse y cuánto dura. Las preguntas de abajo son las de verdad.",
-    q1: "¿Cómo encuentro la iglesia más cercana?",
-    a1: "En la sección «Las iglesias» hay una ficha por cada una. Se toca y se abre su página, con los horarios, los pastores y el botón para llegar con el navegador del móvil.",
-    q2: "¿Tengo que vestirme de alguna manera?",
-    a2: 'No. Se entra como se está.<span class="x-conf">borrador</span>',
-    q3: "¿Tengo que avisar antes de ir?",
-    a3: 'No, se entra y ya.<span class="x-conf">borrador</span>',
-    q4: "¿Tengo que dar una ofrenda?",
-    a4: 'No. Nadie te va a pedir nada, y nadie mira quién da y quién no.<span class="x-conf">borrador</span>',
-    q5: "¿Qué idiomas se hablan?",
-    a5: 'Somos un grupo de personas de distintas naciones. Los idiomas de cada sede están escritos en su ficha.<span class="x-conf">por confirmar</span>',
-    q6: "¿Puedo venir con niños?",
-    a6: 'Aquí hace falta la respuesta real: si hay un momento para los niños, a qué hora y desde qué edad.<span class="x-conf">por confirmar</span>',
-    q7: "Quiero venir a Italia como misionero. ¿Me pueden ayudar?",
-    a7: "Sí — es el séptimo punto de nuestra visión. Escríbenos por WhatsApp y hablamos.",
+    faq_conf: "por confirmar", dm_p: "Quien no ha estado nunca en una iglesia evangélica no pregunta de teología: pregunta cómo hay que vestirse y cuánto dura. Las preguntas de abajo son las de verdad.",
     wa_txt: "Escríbenos",
     foot_dir: "Fidenza · Parma", foot_min: "Isaías 55:5", foot_panel: "Área reservada",
     banda: "Prototipo Digitatex · contenidos por confirmar"
@@ -1019,6 +1044,7 @@ function aplicarIdioma(lang) {
      barrido de [data-i18n]: se vuelven a pintar con el diccionario cargado. */
   if (window.__dibujarSedi) window.__dibujarSedi();
   if (window.__dibujarFede) window.__dibujarFede();
+  if (window.__dibujarFaq) window.__dibujarFaq();
   if (window.__dibujarSede) window.__dibujarSede();
   try { localStorage.setItem('gc_lang', lang); } catch (e) {}
 }

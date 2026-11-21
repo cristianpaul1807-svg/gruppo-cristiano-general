@@ -216,6 +216,20 @@ a.btn{text-decoration:none;}
 #galeria-capa .hoja{max-width:760px;}
 #galeria-capa label.btn{cursor:pointer;}
 
+/* --- preguntas -------------------------------------------------------------- */
+#faq-capa .hoja{max-width:820px;}
+.faq-item{padding:14px;border:1px solid var(--line);border-radius:6px;background:var(--ink-3);}
+.faq-item + .faq-item{margin-top:12px;}
+.faq-item .lado{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media (max-width:640px){ .faq-item .lado{grid-template-columns:1fr;} }
+.faq-item label{display:block;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--stone);margin:0 0 5px;}
+.faq-item input[type=text],.faq-item textarea{width:100%;padding:9px 11px;background:var(--ink-2);color:var(--bone);
+  border:1px solid var(--line-strong);border-radius:4px;font:400 14px/1.5 'Inter',sans-serif;}
+.faq-item textarea{min-height:84px;resize:vertical;margin-top:8px;}
+.faq-item .faq-acc{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px;}
+.faq-item .faq-acc label{display:flex;gap:6px;align-items:center;margin:0 auto 0 0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--bone-dim);}
+.faq-num{font-size:11px;letter-spacing:.12em;color:var(--stone);margin-bottom:8px;text-transform:uppercase;}
+
 /* --- capas ----------------------------------------------------------------- */
 .capa{display:none;position:fixed;inset:0;z-index:45;background:rgba(5,7,10,0.72);
   overflow-y:auto;padding:clamp(14px,6vh,70px) 14px;}
@@ -333,6 +347,14 @@ a.btn{text-decoration:none;}
           <p class="pista" style="margin:4px 0 0">Le foto con il testo sotto che escono nella pagina principale.</p>
         </div>
         <button class="btn piena" type="button" id="sito-galeria">Apri la galleria</button>
+      </div>
+
+      <div class="hoja" style="max-width:none;margin:16px 0 0;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <b style="font-weight:500">Domande frequenti</b>
+          <p class="pista" style="margin:4px 0 0" id="faq-estado">Le domande e risposte della pagina principale.</p>
+        </div>
+        <button class="btn piena" type="button" id="sito-faq">Modifica le domande</button>
       </div>
 
       <form class="hoja" id="f-sito-wa" style="max-width:none;margin:16px 0 0" novalidate>
@@ -501,6 +523,27 @@ a.btn{text-decoration:none;}
     <div class="pie-hoja">
       <button class="btn" type="button" id="gal-cerrar">Chiudi</button>
       <button class="btn piena" type="button" id="gal-salva" disabled>Salva i testi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================================
+     DOMANDE — las preguntas y respuestas de la pagina principal (solo el general).
+     ============================================================================ -->
+<div class="capa" id="faq-capa">
+  <div class="hoja">
+    <h2>Domande frequenti</h2>
+    <p>Ogni domanda in italiano e in spagnolo. Se lasci vuota la parte in spagnolo, chi legge
+      in spagnolo vede quella in italiano. Sul sito escono in quest'ordine.</p>
+    <div id="faq-lista"></div>
+    <div class="subida-acc" style="margin-top:14px">
+      <button class="btn piena" type="button" id="faq-add">+ Aggiungi domanda</button>
+    </div>
+    <p class="error" id="err-faq" role="alert"></p>
+    <div class="pie-hoja">
+      <button class="btn mini peligro izq" type="button" id="faq-serie">Torna a quelle di serie</button>
+      <button class="btn" type="button" id="faq-cerrar">Chiudi</button>
+      <button class="btn piena" type="button" id="faq-salva" disabled>Salva le domande</button>
     </div>
   </div>
 </div>
@@ -686,6 +729,7 @@ a.btn{text-decoration:none;}
 
 <script src="../sedi.js"></script>
 <script src="../almacen.js"></script>
+<script src="../domande.js"></script>
 <script src="../mapa.js"></script>
 <script>
 'use strict';
@@ -1243,7 +1287,11 @@ function pintarSito(url) {
 }
 function cargarSito() {
   ALMACEN.leerSito().then(function (s) {
-    SITO = { copertina: (s && s.copertina) || '', whatsapp: (s && s.whatsapp) || '' };
+    SITO = { copertina: (s && s.copertina) || '', whatsapp: (s && s.whatsapp) || '',
+      domande: (s && Array.isArray(s.domande)) ? s.domande : null };
+    $('#faq-estado').textContent = SITO.domande
+      ? SITO.domande.length + ' domande, scritte da te.'
+      : 'Per ora escono quelle di serie (' + (window.DOMANDE_BASE || []).length + '). Aprile per cambiarle.';
     $('#sito-wa').value = SITO.whatsapp;
     SITO_PENDIENTE = null;
     $('#sito-salva').disabled = true;
@@ -1447,6 +1495,128 @@ document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape' && $('#galeria-capa').style.display === 'block') cerrarGaleria();
 });
 $('#sito-galeria').addEventListener('click', function () { abrirGaleria('generale', ''); });
+
+/* --- las preguntas (solo el general) --------------------------------------
+   Se edita una copia; nada se guarda hasta «Salva le domande». La primera vez
+   la copia sale de las de serie (domande.js), para cambiarlas y no empezar de
+   cero. «Torna a quelle di serie» guarda null: la web vuelve a las de serie. */
+var FAQ = { lista: [], sucio: false };
+function copiaFaq(l) {
+  return (l || []).map(function (q) {
+    return { d_it: q.d_it || '', r_it: q.r_it || '', d_es: q.d_es || '', r_es: q.r_es || '', conf: !!q.conf };
+  });
+}
+function abrirFaq() {
+  FAQ = { lista: copiaFaq(SITO.domande || window.DOMANDE_BASE), sucio: false };
+  $('#err-faq').textContent = '';
+  $('#faq-salva').disabled = true;
+  $('#faq-serie').hidden = !SITO.domande;
+  pintarFaq();
+  $('#faq-capa').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function cerrarFaq() {
+  if (FAQ.sucio && !confirm('Hai modifiche non salvate. Chiudo lo stesso?')) return;
+  $('#faq-capa').style.display = 'none';
+  document.body.style.overflow = '';
+}
+function marcarFaq() { FAQ.sucio = true; $('#faq-salva').disabled = false; }
+function pintarFaq() {
+  var cont = $('#faq-lista'); cont.textContent = '';
+  if (!FAQ.lista.length) {
+    var v = document.createElement('div'); v.className = 'gal-vacia';
+    v.textContent = 'Nessuna domanda. Se salvi così, la sezione «Domande» sparisce dal sito.';
+    cont.appendChild(v);
+  }
+  FAQ.lista.forEach(function (q, i) {
+    var it = document.createElement('div'); it.className = 'faq-item';
+    var num = document.createElement('p'); num.className = 'faq-num'; num.textContent = 'Domanda ' + (i + 1);
+    it.appendChild(num);
+    var lado = document.createElement('div'); lado.className = 'lado';
+    [['it', 'Italiano'], ['es', 'Español']].forEach(function (l) {
+      var col = document.createElement('div');
+      var lb = document.createElement('label'); lb.textContent = l[1];
+      var d = document.createElement('input'); d.type = 'text'; d.maxLength = 300;
+      d.placeholder = l[0] === 'it' ? 'La domanda' : 'La pregunta (facoltativa)';
+      d.value = q['d_' + l[0]];
+      d.addEventListener('input', function () { q['d_' + l[0]] = d.value; marcarFaq(); });
+      var r = document.createElement('textarea'); r.maxLength = 1500;
+      r.placeholder = l[0] === 'it' ? 'La risposta' : 'La respuesta (facoltativa)';
+      r.value = q['r_' + l[0]];
+      r.addEventListener('input', function () { q['r_' + l[0]] = r.value; marcarFaq(); });
+      col.appendChild(lb); col.appendChild(d); col.appendChild(r);
+      lado.appendChild(col);
+    });
+    it.appendChild(lado);
+    var acc = document.createElement('div'); acc.className = 'faq-acc';
+    var lc = document.createElement('label');
+    var cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = q.conf;
+    cb.addEventListener('change', function () { q.conf = cb.checked; marcarFaq(); });
+    lc.appendChild(cb); lc.appendChild(document.createTextNode('Da confermare (esce con l’etichetta)'));
+    acc.appendChild(lc);
+    function boton(txt, clase, fn, off) {
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'btn mini' + (clase ? ' ' + clase : '');
+      b.textContent = txt; b.disabled = !!off; b.addEventListener('click', fn); acc.appendChild(b);
+    }
+    boton('↑', '', function () { mover2(i, -1); }, i === 0);
+    boton('↓', '', function () { mover2(i, 1); }, i === FAQ.lista.length - 1);
+    boton('Togli', 'peligro', function () {
+      if (!confirm('Tolgo questa domanda?')) return;
+      FAQ.lista.splice(i, 1); marcarFaq(); pintarFaq();
+    });
+    it.appendChild(acc);
+    cont.appendChild(it);
+  });
+  $('#faq-add').hidden = FAQ.lista.length >= 30;
+}
+function mover2(i, d) {
+  var x = FAQ.lista[i]; FAQ.lista[i] = FAQ.lista[i + d]; FAQ.lista[i + d] = x;
+  marcarFaq(); pintarFaq();
+}
+$('#faq-add').addEventListener('click', function () {
+  FAQ.lista.push({ d_it: '', r_it: '', d_es: '', r_es: '', conf: false });
+  marcarFaq(); pintarFaq();
+  var ins = $('#faq-lista').querySelectorAll('.faq-item input[type=text]');
+  if (ins.length) ins[ins.length - 2].focus();
+});
+$('#faq-salva').addEventListener('click', function () {
+  var err = $('#err-faq'); err.textContent = '';
+  var mal = FAQ.lista.findIndex(function (q) {
+    return (q.d_it.trim() && !q.r_it.trim()) || (!q.d_it.trim() && q.r_it.trim())
+      || (q.d_es.trim() && !q.r_es.trim()) || (!q.d_es.trim() && q.r_es.trim())
+      || (!q.d_it.trim() && !q.d_es.trim());
+  });
+  if (mal >= 0) {
+    err.textContent = 'La domanda ' + (mal + 1) + ' è a metà: ogni domanda ha bisogno della sua risposta '
+      + '(e almeno l’italiano).';
+    return;
+  }
+  var b = this; b.disabled = true;
+  ALMACEN.guardarSito({ domande: FAQ.lista }).then(function () {
+    FAQ.sucio = false;
+    avisar('Domande salvate: le vedi già sul sito.');
+    $('#faq-capa').style.display = 'none'; document.body.style.overflow = '';
+    cargarSito();
+  }).catch(function (e) {
+    err.textContent = 'Non sono riuscito a salvarle: ' + e.message;
+    b.disabled = false;
+  });
+});
+$('#faq-serie').addEventListener('click', function () {
+  if (!confirm('Il sito torna alle domande di serie e le tue si perdono. Procedo?')) return;
+  ALMACEN.guardarSito({ domande: null }).then(function () {
+    FAQ.sucio = false;
+    avisar('Il sito usa di nuovo le domande di serie.');
+    $('#faq-capa').style.display = 'none'; document.body.style.overflow = '';
+    cargarSito();
+  }).catch(function (e) { $('#err-faq').textContent = 'Non ci sono riuscito: ' + e.message; });
+});
+$('#faq-cerrar').addEventListener('click', cerrarFaq);
+$('#faq-capa').addEventListener('click', function (e) { if (e.target === this) cerrarFaq(); });
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && $('#faq-capa').style.display === 'block') cerrarFaq();
+});
+$('#sito-faq').addEventListener('click', abrirFaq);
 
 /* --- la direccion de una iglesia nueva --------------------------------------
    "Massa-Carrara" -> "massa-carrara". Sin acentos —"Forlì" -> "forli"—,

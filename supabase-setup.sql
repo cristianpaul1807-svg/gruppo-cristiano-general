@@ -492,6 +492,17 @@ insert into public.sito (id) values (true) on conflict (id) do nothing;
 -- escribe a ESA iglesia (su numero va en su ficha).
 alter table public.sito add column if not exists whatsapp text not null default '';
 
+-- Las preguntas de la seccion «Domande», que cambia el general. null = todavia
+-- no ha guardado ninguna y la web usa las de serie (domande.js). Una lista de
+-- {d_it, r_it, d_es, r_es, conf}; tope de 30 preguntas para que nadie llene la
+-- fila por error.
+alter table public.sito add column if not exists domande jsonb;
+do $$ begin
+  alter table public.sito add constraint sito_domande_valide check (
+    domande is null or (jsonb_typeof(domande) = 'array'
+      and jsonb_array_length(domande) <= 30 and octet_length(domande::text) < 60000));
+exception when duplicate_object then null; end $$;
+
 comment on table public.sito is
   'Lo de la web general que cambia el administrador general desde el panel. Una sola fila.';
 

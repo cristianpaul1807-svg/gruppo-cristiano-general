@@ -483,42 +483,9 @@
         chiede come ci si veste e quanto dura. Le domande qui sotto sono quelle vere.</p>
     </div>
 
-    <div class="faq reveal">
-      <details>
-        <summary data-i18n="q1">Come trovo la chiesa più vicina a me?</summary>
-        <p class="risposta" data-i18n="a1">Nella sezione «Le sedi» c'è una scheda per ogni
-          chiesa. Si tocca e si apre la sua pagina, con gli orari, i pastori e il bottone per
-          arrivarci col navigatore del telefono.</p>
-      </details>
-      <details>
-        <summary data-i18n="q2">Devo vestirmi in un modo particolare?</summary>
-        <p class="risposta" data-i18n="a2">No. Si entra come si è.<span class="x-conf">bozza</span></p>
-      </details>
-      <details>
-        <summary data-i18n="q3">Devo avvisare prima di venire?</summary>
-        <p class="risposta" data-i18n="a3">No, si entra e basta.<span class="x-conf">bozza</span></p>
-      </details>
-      <details>
-        <summary data-i18n="q4">Devo dare un'offerta?</summary>
-        <p class="risposta" data-i18n="a4">No. Nessuno ti chiederà niente, e nessuno guarda
-          chi dà e chi non dà.<span class="x-conf">bozza</span></p>
-      </details>
-      <details>
-        <summary data-i18n="q5">Che lingue si parlano?</summary>
-        <p class="risposta" data-i18n="a5">Siamo un gruppo di persone di diverse nazioni.
-          Le lingue di ogni sede sono scritte nella sua scheda.<span class="x-conf">da confermare</span></p>
-      </details>
-      <details>
-        <summary data-i18n="q6">Posso venire con i bambini?</summary>
-        <p class="risposta" data-i18n="a6">Qui serve la risposta vera: se c'è un momento per
-          i bambini, a che ora e da che età.<span class="x-conf">da confermare</span></p>
-      </details>
-      <details>
-        <summary data-i18n="q7">Voglio venire in Italia come missionario. Mi potete aiutare?</summary>
-        <p class="risposta" data-i18n="a7">Sì — è il settimo punto della nostra visione.
-          Scrivici su WhatsApp e ne parliamo.</p>
-      </details>
-    </div>
+    <!-- Las preguntas las pinta app.js: las del general (base de datos) o, si
+         todavia no ha guardado ninguna, las de serie (domande.js). -->
+    <div class="faq reveal" id="faq"></div>
   </div>
 </section>
 
@@ -549,6 +516,7 @@
 <script src="sedi.js"></script>
 <script src="almacen.js"></script>
 <script src="fede.js"></script>
+<script src="domande.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -170,6 +170,15 @@ var ALMACEN = (function () {
   function soloLoDado(d) {
     var o = {};
     ['copertina', 'whatsapp'].forEach(function (k) { if (d && d[k] !== undefined) o[k] = String(d[k] || ''); });
+    /* Las preguntas: null = volver a las de serie; si no, una lista limpia,
+       solo con los campos que se usan y con tope de largo. */
+    if (d && d.domande !== undefined) {
+      o.domande = d.domande === null ? null : (Array.isArray(d.domande) ? d.domande : []).slice(0, 30)
+        .map(function (q) {
+          function c(v, n) { return String(v || '').trim().slice(0, n); }
+          return { d_it: c(q.d_it, 300), r_it: c(q.r_it, 1500), d_es: c(q.d_es, 300), r_es: c(q.r_es, 1500), conf: !!q.conf };
+        }).filter(function (q) { return q.d_it || q.d_es; });
+    }
     return o;
   }
 
@@ -572,7 +581,7 @@ var ALMACEN = (function () {
        en blanco por un fallo. */
     leerSito: function () {
       if (conBase) {
-        return rest('sito?select=copertina,whatsapp&limit=1', {}, false)
+        return rest('sito?select=copertina,whatsapp,domande&limit=1', {}, false)
           .then(function (f) { return (f && f[0]) || null; })
           .catch(function () { return null; });
       }
@@ -597,7 +606,7 @@ var ALMACEN = (function () {
       }
       var antes = {};
       try { antes = JSON.parse(localStorage.getItem('gcf_sito') || '{}') || {}; } catch (e) {}
-      var todo = Object.assign({ copertina: '', whatsapp: '' }, antes, soloLoDado(datos));
+      var todo = Object.assign({ copertina: '', whatsapp: '', domande: null }, antes, soloLoDado(datos));
       try { localStorage.setItem('gcf_sito', JSON.stringify(todo)); } catch (e) {}
       return Promise.resolve(todo);
     },
