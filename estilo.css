@@ -552,3 +552,81 @@ html.dominio body{padding-bottom:0;}
 .visor-pie{padding:16px 20px 26px;text-align:center;color:#fff;font-size:15.5px;line-height:1.6;
   max-width:70ch;margin:0 auto;}
 @media (max-width:640px){ .visor-centro{padding:0 8px;} .visor .ant,.visor .sig{display:none;} }
+
+/* --- tres idiomas en el movil ---------------------------------------------
+   Con IT · ES · EN, el nombre y el selector no caben a 390 px con el tamaño
+   de siempre: se aprietan un poco, solo en pantallas estrechas. */
+@media (max-width:440px){
+  .brand{gap:8px;}
+  .brand img{width:38px;}
+  .brand-text{font-size:16.5px;}
+  .navright{gap:8px;}
+  .langsw button{padding:8px 8px;letter-spacing:0.06em;}
+}
+@media (max-width:360px){ .brand-text{display:none;} }
+
+footer .pie-trad{margin-top:8px;font-size:11.5px;color:#93a3bd;}
+footer .pie-trad:empty{display:none;}
+
+/* ============================================================================
+   LOS EVENTOS — una fila por evento: la fecha grande a la izquierda, el texto
+   en medio y el cartel (si lo hay) a la derecha. En el movil, el cartel pasa
+   debajo.
+   ============================================================================ */
+.eventi-sec{background:var(--crema);}
+.eventi{display:grid;gap:clamp(14px,2vw,20px);margin-top:clamp(28px,4vw,44px);}
+.evento{display:grid;grid-template-columns:auto 1fr;gap:clamp(16px,2.4vw,28px);align-items:start;
+  background:var(--blanco);border:1px solid var(--linea);border-radius:18px;
+  padding:clamp(18px,2.4vw,28px);box-shadow:var(--sombra);}
+.evento.con-foto{grid-template-columns:auto 1fr minmax(0,220px);}
+.ev-data{width:74px;text-align:center;border-radius:14px;background:var(--marino);color:#fff;
+  padding:12px 6px 10px;line-height:1;}
+.ev-data b{display:block;font-family:'Fraunces',serif;font-size:34px;font-weight:500;}
+.ev-data span{display:block;margin-top:6px;font-size:11px;font-weight:600;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--oro);}
+.ev-chi{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--blu-texto);margin-bottom:8px;}
+a.ev-chi:hover{text-decoration:underline;text-underline-offset:3px;}
+.ev-corpo h3{font-family:'Fraunces',serif;font-size:clamp(21px,2.2vw,26px);font-weight:500;line-height:1.2;}
+.ev-quando{margin-top:8px;font-weight:600;font-size:14.5px;color:var(--texto);}
+.ev-luogo{margin-top:4px;font-size:14px;color:var(--apagado);}
+.ev-testo{margin-top:12px;color:var(--texto-2);line-height:1.7;font-size:15px;}
+.ev-testo p + p,.ev-testo ul{margin-top:8px;}
+.ev-testo ul{padding-left:20px;}
+.evento .acciones{justify-content:flex-start;margin-top:16px;}
+.evento .acciones .btn{padding:11px 20px;font-size:13.5px;}
+.ev-foto{display:block;border-radius:12px;overflow:hidden;background:var(--crema);}
+.ev-foto img{width:100%;height:auto;display:block;max-height:280px;object-fit:cover;}
+.eventi-mas{margin-top:26px;}
+.eventi-vuoto{margin-top:24px;color:var(--texto-2);}
+.eventi-social{margin-top:22px;color:var(--texto-2);}
+.eventi-social a{color:var(--blu-texto);font-weight:600;text-decoration:underline;text-underline-offset:3px;}
+.eventi-social:empty{display:none;}
+@media (max-width:700px){
+  .evento,.evento.con-foto{grid-template-columns:auto 1fr;}
+  .ev-foto{grid-column:1 / -1;}
+  .ev-data{width:62px;padding:10px 4px 8px;}
+  .ev-data b{font-size:28px;}
+}
+
+/* ============================================================================
+   DONAR — dos tarjetas: PayPal y transferencia. El IBAN en letra de
+   maquina, en grupos de cuatro, que es como se copia a mano sin errores.
+   ============================================================================ */
+.dona-sec{background:var(--blanco);border-top:1px solid var(--linea);}
+.dona{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));
+  gap:clamp(16px,2vw,24px);margin-top:clamp(28px,4vw,44px);}
+.dona-card{border:1px solid var(--linea);border-radius:18px;padding:clamp(22px,3vw,32px);
+  background:var(--fondo);box-shadow:var(--sombra);display:flex;flex-direction:column;}
+.dona-card h3{font-family:'Fraunces',serif;font-size:24px;font-weight:500;}
+.dona-card > p{margin-top:10px;color:var(--texto-2);line-height:1.7;}
+.dona-card .acciones{justify-content:flex-start;margin-top:auto;padding-top:22px;}
+.dona-dati{margin-top:14px;display:grid;gap:12px;}
+.dona-dati dt{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--apagado);font-weight:600;}
+.dona-dati dd{margin-top:3px;font-size:15.5px;color:var(--texto);word-break:break-word;}
+.dona-dati dd.iban{font-family:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;font-size:15px;
+  letter-spacing:.02em;}
+
+/* La foto de los pastores, sobre sus nombres. */
+.sp-pastori-foto{width:100%;max-width:420px;aspect-ratio:4/3;object-fit:cover;border-radius:14px;
+  margin-bottom:16px;box-shadow:var(--sombra);display:block;}

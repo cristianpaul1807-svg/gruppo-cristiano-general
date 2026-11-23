@@ -9,7 +9,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <title>Gruppo Cristiano Latino Americano — Chiese in Italia</title>
-<meta name="description" content="Gruppo Cristiano Latino Americano: chiese evangeliche in Italia. Le nostre sedi, gli orari degli incontri e come arrivare. Italiano e spagnolo.">
+<meta name="description" content="Gruppo Cristiano Latino Americano: chiese evangeliche in Italia. Le nostre sedi, gli orari degli incontri e come arrivare. Italiano, spagnolo e inglese.">
 <link rel="icon" href="media/simbolo-256.png" type="image/png">
 <link rel="apple-touch-icon" href="media/simbolo-256.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -131,7 +131,7 @@
 }
 </script>
 
-<link rel="stylesheet" href="estilo.css?v=8">
+<link rel="stylesheet" href="estilo.css?v=9">
 </head>
 <body>
 
@@ -149,15 +149,18 @@
   <div class="navright">
     <div class="navlinks">
       <a href="#sedi" data-i18n="nav_sedi">Le comunità</a>
+      <a href="#eventi" data-i18n="nav_eventi" id="nav-eventi" hidden>Eventi</a>
       <a href="#storia" data-i18n="nav_storia">Chi siamo</a>
       <a href="#predicazioni" data-i18n="nav_pred">Predicazioni</a>
       <a href="#visione" data-i18n="nav_visione">La visione</a>
       <a href="#fede" data-i18n="nav_fede">Punti di fede</a>
       <a href="#domande" data-i18n="nav_domande">Domande</a>
+      <a href="#dona" data-i18n="nav_dona" id="nav-dona" hidden>Dona</a>
     </div>
     <div class="langsw">
       <button type="button" data-lang="it" class="active">IT</button>
       <button type="button" data-lang="es">ES</button>
+      <button type="button" data-lang="en">EN</button>
     </div>
     <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -235,6 +238,23 @@
       <h2 data-i18n="gal_h2">La vita del gruppo.</h2>
     </div>
     <div class="galleria" id="galleria-lista"></div>
+  </div>
+</section>
+
+<!-- ============================================================================
+     PROSSIMI EVENTI — los de todas las iglesias y los del grupo, juntos y por
+     fecha. Los pone cada iglesia desde su panel; aqui llegan solos. Escondida
+     mientras no haya ninguno.
+     ============================================================================ -->
+<section id="eventi" class="eventi-sec" hidden>
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow" data-i18n="ev_eyebrow">Prossimi eventi</p>
+      <h2 data-i18n="ev_h2">Cosa succede nel gruppo.</h2>
+      <p data-i18n="ev_p">Gli appuntamenti di tutte le nostre chiese, in un posto solo.</p>
+    </div>
+    <div class="eventi" id="eventi-lista"></div>
+    <div class="acciones eventi-mas"><button class="btn" type="button" id="eventi-mas" hidden></button></div>
   </div>
 </section>
 
@@ -407,6 +427,22 @@
   </div>
 </section>
 
+<!-- ============================================================================
+     DONA — PayPal y/o transferencia. Los datos los pone el general en su
+     panel («Il sito del gruppo»). Escondida mientras no haya ninguno.
+     ============================================================================ -->
+<section id="dona" class="dona-sec" hidden>
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow" data-i18n="dn_eyebrow">Donazioni</p>
+      <h2 data-i18n="dn_h2">Sostieni l’opera.</h2>
+      <p data-i18n="dn_p">Se vuoi contribuire alla missione del gruppo, puoi farlo così. Ogni
+        offerta è libera e volontaria.</p>
+    </div>
+    <div class="dona" id="dona-lista"></div>
+  </div>
+</section>
+
 <footer>
   <div class="wrap">
     <div class="marchio">
@@ -418,6 +454,9 @@
          mano, esta linea se queda vieja en cuanto entra una iglesia nueva. -->
     <p class="pie-dir">Fidenza · Parma</p>
     <p class="pie-min" data-i18n="foot_min">Isaia 55:5</p>
+    <!-- Vacio en italiano; en espanol e ingles avisa de que lo escrito en el
+         panel se traduce solo. -->
+    <p class="pie-trad" data-i18n="foot_trad"></p>
     <!-- La puerta del panel: la misma para el general y para cada iglesia; al
          entrar, cada uno ve solo lo suyo. Discreta, al final, y sin indexar. -->
     <p class="pie-panel"><a href="panel/" rel="nofollow" data-i18n="foot_panel">Area riservata</a></p>

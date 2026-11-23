@@ -31,6 +31,9 @@
 
   function $(s) { return document.querySelector(s); }
   function texto(k, alt) { var d = window.__T || {}; return d[k] !== undefined ? d[k] : alt; }
+  /* Lo que escribe la iglesia en el panel, traducido si la pagina esta en
+     espanol o en ingles (ver TR en app.js). */
+  function tr(t) { return window.TR ? TR(t) : String(t || ''); }
 
   function buscar() {
     var lista = window.SEDI || window.SEDI_BASE || [];
@@ -168,8 +171,8 @@
       if (s.orari && s.orari.length) {
         s.orari.forEach(function (o) {
           var f = document.createElement('div');
-          var dt = document.createElement('dt'); dt.textContent = o[0];
-          var dd = document.createElement('dd'); dd.textContent = o[1];
+          var dt = document.createElement('dt'); dt.textContent = tr(o[0]);
+          var dd = document.createElement('dd'); dd.textContent = tr(o[1]);
           f.appendChild(dt); f.appendChild(dd); orari.appendChild(f);
         });
       } else {
@@ -195,7 +198,7 @@
     var ling = $('#sp-lingue');
     if (ling) {
       ling.textContent = '';
-      String(s.lingue || '').split(',').forEach(function (l) {
+      tr(s.lingue || '').split(',').forEach(function (l) {
         l = l.trim(); if (!l) return;
         var e = document.createElement('span'); e.textContent = l; ling.appendChild(e);
       });
@@ -205,7 +208,7 @@
 
     /* --- descripcion --------------------------------------------------------- */
     var tx = $('#sp-testo');
-    if (tx) { tx.textContent = s.testo || ''; tx.hidden = !s.testo; }
+    if (tx) { tx.textContent = tr(s.testo || ''); tx.hidden = !s.testo; }
 
     /* --- los pastores ---------------------------------------------------------
        Nombre y, si lo tiene, su papel ("pastore giovani"). Todo como texto. */
@@ -219,13 +222,19 @@
         var li = document.createElement('li');
         li.textContent = nombre;
         if (papel) {
-          var r = document.createElement('span'); r.textContent = papel;
+          var r = document.createElement('span'); r.textContent = tr(papel);
           li.appendChild(r);
         }
         lp.appendChild(li);
       });
+      /* La foto de los pastores, si la ha subido la iglesia. */
+      var fp = $('#sp-pastori-foto'), urlFp = imagen(s.foto_pastori);
+      if (fp) {
+        if (urlFp) { fp.src = urlFp; fp.hidden = false; fp.alt = texto('sp_pastori_alt', 'I pastori della chiesa di') + ' ' + s.citta; }
+        else { fp.hidden = true; fp.removeAttribute('src'); }
+      }
       var bp = $('#sp-pastori-bloque');
-      if (bp) bp.hidden = !lp.children.length;
+      if (bp) bp.hidden = !(lp.children.length || urlFp);
     }
 
     /* --- hablar con la iglesia ------------------------------------------------
@@ -258,6 +267,10 @@
       var bc = $('#sp-contatti-bloque');
       if (bc) bc.hidden = !(cont.children.length || red.children.length);
     }
+
+    /* --- donar a esta iglesia ------------------------------------------------- */
+    var dn = $('#sp-dona-lista'), sdn = $('#sp-dona');
+    if (dn && sdn && window.DONAZIONI) sdn.hidden = !DONAZIONI(dn, s.donazioni);
 
     /* --- el aviso de ficha vacia ---------------------------------------------
        Una pagina sin direccion ni horarios no puede quedarse muda: quien llega
@@ -320,9 +333,12 @@
                + '. Orari degli incontri e come arrivare.') },
       es: { t: 'Gruppo Cristiano ' + s.citta + ' — Iglesia evangélica en ' + s.citta,
             d: s.testo || ('Gruppo Cristiano ' + s.citta + (dir ? ', ' + dir : '')
-               + '. Horarios de las reuniones y cómo llegar.') }
+               + '. Horarios de las reuniones y cómo llegar.') },
+      en: { t: 'Gruppo Cristiano ' + s.citta + ' — Evangelical church in ' + s.citta,
+            d: 'Gruppo Cristiano ' + s.citta + (dir ? ', ' + dir : '')
+               + '. Meeting times and how to get there.' }
     };
-    var lang = document.documentElement.lang === 'es' ? 'es' : 'it';
+    var lang = window.LINGUA ? LINGUA() : 'it';
     document.title = window.__META[lang].t;
     var md = document.querySelector('meta[name="description"]');
     if (md) md.content = window.__META[lang].d;

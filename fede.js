@@ -2,8 +2,8 @@
    PUNTI DI FEDE — los diez, con sus referencias.
 
    Van en un archivo y no escritos en el HTML por dos motivos: son largos y
-   repetitivos, y hay que traducirlos enteros al español. Asi el texto italiano
-   y el español viven uno al lado del otro y se ve de un vistazo si falta algo.
+   repetitivos, y hay que traducirlos enteros al español y al ingles. Asi los tres textos
+   viven uno al lado del otro y se ve de un vistazo si falta algo.
 
    EL TEXTO ITALIANO NO SE TOCA. Es doctrina de la iglesia, y las erratas del
    original —"Dio cre il cielo", "Colossesi 1:1519", "2 Tim3:16-17"— las
@@ -20,7 +20,10 @@ var FEDE = [
           r: 'Genesi 1:1; 1:27-28; 2:15' },
     es: { t: 'La creación',
           p: 'Creemos que en el principio Dios creó el cielo y la tierra (Génesis 1:1), y creó al hombre conforme a su imagen y semejanza (Génesis 1:27-28). Creemos que Dios le dio la tarea de ser guardián y administrador de su creación.',
-          r: 'Génesis 1:1; 1:27-28; 2:15' }
+          r: 'Génesis 1:1; 1:27-28; 2:15' },
+    en: { t: "Creation",
+          p: "We believe that in the beginning God created the heavens and the earth (Genesis 1:1), and created man in his own image and likeness (Genesis 1:27-28). We believe that God gave him the task of being the guardian and steward of his creation.",
+          r: "Genesis 1:1; 1:27-28; 2:15" }
   },
   {
     it: { t: 'La Trinità',
@@ -28,7 +31,10 @@ var FEDE = [
           r: 'Deuteronomio 6:4; Matteo 28:19; Efesini 4:4-6' },
     es: { t: 'La Trinidad',
           p: 'Creemos en la santísima Trinidad. Hay un solo Dios: Padre, Hijo y Espíritu Santo, una unidad de tres personas coeternas. Dios es inmortal, omnipotente, omnisciente y omnipresente, en todo lugar y siempre.',
-          r: 'Deuteronomio 6:4; Mateo 28:19; Efesios 4:4-6' }
+          r: 'Deuteronomio 6:4; Mateo 28:19; Efesios 4:4-6' },
+    en: { t: "The Trinity",
+          p: "We believe in the most holy Trinity. There is only one God: Father, Son and Holy Spirit, a unity of three co-eternal persons. God is immortal, almighty, all-knowing and ever-present, everywhere and always.",
+          r: "Deuteronomy 6:4; Matthew 28:19; Ephesians 4:4-6" }
   },
   {
     it: { t: 'Gesù',
@@ -36,7 +42,10 @@ var FEDE = [
           r: 'Giovanni 1:1-3,14; Colossesi 1:15-19; Giovanni 10:30; 14:9; Romani 6:23' },
     es: { t: 'Jesús',
           p: 'Creemos que Jesús es el Hijo de Dios, enviado por el Padre celestial como expiación de nuestros pecados, muerto en la cruz y resucitado por el Padre al tercer día. Creemos que está sentado a la derecha del Padre e intercede por nosotros, para que todo hombre y mujer que cree en Él con fe en su corazón y lo confiesa con su boca sea salvo.',
-          r: 'Juan 1:1-3,14; Colosenses 1:15-19; Juan 10:30; 14:9; Romanos 6:23' }
+          r: 'Juan 1:1-3,14; Colosenses 1:15-19; Juan 10:30; 14:9; Romanos 6:23' },
+    en: { t: "Jesus",
+          p: "We believe that Jesus is the Son of God, sent by the heavenly Father as the atonement for our sins, who died on the cross and was raised by the Father on the third day. We believe that he sits at the right hand of the Father and intercedes for us, so that every man and woman who believes in him with faith in their heart and confesses him with their mouth will be saved.",
+          r: "John 1:1-3,14; Colossians 1:15-19; John 10:30; 14:9; Romans 6:23" }
   },
   {
     it: { t: 'La salvezza',
@@ -44,7 +53,10 @@ var FEDE = [
           r: 'Efesini 2:8-10' },
     es: { t: 'La salvación',
           p: 'Creemos que la salvación es por fe y no por obras; las obras son ciertamente el fruto práctico, resultado del creer.',
-          r: 'Efesios 2:8-10' }
+          r: 'Efesios 2:8-10' },
+    en: { t: "Salvation",
+          p: "We believe that salvation is by faith and not by works; works are certainly the practical fruit, the result of believing.",
+          r: "Ephesians 2:8-10" }
   },
   {
     it: { t: 'Il ritorno di Gesù',
@@ -52,7 +64,10 @@ var FEDE = [
           r: 'Atti 1:9-11; Matteo 24:14; 1 Tessalonicesi 4:13-18' },
     es: { t: 'El regreso de Jesús',
           p: 'Creemos que Jesús volverá y que los creyentes vivirán para siempre con él.',
-          r: 'Hechos 1:9-11; Mateo 24:14; 1 Tesalonicenses 4:13-18' }
+          r: 'Hechos 1:9-11; Mateo 24:14; 1 Tesalonicenses 4:13-18' },
+    en: { t: "The return of Jesus",
+          p: "We believe that Jesus will return and that believers will live with him forever.",
+          r: "Acts 1:9-11; Matthew 24:14; 1 Thessalonians 4:13-18" }
   },
   {
     it: { t: 'Il battesimo',
@@ -60,7 +75,10 @@ var FEDE = [
           r: 'Romani 6:1-6; Atti 16:30-33' },
     es: { t: 'El bautismo',
           p: 'Creemos en el bautismo en agua como confesión pública de la propia decisión de aceptar y seguir a Cristo como Señor de la propia vida.',
-          r: 'Romanos 6:1-6; Hechos 16:30-33' }
+          r: 'Romanos 6:1-6; Hechos 16:30-33' },
+    en: { t: "Baptism",
+          p: "We believe in water baptism as a public confession of one's decision to accept and follow Christ as the Lord of one's life.",
+          r: "Romans 6:1-6; Acts 16:30-33" }
   },
   {
     it: { t: 'La Parola di Dio',
@@ -68,7 +86,10 @@ var FEDE = [
           r: '2 Timoteo 3:16-17' },
     es: { t: 'La Palabra de Dios',
           p: 'Creemos que la Palabra de Dios fue inspirada por Dios mismo en persona, y que Dios mismo la usa para alimentarnos espiritualmente. A través de ella crecemos espiritualmente y llegamos a ser creyentes maduros, preparados para toda buena obra.',
-          r: '2 Timoteo 3:16-17' }
+          r: '2 Timoteo 3:16-17' },
+    en: { t: "The Word of God",
+          p: "We believe that the Word of God was inspired by God himself, in person, and that God himself uses it to feed us spiritually. Through it we grow spiritually and become mature believers, equipped for every good work.",
+          r: "2 Timothy 3:16-17" }
   },
   {
     it: { t: 'Lo Spirito Santo',
@@ -76,7 +97,10 @@ var FEDE = [
           r: 'Giovanni 14:16-18,26; 15:26,27; 16:7-13' },
     es: { t: 'El Espíritu Santo',
           p: 'Creemos que el Espíritu Santo es la tercera persona de la Trinidad, enviado por el Padre celestial para morar en nosotros, para guiarnos en su verdad, para convencernos de pecado, para ser juez y consolador. Creemos que el Espíritu Santo concede dones a los hombres, produciendo en ellos una fuerza y energía especial para llevar a término la obra para la que han sido llamados.',
-          r: 'Juan 14:16-18,26; 15:26,27; 16:7-13' }
+          r: 'Juan 14:16-18,26; 15:26,27; 16:7-13' },
+    en: { t: "The Holy Spirit",
+          p: "We believe that the Holy Spirit is the third person of the Trinity, sent to us by the heavenly Father to dwell in us, to guide us into his truth, to convict us of sin, and to be judge and comforter. We believe that the Holy Spirit gives gifts to people, producing in them a special strength and energy to accomplish the work to which they have been called.",
+          r: "John 14:16-18,26; 15:26,27; 16:7-13" }
   },
   {
     /* El unico sin referencias en el original. Se deja asi: anadirle versiculos
@@ -86,7 +110,10 @@ var FEDE = [
           r: '' },
     es: { t: 'La oración y la alabanza',
           p: 'Creemos en la relación personal con Dios, por tanto en la oración, y en alabar a Dios con cánticos e instrumentos musicales. Creemos que la alabanza es un arma poderosa para derribar la obra del maligno.',
-          r: '' }
+          r: '' },
+    en: { t: "Prayer and praise",
+          p: "We believe in a personal relationship with God, and therefore in prayer, and in praising God with songs and musical instruments. We believe that praise is a powerful weapon to tear down the work of the evil one.",
+          r: "" }
   },
   {
     it: { t: 'La chiesa',
@@ -94,6 +121,9 @@ var FEDE = [
           r: 'Efesini 2:19-22; Colossesi 1:18; 1 Corinzi 12:12,27' },
     es: { t: 'La iglesia',
           p: 'Creemos que la iglesia es el cuerpo de Cristo y la comunión de los creyentes. Creemos que somos parte de una iglesia universal esparcida por todo el mundo, y miembros de una iglesia local, donde crecemos, nos alimentamos y nos multiplicamos.',
-          r: 'Efesios 2:19-22; Colosenses 1:18; 1 Corintios 12:12,27' }
+          r: 'Efesios 2:19-22; Colosenses 1:18; 1 Corintios 12:12,27' },
+    en: { t: "The church",
+          p: "We believe that the church is the body of Christ and the fellowship of believers. We believe that we are part of a universal church spread throughout the world, and members of a local church, where we grow, are nourished and multiply.",
+          r: "Ephesians 2:19-22; Colossians 1:18; 1 Corinthians 12:12,27" }
   }
 ];

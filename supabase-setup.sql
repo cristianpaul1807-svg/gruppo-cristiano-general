@@ -382,9 +382,9 @@ create policy "media: ver"
   on storage.objects for select to authenticated
   using (bucket_id = 'media');
 
--- EL TOPE: 30 archivos por carpeta. Una iglesia usa como mucho 14: portada,
--- logo y las 12 fotos de su galeria; el general, ademas, las fotos de los
--- fundadores. El panel borra solas las viejas; el
+-- EL TOPE: 50 archivos por carpeta. Una iglesia usa como mucho 35: portada, logo,
+-- foto de los pastores, las 12 fotos de su galeria y la imagen de hasta 20
+-- eventos; el general, ademas, las fotos de los fundadores. El panel borra solas las viejas; el
 -- margen es para cambiar fotos y para algun resto si se corta la red. Con
 -- 3 MB por archivo como mucho, una carpeta no pasa de 90 MB aunque alguien se
 -- salte el panel; en la practica, con las fotos achicadas, unos 3 MB.
@@ -403,7 +403,7 @@ create policy "media: subir lo suyo"
   on storage.objects for insert to authenticated
   with check (bucket_id = 'media'
     and public.puo_cartella((storage.foldername(name))[1])
-    and public.fotos_en_cartella((storage.foldername(name))[1]) < 30);
+    and public.fotos_en_cartella((storage.foldername(name))[1]) < 50);
 
 create policy "media: cambiar lo suyo"
   on storage.objects for update to authenticated
@@ -546,6 +546,112 @@ do $$ begin
   alter table public.sede add constraint sede_id_no_riservato
     check (id not in ('generale', 'sito', 'panel', 'media'));
 exception when duplicate_object then null; end $$;
+
+-- ----------------------------------------------------------------------------
+-- LA FOTO DE LOS PASTORES Y LAS DONACIONES
+--
+-- foto_pastori: la direccion de la foto en el almacen (<id>/pastori-....jpg).
+-- donazioni: {paypal, iban, intestatario, causale}. Lo mismo en `sito` para
+-- el boton de donar de la web del grupo. Con tope de tamano, por si alguien se
+-- salta el panel.
+-- ----------------------------------------------------------------------------
+alter table public.sede add column if not exists foto_pastori text  not null default '';
+alter table public.sede add column if not exists donazioni    jsonb not null default '{}'::jsonb;
+alter table public.sito add column if not exists donazioni    jsonb not null default '{}'::jsonb;
+do $$ begin
+  alter table public.sede add constraint sede_donazioni_valide check (
+    jsonb_typeof(donazioni) = 'object' and octet_length(donazioni::text) < 2000);
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter table public.sito add constraint sito_donazioni_valide check (
+    jsonb_typeof(donazioni) = 'object' and octet_length(donazioni::text) < 2000);
+exception when duplicate_object then null; end $$;
+
+-- ----------------------------------------------------------------------------
+-- LOS EVENTOS — los proximos de cada iglesia, y los del grupo (cartella =
+-- 'generale'). La portada los junta todos; la pagina de cada iglesia ensena
+-- los suyos. Los pasados no salen en la web, y el panel los borra solo.
+--
+-- Mismas reglas que todo: cada uno en lo suyo (puo_cartella). Tope: 20
+-- eventos por iglesia. La imagen (el cartel) vive en <cartella>/eventi/, y el
+-- enlace es al post de Instagram o Facebook donde lo anuncian.
+-- ----------------------------------------------------------------------------
+create table if not exists public.evento (
+  id       uuid primary key default gen_random_uuid(),
+  cartella text        not null,
+  titolo   text        not null check (char_length(titolo) between 1 and 120),
+  giorno   date        not null,
+  ora      text        not null default '' check (char_length(ora)   <= 40),
+  luogo    text        not null default '' check (char_length(luogo) <= 160),
+  testo    text        not null default '' check (char_length(testo) <= 1000),
+  foto     text        not null default '',
+  link     text        not null default '' check (link = '' or link ~* '^https://[^[:space:]]+$'),
+  creato   timestamptz not null default now()
+);
+create index if not exists evento_giorno_idx on public.evento (giorno);
+
+comment on table public.evento is
+  'Los proximos eventos de cada iglesia y del grupo (cartella = generale). Tope 20 por iglesia.';
+
+create or replace function public.eventi_in(c text)
+returns integer language sql stable security definer set search_path = ''
+as $$ select count(*)::integer from public.evento where cartella = c; $$;
+
+alter table public.evento enable row level security;
+drop policy if exists "eventos: los ve cualquiera"   on public.evento;
+drop policy if exists "eventos: anadir a la suya"    on public.evento;
+drop policy if exists "eventos: cambiar los suyos"   on public.evento;
+drop policy if exists "eventos: quitar los suyos"    on public.evento;
+
+create policy "eventos: los ve cualquiera"
+  on public.evento for select to anon, authenticated
+  using (true);
+
+-- La imagen, si la hay, solo de SU carpeta del almacen.
+create policy "eventos: anadir a la suya"
+  on public.evento for insert to authenticated
+  with check (public.puo_cartella(cartella)
+    and public.eventi_in(cartella) < 20
+    and (foto = '' or foto like 'https://ifmrqbnnvlmnrfbseonr.supabase.co/storage/v1/object/public/media/'
+                                || cartella || '/eventi/%'));
+
+create policy "eventos: cambiar los suyos"
+  on public.evento for update to authenticated
+  using      (public.puo_cartella(cartella))
+  with check (public.puo_cartella(cartella)
+    and (foto = '' or foto like 'https://ifmrqbnnvlmnrfbseonr.supabase.co/storage/v1/object/public/media/'
+                                || cartella || '/eventi/%'));
+
+create policy "eventos: quitar los suyos"
+  on public.evento for delete to authenticated
+  using (public.puo_cartella(cartella));
+
+grant select                 on public.evento to anon, authenticated;
+grant insert, update, delete on public.evento to authenticated;
+grant execute on function public.eventi_in(text) to authenticated;
+
+-- ----------------------------------------------------------------------------
+-- LAS TRADUCCIONES AUTOMATICAS
+--
+-- Lo que escriben en el panel va en italiano. La funcion `traduci` (carpeta
+-- supabase/functions/traduci) lo pasa a espanol y a ingles con DeepL y guarda
+-- aqui cada frase traducida: una frase se traduce UNA vez, y la siguiente
+-- visita la lee de aqui sin gastar nada. Si cambian el texto, la frase nueva
+-- se traduce sola en la siguiente visita.
+--
+-- Sin reglas a proposito: con RLS activado y ninguna regla, ni la web ni el
+-- panel pueden leerla ni escribirla. Solo la funcion, que entra con la llave
+-- de servicio.
+-- ----------------------------------------------------------------------------
+create table if not exists public.traduzione (
+  lingua   text not null check (lingua in ('es', 'en')),
+  chiave   text not null,            -- sha-256 del texto italiano
+  tradotto text not null,
+  creata   timestamptz not null default now(),
+  primary key (lingua, chiave)
+);
+alter table public.traduzione enable row level security;
+revoke all on public.traduzione from anon, authenticated;
 
 -- ============================================================================
 -- DESPUES DE EJECUTAR ESTO — en este orden

@@ -39,7 +39,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../estilo.css?v=8">
+<link rel="stylesheet" href="../estilo.css?v=9">
 
 <!-- Ficha de esta iglesia para buscadores y mapas. Solo lo verificado. -->
 <script type="application/ld+json">
@@ -95,6 +95,7 @@ window.__META = {{META}};
     <div class="langsw">
       <button type="button" data-lang="it" class="active">IT</button>
       <button type="button" data-lang="es">ES</button>
+      <button type="button" data-lang="en">EN</button>
     </div>
     <button class="nav-toggle" type="button" aria-label="Menu" aria-expanded="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -154,6 +155,7 @@ window.__META = {{META}};
              viene por primera vez: saber a quien va a ver. -->
         <div id="sp-pastori-bloque" hidden>
           <h2 data-i18n="sp_pastori">Pastori</h2>
+          <img class="sp-pastori-foto" id="sp-pastori-foto" alt="" loading="lazy" hidden>
           <ul class="sp-pastori" id="sp-pastori"></ul>
         </div>
 
@@ -167,6 +169,21 @@ window.__META = {{META}};
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- Los proximos eventos de ESTA iglesia (los pone su responsable desde el
+     panel) y, debajo, sus redes: alli es donde publican los anuncios. Sale si
+     hay eventos o redes; si no, escondida. -->
+<section id="eventi" class="eventi-sec" hidden>
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow" data-i18n="ev_eyebrow">Prossimi eventi</p>
+      <h2 data-i18n="sp_ev_h2">Cosa succede qui.</h2>
+    </div>
+    <p class="eventi-vuoto" id="eventi-vuoto" data-i18n="ev_vuoto" hidden>Per ora non ci sono eventi in programma.</p>
+    <div class="eventi" id="eventi-lista"></div>
+    <div class="eventi-social" id="eventi-social"></div>
   </div>
 </section>
 
@@ -194,6 +211,18 @@ window.__META = {{META}};
       <h2 data-i18n="sp_gal_h2">La vita della comunità.</h2>
     </div>
     <div class="galleria" id="galleria-lista"></div>
+  </div>
+</section>
+
+<!-- Donar a ESTA iglesia: PayPal y/o transferencia, lo pone su responsable.
+     Escondida si no hay datos. -->
+<section id="sp-dona" class="dona-sec" hidden>
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow" data-i18n="dn_eyebrow">Donazioni</p>
+      <h2 data-i18n="sp_dn_h2">Sostieni questa chiesa.</h2>
+    </div>
+    <div class="dona" id="sp-dona-lista"></div>
   </div>
 </section>
 

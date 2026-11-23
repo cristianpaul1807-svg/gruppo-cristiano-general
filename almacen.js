@@ -109,6 +109,8 @@ var ALMACEN = (function () {
       whatsapp: s.whatsapp || '',
       email: s.email || '',
       copertina: s.copertina || '',
+      foto_pastori: s.foto_pastori || '',
+      donazioni: pulisciDon(s.donazioni),
       pastori: Array.isArray(s.pastori) ? s.pastori : [],
       social: (s.social && typeof s.social === 'object') ? s.social : {},
       lat: num(s.lat),
@@ -125,6 +127,7 @@ var ALMACEN = (function () {
       id: f.id, orden: f.orden, citta: f.citta, via: f.via, cap: f.cap,
       web: f.web, testo: f.testo, lingue: f.lingue, logo: f.logo,
       whatsapp: f.whatsapp || '', email: f.email || '', copertina: f.copertina || '',
+      foto_pastori: f.foto_pastori || '', donazioni: f.donazioni || {},
       pastori: f.pastori || [], social: f.social || {},
       lat: f.lat, lon: f.lon, orari: f.orari || [], apple: f.apple,
       mapa: f.mapa, publicada: f.publicada
@@ -158,6 +161,50 @@ var ALMACEN = (function () {
       : '+' + d;
   }
 
+  /* LAS DONACIONES: un enlace de PayPal y/o los datos de la transferencia.
+     Se limpian aqui para que a la base solo llegue lo que se usa: el enlace,
+     solo si es una web https normal; el IBAN, en mayusculas y sin espacios. */
+  function pulisciDon(d) {
+    d = (d && typeof d === 'object') ? d : {};
+    function c(v, n) { return String(v || '').trim().slice(0, n); }
+    var pp = c(d.paypal, 300);
+    if (pp && !/^https?:\/\//i.test(pp)) pp = 'https://' + pp;
+    if (!/^https:\/\/[^\s<>"']+$/i.test(pp)) pp = '';
+    return {
+      paypal: pp,
+      iban: c(d.iban, 50).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 34),
+      intestatario: c(d.intestatario, 120),
+      causale: c(d.causale, 160)
+    };
+  }
+
+  /* La fecha de hoy en el telefono (no en Londres): "2026-11-23". Un evento
+     de hoy sigue saliendo todo el dia. */
+  function hoy() {
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+
+  /* Un evento, limpio y con tope de largo, como lo pide la base. */
+  function aEvento(e) {
+    function c(v, n) { return String(v || '').trim().slice(0, n); }
+    var link = c(e.link, 500);
+    if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
+    link = link.replace(/^http:\/\//i, 'https://');
+    if (!/^https:\/\/[^\s<>"']+$/i.test(link)) link = '';
+    return {
+      titolo: c(e.titolo, 120), giorno: c(e.giorno, 10), ora: c(e.ora, 40),
+      luogo: c(e.luogo, 160), testo: c(e.testo, 1000), link: link, foto: c(e.foto, 600)
+    };
+  }
+
+  function eventiDemo(nuevos) {
+    try {
+      if (nuevos) { localStorage.setItem('gcf_eventi', JSON.stringify(nuevos)); return nuevos; }
+      return JSON.parse(localStorage.getItem('gcf_eventi') || '[]') || [];
+    } catch (e) { return []; }
+  }
+
   /* Las galerias en modo demo (sin base): en el navegador, como lo demas. */
   function fotosDemo(nuevas) {
     try {
@@ -170,6 +217,7 @@ var ALMACEN = (function () {
   function soloLoDado(d) {
     var o = {};
     ['copertina', 'whatsapp'].forEach(function (k) { if (d && d[k] !== undefined) o[k] = String(d[k] || ''); });
+    if (d && d.donazioni !== undefined) o.donazioni = pulisciDon(d.donazioni);
     /* Las preguntas: null = volver a las de serie; si no, una lista limpia,
        solo con los campos que se usan y con tope de largo. */
     if (d && d.domande !== undefined) {
@@ -610,7 +658,7 @@ var ALMACEN = (function () {
        en blanco por un fallo. */
     leerSito: function () {
       if (conBase) {
-        return rest('sito?select=copertina,whatsapp,domande,visione,storia&limit=1', {}, false)
+        return rest('sito?select=copertina,whatsapp,domande,visione,storia,donazioni&limit=1', {}, false)
           .then(function (f) { return (f && f[0]) || null; })
           .catch(function () { return null; });
       }
@@ -635,9 +683,104 @@ var ALMACEN = (function () {
       }
       var antes = {};
       try { antes = JSON.parse(localStorage.getItem('gcf_sito') || '{}') || {}; } catch (e) {}
-      var todo = Object.assign({ copertina: '', whatsapp: '', domande: null, visione: null, storia: null }, antes, soloLoDado(datos));
+      var todo = Object.assign({ copertina: '', whatsapp: '', domande: null, visione: null, storia: null, donazioni: {} }, antes, soloLoDado(datos));
       try { localStorage.setItem('gcf_sito', JSON.stringify(todo)); } catch (e) {}
       return Promise.resolve(todo);
+    },
+
+    /* ======================================================================
+       LOS EVENTOS — los proximos de cada iglesia y los del grupo.
+       ====================================================================== */
+
+    /* Los de hoy en adelante, por fecha. Sin cartella, los de TODAS (la
+       portada los junta). Sin red, una lista vacia: la seccion no sale. */
+    leerEventi: function (cartella) {
+      var desde = hoy();
+      if (conBase) {
+        return rest('evento?select=id,cartella,titolo,giorno,ora,luogo,testo,foto,link'
+          + '&giorno=gte.' + desde + (cartella ? '&cartella=eq.' + encodeURIComponent(cartella) : '')
+          + '&order=giorno.asc,ora.asc&limit=60', {}, false)
+          .then(function (f) { return f || []; }).catch(function () { return []; });
+      }
+      return Promise.resolve(eventiDemo().filter(function (e) {
+        return e.giorno >= desde && (!cartella || e.cartella === cartella);
+      }).sort(function (a, b) { return (a.giorno + a.ora) < (b.giorno + b.ora) ? -1 : 1; }));
+    },
+
+    /* Todos los de una carpeta, pasados incluidos: para el panel. */
+    tuttiEventi: function (cartella) {
+      if (conBase) {
+        return rest('evento?select=*&cartella=eq.' + encodeURIComponent(cartella)
+          + '&order=giorno.asc,ora.asc', {}, true).then(function (f) { return f || []; });
+      }
+      return Promise.resolve(eventiDemo().filter(function (e) { return e.cartella === cartella; })
+        .sort(function (a, b) { return (a.giorno + a.ora) < (b.giorno + b.ora) ? -1 : 1; }));
+    },
+
+    /* Crear (sin id) o cambiar (con id). La imagen ya viene subida: su
+       direccion va en datos.foto. */
+    guardaEvento: function (cartella, datos) {
+      var fila = aEvento(datos);
+      if (!fila.titolo || !/^\d{4}-\d{2}-\d{2}$/.test(fila.giorno)) {
+        return Promise.reject(new Error('Servono il titolo e la data.'));
+      }
+      if (!conBase) {
+        var todos = eventiDemo();
+        if (datos.id) todos.forEach(function (e) { if (e.id === datos.id) Object.assign(e, fila); });
+        else { fila.id = 'e' + Date.now(); fila.cartella = cartella; todos.push(fila); }
+        eventiDemo(todos);
+        return Promise.resolve(fila);
+      }
+      if (datos.id) {
+        return rest('evento?id=eq.' + encodeURIComponent(datos.id), {
+          method: 'PATCH', headers: { 'Prefer': 'return=representation' }, body: JSON.stringify(fila)
+        }, true).then(function (f) { if (!f || !f.length) throw new Error('non è un evento tuo'); return f[0]; });
+      }
+      fila.cartella = cartella;
+      return rest('evento', {
+        method: 'POST', headers: { 'Prefer': 'return=representation' }, body: JSON.stringify(fila)
+      }, true).then(function (f) { return f && f[0]; });
+    },
+
+    togliEvento: function (ev) {
+      var self = this;
+      if (!conBase) {
+        eventiDemo(eventiDemo().filter(function (e) { return e.id !== ev.id; }));
+        return Promise.resolve();
+      }
+      return rest('evento?id=eq.' + encodeURIComponent(ev.id), {
+        method: 'DELETE', headers: { 'Prefer': 'return=representation' }
+      }, true).then(function (f) {
+        if (!f || !f.length) throw new Error('non è un evento tuo');
+        return self.borrarImagen(ev.foto);
+      });
+    },
+
+    /* Los que ya pasaron (de ayer para atras) se borran solos, con su
+       imagen: asi el tope de 20 nunca se llena de eventos viejos. */
+    pulisciEventi: function (cartella) {
+      var self = this, h = hoy();
+      return self.tuttiEventi(cartella).then(function (lista) {
+        var viejos = (lista || []).filter(function (e) { return e.giorno < h; });
+        return Promise.all(viejos.map(function (e) { return self.togliEvento(e).catch(function () {}); }))
+          .then(function () { return (lista || []).filter(function (e) { return e.giorno >= h; }); });
+      });
+    },
+
+    /* ======================================================================
+       LAS TRADUCCIONES AUTOMATICAS — lo escrito en el panel, en espanol o
+       en ingles. Las hace la funcion `traduci` del servidor (DeepL) y las
+       guarda: aqui solo se piden. Devuelve {texto italiano: traduccion}.
+       Sin funcion, sin red o sin llave de DeepL: {} y la web ensena el
+       italiano, que es mejor que un hueco.
+       ====================================================================== */
+    traduzioni: function (lingua) {
+      if (!conBase || (lingua !== 'es' && lingua !== 'en')) return Promise.resolve({});
+      return fetch(SUPABASE.url + '/functions/v1/traduci?lingua=' + lingua, {
+        headers: { 'apikey': SUPABASE.key, 'Authorization': 'Bearer ' + SUPABASE.key }
+      }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { return (d && d.testi && typeof d.testi === 'object') ? d.testi : {}; })
+        .catch(function () { return {}; });
     },
 
     /* Anular una invitacion que se quedo a medias. */

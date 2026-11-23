@@ -50,6 +50,37 @@ function BLOQUES(cont, texto) {
 }
 var $ = function (s) { return document.querySelector(s); };
 
+/* --- el idioma de lo que escriben ellos -----------------------------------
+   Lo fijo (menus, botones, titulos) esta traducido a mano en I18N, al final.
+   Lo que escriben el general y cada iglesia en el panel va en italiano, y lo
+   traduce el servidor con DeepL (ALMACEN.traduzioni): aqui se guarda lo que
+   devuelve. Si una pregunta, la vision o la historia tienen su version
+   espanola escrita a mano en el panel, manda esa. Sin traduccion, el
+   italiano: mejor que un hueco. */
+function LINGUA() { var l = document.documentElement.lang; return (l === 'es' || l === 'en') ? l : 'it'; }
+var TRAD = {};
+function TR(t) {
+  t = t == null ? '' : String(t);
+  var l = LINGUA(), m = TRAD[l];
+  return (l !== 'it' && m && m[t]) ? m[t] : t;
+}
+function CAMPO(o, k) {
+  if (!o) return '';
+  var l = LINGUA();
+  if (l !== 'it' && o[k + '_' + l]) return o[k + '_' + l];
+  if (o[k + '_it']) return TR(o[k + '_it']);
+  return o[k + '_es'] || o[k + '_en'] || '';
+}
+/* Una fecha "2026-12-14" escrita en el idioma de la pagina. */
+function FECHA(g, opc) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(g || ''));
+  if (!m) return '';
+  var d = new Date(+m[1], +m[2] - 1, +m[3]);
+  var loc = { it: 'it-IT', es: 'es-ES', en: 'en-GB' }[LINGUA()];
+  try { return new Intl.DateTimeFormat(loc, opc).format(d); } catch (e) { return g; }
+}
+function TEXTO(k, alt) { var d = window.__T || {}; return d[k] !== undefined ? d[k] : alt; }
+
 /* --- movimiento al bajar ----------------------------------------------------
    Entrar al llegar, salir hacia el lado al irse por arriba, y volver a entrar
    si se sube. La "pantalla" que se vigila es un poco mas baja por arriba
@@ -483,14 +514,14 @@ function MAPA_DE(sede) {
 
     if (sede.testo) {
       var t = document.createElement('p');
-      t.className = 'sede-testo'; t.textContent = sede.testo;
+      t.className = 'sede-testo'; t.textContent = TR(sede.testo);
       corpo.appendChild(t);
     }
 
     if (sede.lingue) {
       var cont = document.createElement('div');
       cont.className = 'sede-lingue';
-      String(sede.lingue).split(',').forEach(function (l) {
+      TR(sede.lingue).split(',').forEach(function (l) {
         l = l.trim(); if (!l) return;
         var s = document.createElement('span'); s.textContent = l; cont.appendChild(s);
       });
@@ -508,8 +539,8 @@ function MAPA_DE(sede) {
       var MAX = 2;
       sede.orari.slice(0, MAX).forEach(function (o) {
         var fila = document.createElement('div');
-        var dt = document.createElement('dt'); dt.textContent = o[0];
-        var dd = document.createElement('dd'); dd.textContent = o[1];
+        var dt = document.createElement('dt'); dt.textContent = TR(o[0]);
+        var dd = document.createElement('dd'); dd.textContent = TR(o[1]);
         fila.appendChild(dt); fila.appendChild(dd); dl.appendChild(fila);
       });
       if (sede.orari.length > MAX && pagina) {
@@ -754,6 +785,9 @@ function MAPA_DE(sede) {
            si el encargado corrige un horario desde el panel, se corrige aqui y
            en la portada a la vez. */
         if (window.__dibujarSede) window.__dibujarSede();
+        /* Los eventos dicen de que iglesia son: con la lista nueva, las
+           creadas desde el panel tambien tienen nombre. */
+        if (window.__dibujarEventi) window.__dibujarEventi();
       }
     });
   }
@@ -830,8 +864,11 @@ function MAPA_DE(sede) {
   function ir(d) { actual = (actual + d + fotos.length) % fotos.length; pintarVisor(); }
 
   /* --- la rejilla ---------------------------------------------------------- */
-  ALMACEN.leerFotos(cartella).then(function (lista) {
-    fotos = (lista || []).map(function (f) { return { src: IMAGEN(f.url), testo: f.testo || '' }; })
+  /* Se vuelve a pintar al cambiar de idioma: el texto de cada foto se
+     traduce. */
+  var crudas = [];
+  function pintar() {
+    fotos = crudas.map(function (f) { return { src: IMAGEN(f.url), testo: TR(f.testo || '') }; })
       .filter(function (f) { return f.src; });
     cont.textContent = '';
     if (!fotos.length) { sec.hidden = true; return; }
@@ -853,7 +890,9 @@ function MAPA_DE(sede) {
     });
     sec.hidden = false;
     if (observarReveal) observarReveal(cont);
-  });
+  }
+  window.__dibujarGaleria = pintar;
+  ALMACEN.leerFotos(cartella).then(function (lista) { crudas = lista || []; pintar(); });
 })();
 
 /* ============================================================================
@@ -867,19 +906,18 @@ function MAPA_DE(sede) {
   if (!cont) return;
   var lista = window.DOMANDE_BASE || [];
   function dibujar() {
-    var es = document.documentElement.lang === 'es';
     cont.textContent = '';
     var sec = document.getElementById('domande');
     if (sec) sec.hidden = !lista.length;
     lista.forEach(function (q) {
-      var d = (es && q.d_es) ? q.d_es : q.d_it, r = (es && q.r_es) ? q.r_es : q.r_it;
+      var d = CAMPO(q, 'd'), r = CAMPO(q, 'r');
       if (!d) return;
       var det = document.createElement('details');
       var s = document.createElement('summary'); s.textContent = d;
       var p = document.createElement('p'); p.className = 'risposta'; p.textContent = r || '';
       if (q.conf) {
         var x = document.createElement('span'); x.className = 'x-conf';
-        x.textContent = es ? ((window.__T && window.__T.faq_conf) || 'por confirmar') : 'da confermare';
+        x.textContent = TEXTO('faq_conf', 'da confermare');
         p.appendChild(x);
       }
       det.appendChild(s); det.appendChild(p);
@@ -906,10 +944,7 @@ function MAPA_DE(sede) {
   var vIntro = document.getElementById('visione-intro'), vLista = document.getElementById('visione-lista');
   if (!stTesto && !vLista) return;
   var storia = window.STORIA_BASE || null, visione = window.VISIONE_BASE || null;
-  function en(o, k) {
-    var es = document.documentElement.lang === 'es';
-    return (es && o[k + '_es']) ? o[k + '_es'] : (o[k + '_it'] || '');
-  }
+  function en(o, k) { return CAMPO(o, k); }
   function dibujar() {
     if (storia && stTesto) {
       stTesto.textContent = ''; BLOQUES(stTesto, en(storia, 'testo'));
@@ -958,13 +993,207 @@ function MAPA_DE(sede) {
 })();
 
 /* ============================================================================
+   LOS EVENTOS — los proximos. En la portada, los de todas las iglesias y los
+   del grupo, juntos y por fecha; en la pagina de una iglesia, los suyos. Los
+   pone cada uno desde su panel, con el enlace al post de Instagram o Facebook
+   donde lo anuncian. Los pasados ya no llegan (los filtra ALMACEN).
+   ============================================================================ */
+(function () {
+  var sec = document.getElementById('eventi'), cont = document.getElementById('eventi-lista');
+  if (!sec || !cont || !window.ALMACEN || !ALMACEN.leerEventi) return;
+  var YO = document.body.getAttribute('data-sede') || '';
+  var mas = document.getElementById('eventi-mas');
+  var social = document.getElementById('eventi-social');
+  var navEv = document.getElementById('nav-eventi');
+  var lista = [], abiertos = false, MAX = 6;
+
+  function sedeDe(c) {
+    for (var i = 0; i < SEDI.length; i++) if (SEDI[i].id === c) return SEDI[i];
+    return null;
+  }
+
+  function tarjeta(e, i) {
+    var s = sedeDe(e.cartella);
+    /* En la portada, un evento de una iglesia que ya no esta no sale. */
+    if (!YO && e.cartella !== 'generale' && (!s || s.publicada === false)) return null;
+    var art = document.createElement('article');
+    art.className = 'evento reveal ' + (i % 2 ? 'der' : 'izq');
+
+    var fecha = document.createElement('div'); fecha.className = 'ev-data';
+    var dia = document.createElement('b'); dia.textContent = FECHA(e.giorno, { day: 'numeric' });
+    var mes = document.createElement('span'); mes.textContent = FECHA(e.giorno, { month: 'short' }).replace('.', '');
+    fecha.appendChild(dia); fecha.appendChild(mes);
+    art.appendChild(fecha);
+
+    var cuerpo = document.createElement('div'); cuerpo.className = 'ev-corpo';
+    if (!YO) {
+      var chi;
+      if (e.cartella === 'generale' || !s) {
+        chi = document.createElement('span'); chi.textContent = TEXTO('ev_gruppo', 'Tutto il gruppo');
+      } else {
+        chi = document.createElement('a'); chi.href = PAGINA(s); chi.textContent = 'Gruppo Cristiano ' + s.citta;
+      }
+      chi.className = 'ev-chi';
+      cuerpo.appendChild(chi);
+    }
+    var h = document.createElement('h3'); h.textContent = TR(e.titolo); cuerpo.appendChild(h);
+    var cuando = document.createElement('p'); cuando.className = 'ev-quando';
+    var largo = FECHA(e.giorno, { weekday: 'long', day: 'numeric', month: 'long' });
+    cuando.textContent = [largo.charAt(0).toUpperCase() + largo.slice(1), TR(e.ora)].filter(Boolean).join(' · ');
+    cuerpo.appendChild(cuando);
+    if (e.luogo) {
+      var lu = document.createElement('p'); lu.className = 'ev-luogo'; lu.textContent = TR(e.luogo);
+      cuerpo.appendChild(lu);
+    }
+    if (e.testo) {
+      var tx = document.createElement('div'); tx.className = 'ev-testo';
+      BLOQUES(tx, TR(e.testo)); cuerpo.appendChild(tx);
+    }
+    var link = SEGURO(e.link);
+    if (link) {
+      var acc = document.createElement('div'); acc.className = 'acciones';
+      var b = document.createElement('a'); b.className = 'btn'; b.href = link;
+      b.target = '_blank'; b.rel = 'noopener'; b.textContent = TEXTO('ev_link', 'Vedi l’annuncio');
+      acc.appendChild(b); cuerpo.appendChild(acc);
+    }
+    art.appendChild(cuerpo);
+
+    var foto = IMAGEN(e.foto);
+    if (foto) {
+      var fa = document.createElement('a'); fa.className = 'ev-foto';
+      fa.href = foto; fa.target = '_blank'; fa.rel = 'noopener';
+      var im = document.createElement('img'); im.src = foto; im.loading = 'lazy';
+      im.alt = TEXTO('ev_foto_alt', 'Locandina:') + ' ' + TR(e.titolo);
+      fa.appendChild(im); art.appendChild(fa);
+      art.classList.add('con-foto');
+    }
+    return art;
+  }
+
+  /* Dentro de la pagina de una iglesia: sus redes, que es donde publican los
+     anuncios. Salen aunque no haya eventos: asi la seccion nunca queda muda. */
+  function pintarSocial() {
+    if (!social) return false;
+    social.textContent = '';
+    var s = sedeDe(YO), soc = (s && s.social) || {};
+    var redes = [['instagram', 'Instagram'], ['facebook', 'Facebook'], ['youtube', 'YouTube']]
+      .filter(function (r) { return SEGURO(soc[r[0]]); });
+    if (!redes.length) return false;
+    var p = document.createElement('p');
+    p.textContent = TEXTO('ev_social', 'Gli annunci li pubblichiamo anche su') + ' ';
+    redes.forEach(function (r, i) {
+      var a = document.createElement('a'); a.href = SEGURO(soc[r[0]]);
+      a.target = '_blank'; a.rel = 'noopener'; a.textContent = r[1];
+      if (i) p.appendChild(document.createTextNode(' · '));
+      p.appendChild(a);
+    });
+    social.appendChild(p);
+    return true;
+  }
+
+  function pintar() {
+    cont.textContent = '';
+    var hechas = 0;
+    lista.forEach(function (e) {
+      var t = tarjeta(e, hechas);
+      if (!t) return;
+      if (!YO && !abiertos && hechas >= MAX) t.hidden = true;
+      cont.appendChild(t); hechas++;
+    });
+    var conRedes = YO ? pintarSocial() : false;
+    var vacio = document.getElementById('eventi-vuoto');
+    if (vacio) vacio.hidden = !!hechas;
+    sec.hidden = !hechas && !conRedes;
+    if (navEv) navEv.hidden = !hechas;
+    if (mas) {
+      mas.hidden = YO || abiertos || hechas <= MAX;
+      mas.textContent = TEXTO('ev_tutti', 'Vedi tutti gli eventi') + ' (' + hechas + ')';
+    }
+    if (observarReveal) observarReveal(cont);
+  }
+  if (mas) mas.addEventListener('click', function () { abiertos = true; pintar(); });
+
+  window.__dibujarEventi = pintar;
+  ALMACEN.leerEventi(YO || null).then(function (l) { lista = l || []; pintar(); });
+})();
+
+/* ============================================================================
+   LAS DONACIONES — PayPal y/o transferencia. Las del grupo las pone el
+   general («Il sito del gruppo»); las de cada iglesia, su responsable. Todo
+   como texto: el IBAN y el nombre los escribe una persona en el panel.
+   ============================================================================ */
+function DONAZIONI(cont, d) {
+  cont.textContent = '';
+  d = (d && typeof d === 'object') ? d : {};
+  var pp = SEGURO(d.paypal), iban = String(d.iban || '').replace(/\s+/g, '').toUpperCase();
+  if (!pp && !iban) return false;
+  function el(tag, cls, txt) {
+    var e = document.createElement(tag); if (cls) e.className = cls;
+    if (txt !== undefined) e.textContent = txt; return e;
+  }
+  if (pp) {
+    var c1 = el('div', 'dona-card reveal izq');
+    c1.appendChild(el('h3', '', 'PayPal'));
+    c1.appendChild(el('p', '', TEXTO('dn_paypal_p', 'Con carta o con il tuo conto PayPal. Ci vuole un minuto.')));
+    var b = el('a', 'btn oro'); b.href = pp; b.target = '_blank'; b.rel = 'noopener';
+    b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>';
+    b.appendChild(el('span', '', TEXTO('dn_paypal', 'Dona con PayPal')));
+    var acc = el('div', 'acciones'); acc.appendChild(b); c1.appendChild(acc);
+    cont.appendChild(c1);
+  }
+  if (iban) {
+    var c2 = el('div', 'dona-card reveal der');
+    c2.appendChild(el('h3', '', TEXTO('dn_bonifico', 'Bonifico bancario')));
+    var dl = el('dl', 'dona-dati');
+    function fila(k, v, cls) {
+      if (!v) return;
+      var f = el('div'); f.appendChild(el('dt', '', k)); f.appendChild(el('dd', cls || '', v)); dl.appendChild(f);
+    }
+    fila(TEXTO('dn_intest', 'Intestato a'), d.intestatario);
+    fila('IBAN', iban.replace(/(.{4})/g, '$1 ').trim(), 'iban');
+    fila(TEXTO('dn_causale', 'Causale'), TR(d.causale));
+    c2.appendChild(dl);
+    var cp = el('button', 'btn', TEXTO('dn_copia', 'Copia l’IBAN')); cp.type = 'button';
+    cp.addEventListener('click', function () {
+      function ok() {
+        cp.textContent = TEXTO('dn_copiato', 'Copiato ✓');
+        setTimeout(function () { cp.textContent = TEXTO('dn_copia', 'Copia l’IBAN'); }, 2200);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(iban).then(ok, function () {});
+      else {
+        var t = document.createElement('textarea'); t.value = iban; document.body.appendChild(t);
+        t.select(); try { document.execCommand('copy'); ok(); } catch (e) {} document.body.removeChild(t);
+      }
+    });
+    var acc2 = el('div', 'acciones'); acc2.appendChild(cp); c2.appendChild(acc2);
+    cont.appendChild(c2);
+  }
+  if (observarReveal) observarReveal(cont);
+  return true;
+}
+
+/* Las del grupo, en la portada. */
+(function () {
+  var sec = document.getElementById('dona'), cont = document.getElementById('dona-lista');
+  if (!sec || !cont) return;
+  var datos = null, nav = document.getElementById('nav-dona');
+  function pintar() {
+    var hay = DONAZIONI(cont, datos);
+    sec.hidden = !hay;
+    if (nav) nav.hidden = !hay;
+  }
+  window.__dibujarDona = pintar;
+  SITO_UNA_VEZ().then(function (s) { datos = s && s.donazioni; pintar(); });
+})();
+
+/* ============================================================================
    LOS PUNTOS DE FE
    ============================================================================ */
 (function () {
   var cont = document.getElementById('fede-lista');
   if (!cont || !window.FEDE) return;
   function dibujar() {
-    var lang = document.documentElement.lang === 'es' ? 'es' : 'it';
+    var lang = LINGUA();
     cont.textContent = '';
     FEDE.forEach(function (p, i) {
       var d = p[lang] || p.it;
@@ -989,11 +1218,12 @@ function MAPA_DE(sede) {
 })();
 
 /* ============================================================================
-   IDIOMA — italiano y español.
+   IDIOMA — italiano, español e ingles.
 
-   El italiano es lo que viene escrito en el HTML; el español vive en este
-   diccionario. Los dos se leen de izquierda a derecha, asi que no hace falta
-   girar el documento.
+   El italiano es lo que viene escrito en el HTML; el español y el ingles
+   viven en este diccionario. Los tres se leen de izquierda a derecha, asi que
+   no hace falta girar el documento. El ingles lo pidieron ellos: para quien
+   llega de fuera y no habla ninguno de los otros dos.
 
    Por que los dos, y esta vez no es una suposicion mia: el grupo se llama
    "Gruppo Cristiano Latino Americano" en su propio documento de vision, y
@@ -1003,7 +1233,7 @@ function MAPA_DE(sede) {
 var I18N = {
   es: {
     meta_title: "Gruppo Cristiano Latino Americano — Iglesias en Italia",
-    meta_desc: "Gruppo Cristiano Latino Americano: iglesias evangélicas en Italia. Nuestras sedes, los horarios de las reuniones y cómo llegar. Italiano y español.",
+    meta_desc: "Gruppo Cristiano Latino Americano: iglesias evangélicas en Italia. Nuestras sedes, los horarios de las reuniones y cómo llegar. Italiano, español e inglés.",
     nav_sedi: "Las comunidades", nav_storia: "Quiénes somos", nav_visione: "La visión", nav_fede: "Puntos de fe", nav_domande: "Preguntas",
     hero_h1: "Una única familia de comunidades cristianas.",
     hero_p: "«Creemos que este mundo lleno de problemas y sufrimientos necesita una esperanza verdadera.»",
@@ -1076,7 +1306,109 @@ var I18N = {
     faq_conf: "por confirmar", dm_p: "Quien no ha estado nunca en una iglesia evangélica no pregunta de teología: pregunta cómo hay que vestirse y cuánto dura. Las preguntas de abajo son las de verdad.",
     wa_txt: "Escríbenos",
     foot_dir: "Fidenza · Parma", foot_min: "Isaías 55:5", foot_panel: "Área reservada",
+    /* --- eventos y donaciones --- */
+    nav_eventi: "Eventos", nav_dona: "Donar",
+    ev_eyebrow: "Próximos eventos", ev_h2: "Lo que pasa en el grupo.",
+    ev_p: "Las citas de todas nuestras iglesias, en un solo sitio.",
+    sp_ev_h2: "Lo que pasa aquí.", ev_gruppo: "Todo el grupo", ev_link: "Ver el anuncio",
+    ev_tutti: "Ver todos los eventos", ev_vuoto: "Por ahora no hay eventos programados.",
+    ev_social: "Los anuncios los publicamos también en", ev_foto_alt: "Cartel:",
+    dn_eyebrow: "Donaciones", dn_h2: "Apoya la obra.",
+    dn_p: "Si quieres contribuir a la misión del grupo, puedes hacerlo así. Toda ofrenda es libre y voluntaria.",
+    sp_dn_h2: "Apoya esta iglesia.",
+    dn_paypal_p: "Con tarjeta o con tu cuenta PayPal. Se tarda un minuto.", dn_paypal: "Dona con PayPal",
+    dn_bonifico: "Transferencia bancaria", dn_intest: "A nombre de", dn_causale: "Concepto",
+    dn_copia: "Copiar el IBAN", dn_copiato: "Copiado ✓",
+    sp_pastori_alt: "Los pastores de la iglesia de",
+    foot_trad: "Algunos textos se traducen automáticamente del italiano.",
     banda: "Prototipo Digitatex · contenidos por confirmar"
+  },
+  en: {
+    meta_title: "Gruppo Cristiano Latino Americano — Churches in Italy",
+    meta_desc: "Gruppo Cristiano Latino Americano: evangelical churches in Italy. Our churches, meeting times and how to get there. Italian, Spanish and English.",
+    nav_sedi: "Communities", nav_storia: "About us", nav_visione: "Our vision", nav_fede: "Statement of faith", nav_domande: "Questions",
+    hero_h1: "One family of Christian communities.",
+    hero_p: "«We believe that this world, so full of problems and suffering, needs a true hope.»",
+    versetto: "Isaiah 55:5",
+    hero_cta1: "Find a community", hero_cta2: "About us",
+    cue: "Scroll",
+    sd_eyebrow: "Communities",
+    sd_h2: "Our communities",
+    sd_p: "Tap a card to open that church's page: meeting times, pastors and how to get there.",
+    sd_vai: "Get directions", sd_sito: "Visit website", sd_orari: "Times",
+    sd_ver: "See the church", sd_ver_aria: "The church in",
+    sp_torna: "All communities",
+    sp_eyebrow: "A church of the group",
+    sp_dove: "Where we are", sp_quando: "When we meet",
+    sp_lingue: "Languages", sp_contatti: "Talk to this church",
+    sp_contatti_p: "Write on WhatsApp or call, and we'll get back to you. If you'd rather just come along, that's fine too: you don't need to let us know to come in.",
+    sp_pastori: "Pastors",
+    nav_pred: "Sermons",
+    sd_alt_foto: "The church in",
+    tr_eyebrow: "Find your community",
+    tr_h2: "Which one is closest&nbsp;to you?",
+    tr_p: "Press the button: your phone tells you which church of the group is closest to you, and how many kilometres away it is.",
+    tr_btn: "Use my location",
+    tr_priv: "Your location stays on your phone: nobody receives or stores it.",
+    tr_cerco: "Finding your location…",
+    tr_res1: "The closest is",
+    tr_res2: "about",
+    tr_res3: "km as the crow flies.",
+    tr_apri: "Open its page →",
+    tr_negato: "You didn't allow us to use your location. You can look at the map next to this.",
+    tr_errore: "We couldn't find where you are. Have a look at the map next to this.",
+    tr_nessuna: "We can't find any community on the map.",
+    pr_eyebrow: "Sermons",
+    pr_h2: "Listen to the messages.", pr_btn: "Listen on Spotify",
+    pr_p: "The meetings and messages of the Gruppo Cristiano, as audio on Spotify: listen whenever you like, in the car or while you walk.",
+    sd_tutti: "All meetings",
+    sp_chiama: "Call",
+    sp_email: "Send an email",
+    sp_altre_h: "The other churches of the group",
+    sp_altre_p: "The same group, the same faith, another city.",
+    sp_chi_h: "About us", gal_eyebrow: "Gallery", gal_h2: "Life in the group.", sp_gal_h2: "Life in the community.",
+    sp_chi_p: "This church is part of the Gruppo Cristiano Latino Americano. The vision, the statement of faith and the history are those of the whole group.",
+    sp_chi_btn: "The group's vision",
+    sp_nf_h: "This church isn't here",
+    sp_nf_p: "This address doesn't match any church of the group. All of them are listed below.",
+    sp_senza_h: "This page is waiting for its details",
+    sp_senza_p: "This church's address, meeting times and languages are still missing. As soon as they arrive, the page fills itself in.",
+    sd_aria: "Directions to", sd_alt: "Map of the church in",
+    sd_alt_logo: "Logo of the church in",
+    sd_senza_mappa: "Map waiting for the address", sd_senza_via: "Address",
+    sd_attr: "Map © OpenStreetMap contributors",
+    sd_altra_et: "Another church", sd_altra_h: "The other churches",
+    sd_altra_p: "For each church we need the name, the street and number, the days and times, and the languages spoken. From there the card builds itself, map included.",
+    sd_nota_ora_fidenza: "The day comes from your videos. The time doesn't: that is still missing.",
+    sd_nota_ora_parma: "Times taken from the website of the Consiglio delle Chiese Cristiane di Parma. To be confirmed.",
+    conf: "to be confirmed",
+    st_eyebrow: "About us",
+    st_h2: "Our story.",
+    st_fond: "Founders and senior pastors",
+    vs_eyebrow: "Our vision",
+    vs_h2: "What we want<br>to do, and why.",
+    fd_eyebrow: "Statement of faith",
+    fd_h2: "What we<br>believe.",
+    dm_eyebrow: "Questions",
+    dm_h2: "What people ask<br>before coming<br>for the first time.",
+    faq_conf: "to be confirmed", dm_p: "Someone who has never been to an evangelical church doesn't ask about theology: they ask what to wear and how long it lasts. The questions below are the real ones.",
+    wa_txt: "Write to us",
+    foot_dir: "Fidenza · Parma", foot_min: "Isaiah 55:5", foot_panel: "Private area",
+    nav_eventi: "Events", nav_dona: "Give",
+    ev_eyebrow: "Upcoming events", ev_h2: "What's happening in the group.",
+    ev_p: "The events of all our churches, in one place.",
+    sp_ev_h2: "What's on here.", ev_gruppo: "The whole group", ev_link: "See the announcement",
+    ev_tutti: "See all events", ev_vuoto: "There are no upcoming events at the moment.",
+    ev_social: "We also post our announcements on", ev_foto_alt: "Poster:",
+    dn_eyebrow: "Donations", dn_h2: "Support the work.",
+    dn_p: "If you would like to contribute to the mission of the group, this is how. Every gift is free and voluntary.",
+    sp_dn_h2: "Support this church.",
+    dn_paypal_p: "By card or with your PayPal account. It takes a minute.", dn_paypal: "Give with PayPal",
+    dn_bonifico: "Bank transfer", dn_intest: "Account holder", dn_causale: "Reference",
+    dn_copia: "Copy the IBAN", dn_copiato: "Copied ✓",
+    sp_pastori_alt: "The pastors of the church in",
+    foot_trad: "Some texts are translated automatically from Italian.",
+    banda: "Digitatex prototype · content to be confirmed"
   }
 };
 
@@ -1103,14 +1435,26 @@ function aplicarIdioma(lang) {
   document.querySelectorAll('.langsw button').forEach(function (b) {
     b.classList.toggle('active', b.dataset.lang === lang);
   });
-  /* Las fichas y los puntos de fe los dibuja JS, asi que no los alcanza el
-     barrido de [data-i18n]: se vuelven a pintar con el diccionario cargado. */
-  if (window.__dibujarSedi) window.__dibujarSedi();
-  if (window.__dibujarFede) window.__dibujarFede();
-  if (window.__dibujarFaq) window.__dibujarFaq();
-  if (window.__dibujarContenidos) window.__dibujarContenidos();
-  if (window.__dibujarSede) window.__dibujarSede();
+  RIDISEGNA();
+  /* Lo escrito en el panel: la primera vez que se pide este idioma, se
+     traen sus traducciones y se vuelve a pintar todo con ellas. */
+  if (lang !== 'it' && !TRAD[lang] && window.ALMACEN && ALMACEN.traduzioni) {
+    TRAD[lang] = {};
+    ALMACEN.traduzioni(lang).then(function (m) {
+      TRAD[lang] = m || {};
+      if (LINGUA() === lang && Object.keys(TRAD[lang]).length) RIDISEGNA();
+    });
+  }
   try { localStorage.setItem('gc_lang', lang); } catch (e) {}
+}
+
+/* Lo que dibuja JS no lo alcanza el barrido de [data-i18n]: se vuelve a pintar
+   con el diccionario cargado (y con las traducciones, si ya han llegado). */
+function RIDISEGNA() {
+  ['__dibujarSedi', '__dibujarFede', '__dibujarFaq', '__dibujarContenidos', '__dibujarSede',
+   '__dibujarGaleria', '__dibujarEventi', '__dibujarDona'].forEach(function (k) {
+    if (window[k]) window[k]();
+  });
 }
 
 (function () {
@@ -1122,6 +1466,6 @@ function aplicarIdioma(lang) {
   try { guardado = localStorage.getItem('gc_lang'); } catch (e) {}
   /* Por defecto italiano: las iglesias estan en Italia y la calle por la que
      pasa la gente es italiana. El español esta para quien lo necesita. */
-  var elegido = [url, guardado].filter(function (l) { return l === 'it' || l === 'es'; })[0] || 'it';
+  var elegido = [url, guardado].filter(function (l) { return l === 'it' || l === 'es' || l === 'en'; })[0] || 'it';
   aplicarIdioma(elegido);
 })();

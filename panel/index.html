@@ -243,6 +243,24 @@ a.btn{text-decoration:none;}
 .fund-foto label.btn{cursor:pointer;}
 .faq-item input.nome{font-size:16px;margin-bottom:10px;}
 
+/* --- eventos ----------------------------------------------------------------- */
+#ev-capa .hoja{max-width:760px;}
+.ev-item{display:grid;grid-template-columns:64px 1fr;gap:14px;align-items:start;padding:12px;
+  border:1px solid var(--line);border-radius:6px;background:var(--ink-3);}
+.ev-item + .ev-item{margin-top:10px;}
+.ev-item .fecha{border-radius:6px;background:var(--blu-dark);text-align:center;padding:8px 4px;line-height:1.1;}
+.ev-item .fecha b{display:block;font-family:'Fraunces',serif;font-size:24px;font-weight:400;}
+.ev-item .fecha span{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ambar);}
+.ev-item h4{font-family:'Fraunces',serif;font-weight:400;font-size:18px;}
+.ev-item p{font-size:13px;color:var(--stone);}
+.ev-item .gal-acc{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.ev-form{margin-top:18px;padding:16px;border:1px solid var(--line-strong);border-radius:6px;background:var(--ink-3);}
+.ev-form h3{font-family:'Fraunces',serif;font-weight:400;font-size:20px;margin-bottom:12px;}
+.ev-form .campo input,.ev-form .campo textarea{background:var(--ink-2);}
+.campo input[type=date]{color-scheme:dark;}
+.subida.cartel .subida-previa{width:120px;aspect-ratio:4/5;}
+.subida.pastori .subida-previa{width:168px;aspect-ratio:4/3;}
+
 /* --- capas ----------------------------------------------------------------- */
 .capa{display:none;position:fixed;inset:0;z-index:45;background:rgba(5,7,10,0.72);
   overflow-y:auto;padding:clamp(14px,6vh,70px) 14px;}
@@ -385,6 +403,26 @@ a.btn{text-decoration:none;}
         </div>
         <button class="btn piena" type="button" id="sito-sto">Modifica storia e fondatori</button>
       </div>
+
+      <div class="hoja" style="max-width:none;margin:16px 0 0;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <b style="font-weight:500">Eventi del gruppo</b>
+          <p class="pista" style="margin:4px 0 0">Gli eventi di tutto il gruppo. Nella pagina principale
+            escono insieme a quelli di ogni chiesa, da soli, in ordine di data.</p>
+        </div>
+        <button class="btn piena" type="button" id="sito-eventi">Apri gli eventi</button>
+      </div>
+
+      <form class="hoja" id="f-sito-dona" style="max-width:none;margin:16px 0 0" novalidate>
+        <b style="font-weight:500">Donazioni del gruppo</b>
+        <p class="pista" style="margin:4px 0 14px">Il bottone «Dona» della pagina principale. Basta uno
+          dei due: il link di PayPal o l'IBAN. Se li lasci vuoti tutti e due, la sezione non esce.</p>
+        <div class="rejilla" id="sito-dona-campi"></div>
+        <p class="error" id="err-sito-dona" role="alert"></p>
+        <div class="pie-hoja">
+          <button class="btn piena" type="submit" id="sito-dona-salva">Salva le donazioni</button>
+        </div>
+      </form>
 
       <form class="hoja" id="f-sito-wa" style="max-width:none;margin:16px 0 0" novalidate>
         <div class="campo">
@@ -562,8 +600,8 @@ a.btn{text-decoration:none;}
 <div class="capa" id="faq-capa">
   <div class="hoja">
     <h2>Domande frequenti</h2>
-    <p>Ogni domanda in italiano e in spagnolo. Se lasci vuota la parte in spagnolo, chi legge
-      in spagnolo vede quella in italiano. Sul sito escono in quest'ordine.</p>
+    <p>Basta scrivere in italiano: lo spagnolo e l'inglese si traducono da soli. Se scrivi tu
+      lo spagnolo, esce il tuo. Sul sito escono in quest'ordine.</p>
     <div id="faq-lista"></div>
     <div class="subida-acc" style="margin-top:14px">
       <button class="btn piena" type="button" id="faq-add">+ Aggiungi domanda</button>
@@ -583,8 +621,9 @@ a.btn{text-decoration:none;}
 <div class="capa" id="vis-capa">
   <div class="hoja">
     <h2>La visione</h2>
-    <p>Ogni testo in italiano e in spagnolo (se lo spagnolo resta vuoto, esce l'italiano).
-      Una riga che comincia con «- » diventa un punto di un elenco; una riga vuota separa i paragrafi.</p>
+    <p>Basta scrivere in italiano: lo spagnolo e l'inglese si traducono da soli (se scrivi tu lo
+      spagnolo, esce il tuo). Una riga che comincia con «- » diventa un punto di un elenco; una riga
+      vuota separa i paragrafi.</p>
     <div id="vis-cuerpo"></div>
     <p class="error" id="err-vis" role="alert"></p>
     <div class="pie-hoja">
@@ -598,14 +637,83 @@ a.btn{text-decoration:none;}
 <div class="capa" id="sto-capa">
   <div class="hoja">
     <h2>Chi siamo e fondatori</h2>
-    <p>Ogni testo in italiano e in spagnolo (se lo spagnolo resta vuoto, esce l'italiano).
-      Una riga vuota separa i paragrafi. La foto di ogni fondatore esce in un cerchio.</p>
+    <p>Basta scrivere in italiano: lo spagnolo e l'inglese si traducono da soli (se scrivi tu lo
+      spagnolo, esce il tuo). Una riga vuota separa i paragrafi. La foto di ogni fondatore esce in un
+      cerchio.</p>
     <div id="sto-cuerpo"></div>
     <p class="error" id="err-sto" role="alert"></p>
     <div class="pie-hoja">
       <button class="btn mini peligro izq" type="button" id="sto-serie">Torna a quella di serie</button>
       <button class="btn" type="button" id="sto-cerrar">Chiudi</button>
       <button class="btn piena" type="button" id="sto-salva" disabled>Salva</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================================
+     EVENTI — los proximos de una iglesia o del grupo. Los pasados se borran
+     solos al abrir esta ventana.
+     ============================================================================ -->
+<div class="capa" id="ev-capa">
+  <div class="hoja">
+    <h2 id="ev-titulo">Eventi</h2>
+    <p>I prossimi eventi. Escono nella pagina della chiesa e, tutti insieme, nella pagina
+      principale. Quando la data è passata, l'evento si toglie da solo. Basta scrivere in
+      italiano: si traduce da solo.</p>
+    <div id="ev-lista"></div>
+
+    <form class="ev-form" id="f-ev" novalidate>
+      <h3 id="ev-form-titulo">Nuovo evento</h3>
+      <div class="rejilla">
+        <div class="campo">
+          <label for="ev-titolo">Titolo *</label>
+          <input type="text" id="ev-titolo" maxlength="120" placeholder="Serata di lode e preghiera">
+        </div>
+        <div class="rejilla dos">
+          <div class="campo">
+            <label for="ev-giorno">Data *</label>
+            <input type="date" id="ev-giorno">
+          </div>
+          <div class="campo">
+            <label for="ev-ora">Ora</label>
+            <input type="text" id="ev-ora" maxlength="40" placeholder="19:30">
+          </div>
+        </div>
+        <div class="campo">
+          <label for="ev-luogo">Luogo</label>
+          <input type="text" id="ev-luogo" maxlength="160" placeholder="In chiesa (o l'indirizzo, se è fuori)">
+        </div>
+        <div class="campo">
+          <label for="ev-testo">Descrizione</label>
+          <textarea id="ev-testo" rows="4" maxlength="1000" placeholder="Due righe: di cosa si tratta, per chi è."></textarea>
+        </div>
+        <div class="campo">
+          <label for="ev-link">Link al post (Instagram o Facebook)</label>
+          <input type="url" id="ev-link" autocapitalize="none" spellcheck="false" placeholder="https://www.instagram.com/p/...">
+          <p class="pista">Il post dove avete annunciato l'evento. Sul sito esce il bottone «Vedi l'annuncio».
+            Dal telefono: sul post, «Condividi» → «Copia link».</p>
+        </div>
+        <div class="campo">
+          <label>Locandina</label>
+          <div class="subida cartel" id="sub-ev">
+            <div class="subida-previa"><img alt="" hidden><span>Nessuna</span></div>
+            <div class="subida-acc">
+              <label class="btn mini">Scegli<input type="file" accept="image/jpeg,image/png,image/webp" hidden></label>
+              <button class="btn mini peligro" type="button" data-togli hidden>Togli</button>
+            </div>
+          </div>
+          <p class="pista">Facoltativa. La stessa immagine del post va benissimo.</p>
+        </div>
+      </div>
+      <p class="error" id="err-ev" role="alert"></p>
+      <div class="pie-hoja">
+        <button class="btn izq" type="button" id="ev-nuevo" hidden>Annulla la modifica</button>
+        <button class="btn piena" type="submit" id="ev-salva">Aggiungi l'evento</button>
+      </div>
+    </form>
+
+    <div class="pie-hoja">
+      <button class="btn" type="button" id="ev-cerrar">Chiudi</button>
     </div>
   </div>
 </div>
@@ -686,6 +794,27 @@ a.btn{text-decoration:none;}
         <textarea id="pastori" rows="3" placeholder="Daniel Lana&#10;Samuele Lorenzini (pastore giovani)"></textarea>
         <p class="pista">Uno per riga. Se ha un ruolo, tra parentesi dopo il nome — come
           «Samuele Lorenzini (pastore giovani)».</p>
+      </div>
+
+      <div class="campo">
+        <label>Foto dei pastori</label>
+        <div class="subida pastori" id="sub-foto_pastori">
+          <div class="subida-previa"><img alt="" hidden><span>Nessuna foto</span></div>
+          <div class="subida-acc">
+            <label class="btn mini">Scegli una foto<input type="file" accept="image/jpeg,image/png,image/webp" hidden></label>
+            <button class="btn mini peligro" type="button" data-togli hidden>Togli</button>
+          </div>
+        </div>
+        <input type="hidden" id="foto_pastori">
+        <p class="pista">Esce sopra i nomi dei pastori, nella pagina della chiesa. Una foto
+          insieme, sorridenti, va benissimo.</p>
+      </div>
+
+      <div class="campo">
+        <label>Donazioni a questa chiesa</label>
+        <div class="rejilla" style="gap:8px" id="dona-campi"></div>
+        <p class="pista">Il link di PayPal (per esempio https://paypal.me/...) e/o i dati per il
+          bonifico. Se lasci tutto vuoto, nella pagina non esce niente.</p>
       </div>
 
       <div class="campo">
@@ -1106,6 +1235,10 @@ function pintarLista() {
         ga.className = 'btn mini'; ga.type = 'button'; ga.textContent = 'Galleria';
         ga.addEventListener('click', function () { abrirGaleria(s.id, s.citta); });
         acc.appendChild(ga);
+        var ev = document.createElement('button');
+        ev.className = 'btn mini'; ev.type = 'button'; ev.textContent = 'Eventi';
+        ev.addEventListener('click', function () { abrirEventi(s.id, s.citta); });
+        acc.appendChild(ev);
       }
       c.appendChild(acc);
 
@@ -1212,9 +1345,12 @@ function abrirEditor(sede) {
   $('#lingue').value = editando.lingue || '';
   $('#logo').value = editando.logo || '';
   $('#copertina').value = editando.copertina || '';
+  $('#foto_pastori').value = editando.foto_pastori || '';
   FOTOS_PENDIENTES = {};
   pintarSubida('copertina', editando.copertina || '');
   pintarSubida('logo', editando.logo || '');
+  pintarSubida('foto_pastori', editando.foto_pastori || '');
+  ponerDona('dn', editando.donazioni);
   $('#whatsapp').value = editando.whatsapp || '';
   $('#email').value = editando.email || '';
   $('#pastori').value = pastoriATexto(editando.pastori);
@@ -1252,7 +1388,8 @@ function cerrarEditor() {
    Al elegir, solo se prepara y se ensena. Se sube al pulsar "Salva": si se
    cancela el editor, no queda nada subido a medias. */
 var FOTOS_PENDIENTES = {};   // tipo -> Blob a subir, o 'quitar'
-var TAMANOS = { copertina: 1600, logo: 512 };
+var TAMANOS = { copertina: 1600, logo: 512, foto_pastori: 1200 };
+var TIPOS_FOTO = ['copertina', 'logo', 'foto_pastori'];
 
 function achicar(file, lado, tipo) {
   /* Logo: PNG si lo era (para no perder el fondo transparente); la portada
@@ -1295,7 +1432,7 @@ function pintarSubida(tipo, url) {
   else { img.removeAttribute('src'); img.hidden = true; txt.hidden = false; togli.hidden = true; }
 }
 
-['copertina', 'logo'].forEach(function (tipo) {
+TIPOS_FOTO.forEach(function (tipo) {
   var caja = $('#sub-' + tipo);
   var input = caja.querySelector('input[type=file]');
   input.addEventListener('change', function () {
@@ -1318,7 +1455,7 @@ function pintarSubida(tipo, url) {
 
 /* Sube lo que haya pendiente y deja en la ficha la direccion nueva. */
 function subirFotos(sede) {
-  return ['copertina', 'logo'].reduce(function (cadena, tipo) {
+  return TIPOS_FOTO.reduce(function (cadena, tipo) {
     return cadena.then(function () {
       var p = FOTOS_PENDIENTES[tipo];
       if (p === 'quitar') { sede[tipo] = ''; return; }
@@ -1327,8 +1464,7 @@ function subirFotos(sede) {
     });
   }, Promise.resolve()).catch(function (e) {
     if (/row-level security|403|Unauthorized/i.test(e.message || ''))
-      throw new Error('il magazzino ha rifiutato la foto. Ogni chiesa può tenere al massimo '
-        + '6 foto: riprova, le vecchie si tolgono da sole.');
+      throw new Error('il magazzino ha rifiutato la foto. Riprova: le vecchie si tolgono da sole.');
     throw new Error('la foto non si è caricata (' + e.message + ')');
   });
 }
@@ -1362,6 +1498,8 @@ function cargarSito() {
     $('#sto-estado').textContent = SITO.storia
       ? (SITO.storia.fondatori || []).length + ' fondatori, scritti da te.' : 'Per ora esce quella di serie. Aprila per cambiarla.';
     $('#sito-wa').value = SITO.whatsapp;
+    SITO.donazioni = (s && s.donazioni) || {};
+    ponerDona('sdn', SITO.donazioni);
     SITO_PENDIENTE = null;
     $('#sito-salva').disabled = true;
     pintarSito(SITO.copertina);
@@ -1564,6 +1702,223 @@ document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape' && $('#galeria-capa').style.display === 'block') cerrarGaleria();
 });
 $('#sito-galeria').addEventListener('click', function () { abrirGaleria('generale', ''); });
+
+/* --- las donaciones -----------------------------------------------------------
+   Los mismos cuatro campos en la ficha de cada iglesia (dn-...) y en «Il sito
+   del gruppo» (sdn-...). El IBAN se comprueba con su cifra de control: un
+   numero cambiado al copiarlo es justo el error que nadie ve hasta que una
+   transferencia vuelve. */
+function camposDona(cont, pre) {
+  [['paypal', 'Link di PayPal', 'https://paypal.me/...', 'url'],
+   ['iban', 'IBAN', 'IT60 X054 2811 1010 0000 0123 456', 'text'],
+   ['intestatario', 'Intestato a', 'Associazione Gruppo Cristiano', 'text'],
+   ['causale', 'Causale', 'Offerta libera', 'text']].forEach(function (c) {
+    var d = document.createElement('div'); d.className = 'campo';
+    var l = document.createElement('label'); l.htmlFor = pre + '-' + c[0]; l.textContent = c[1];
+    var i = document.createElement('input'); i.type = c[3]; i.id = pre + '-' + c[0];
+    i.placeholder = c[2]; i.autocomplete = 'off'; i.spellcheck = false;
+    if (c[0] === 'paypal' || c[0] === 'iban') i.autocapitalize = 'none';
+    d.appendChild(l); d.appendChild(i); cont.appendChild(d);
+  });
+}
+camposDona($('#dona-campi'), 'dn');
+camposDona($('#sito-dona-campi'), 'sdn');
+function ponerDona(pre, d) {
+  d = d || {};
+  $('#' + pre + '-paypal').value = d.paypal || '';
+  $('#' + pre + '-iban').value = String(d.iban || '').replace(/(.{4})/g, '$1 ').trim();
+  $('#' + pre + '-intestatario').value = d.intestatario || '';
+  $('#' + pre + '-causale').value = d.causale || '';
+}
+function leerDona(pre) {
+  var pp = $('#' + pre + '-paypal').value.trim();
+  if (pp && !/^https?:\/\//i.test(pp)) pp = 'https://' + pp;
+  return {
+    paypal: pp.replace(/^http:\/\//i, 'https://'),
+    iban: $('#' + pre + '-iban').value.toUpperCase().replace(/[^A-Z0-9]/g, ''),
+    intestatario: $('#' + pre + '-intestatario').value.trim(),
+    causale: $('#' + pre + '-causale').value.trim()
+  };
+}
+function ibanValido(iban) {
+  if (!/^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(iban)) return false;
+  var r = (iban.slice(4) + iban.slice(0, 4)).replace(/[A-Z]/g, function (c) { return c.charCodeAt(0) - 55; });
+  var resto = 0;
+  for (var i = 0; i < r.length; i++) resto = (resto * 10 + +r.charAt(i)) % 97;
+  return resto === 1;
+}
+function malaDona(d) {
+  if (d.paypal && !/^https:\/\/[^\s<>"']+\.[^\s<>"']+$/i.test(d.paypal)) return 'Il link di PayPal non sembra giusto.';
+  if (d.iban && !ibanValido(d.iban)) return 'L\'IBAN non torna: controlla di averlo copiato tutto, senza cifre cambiate.';
+  if (d.iban && !d.intestatario) return 'Con l\'IBAN serve anche a chi è intestato il conto.';
+  return '';
+}
+$('#f-sito-dona').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var d = leerDona('sdn'), err = $('#err-sito-dona'), b = $('#sito-dona-salva');
+  err.textContent = malaDona(d);
+  if (err.textContent) return;
+  b.disabled = true;
+  ALMACEN.guardarSito({ donazioni: d }).then(function () {
+    avisar((d.paypal || d.iban) ? 'Donazioni salvate: la sezione «Dona» è sul sito.' : 'Donazioni tolte dal sito.');
+    cargarSito();
+  }).catch(function (x) {
+    err.textContent = 'Non sono riuscito a salvarle: ' + x.message;
+  }).then(function () { b.disabled = false; });
+});
+
+/* --- los eventos ---------------------------------------------------------------
+   Una ventana por carpeta: la de una iglesia o la del grupo ('generale'). Al
+   abrirla se borran los que ya pasaron (con su cartel) y los carteles que se
+   quedaron sin evento. Crear y cambiar es el mismo formulario. */
+var EV = { cartella: null, lista: [], editando: null, cartel: null };   // cartel: Blob, 'quitar' o null
+var EV_TOPE = 20;
+
+function abrirEventi(cartella, nombre) {
+  EV = { cartella: cartella, lista: [], editando: null, cartel: null };
+  $('#ev-titulo').textContent = cartella === 'generale' ? 'Eventi del gruppo' : 'Eventi · ' + nombre;
+  formEvento(null);
+  $('#ev-lista').textContent = 'Un attimo…';
+  $('#ev-capa').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  ALMACEN.pulisciEventi(cartella).then(function (l) {
+    EV.lista = l || [];
+    pintarEventos();
+    ALMACEN.limpiarSubcarpeta(cartella, 'eventi', EV.lista.map(function (e) { return e.foto; }));
+  }).catch(function (e) { $('#ev-lista').textContent = 'Non riesco a leggere gli eventi: ' + e.message; });
+}
+function cerrarEventi() {
+  $('#ev-capa').style.display = 'none';
+  document.body.style.overflow = '';
+}
+function recargarEventos() {
+  return ALMACEN.tuttiEventi(EV.cartella).then(function (l) { EV.lista = l || []; pintarEventos(); });
+}
+function fechaCorta(g) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(g || '');
+  if (!m) return { d: '?', m: '' };
+  var meses = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];
+  return { d: String(+m[3]), m: meses[+m[2] - 1] + ' ' + m[1] };
+}
+function pintarEventos() {
+  var cont = $('#ev-lista');
+  cont.textContent = '';
+  if (!EV.lista.length) {
+    var v = document.createElement('div'); v.className = 'gal-vacia';
+    v.textContent = 'Nessun evento in programma. Aggiungine uno qui sotto.';
+    cont.appendChild(v);
+  }
+  EV.lista.forEach(function (e) {
+    var it = document.createElement('div'); it.className = 'ev-item';
+    var f = fechaCorta(e.giorno);
+    var fe = document.createElement('div'); fe.className = 'fecha';
+    var b = document.createElement('b'); b.textContent = f.d;
+    var sp = document.createElement('span'); sp.textContent = f.m;
+    fe.appendChild(b); fe.appendChild(sp);
+    var der = document.createElement('div');
+    var h = document.createElement('h4'); h.textContent = e.titolo;
+    var p = document.createElement('p');
+    p.textContent = [e.ora, e.luogo, e.foto ? 'con locandina' : '', e.link ? 'con link al post' : '']
+      .filter(Boolean).join(' · ');
+    var acc = document.createElement('div'); acc.className = 'gal-acc';
+    var m = document.createElement('button'); m.type = 'button'; m.className = 'btn mini'; m.textContent = 'Modifica';
+    m.addEventListener('click', function () { formEvento(e); $('#f-ev').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    var q = document.createElement('button'); q.type = 'button'; q.className = 'btn mini peligro'; q.textContent = 'Togli';
+    q.addEventListener('click', function () {
+      if (!confirm('Tolgo «' + e.titolo + '»?')) return;
+      ALMACEN.togliEvento(e).then(function () {
+        avisar('Evento tolto.');
+        if (EV.editando && EV.editando.id === e.id) formEvento(null);
+        return recargarEventos();
+      }).catch(function (x) { $('#err-ev').textContent = 'Non sono riuscito a toglierlo: ' + x.message; });
+    });
+    acc.appendChild(m); acc.appendChild(q);
+    der.appendChild(h); der.appendChild(p); der.appendChild(acc);
+    it.appendChild(fe); it.appendChild(der);
+    cont.appendChild(it);
+  });
+  var lleno = !EV.editando && EV.lista.length >= EV_TOPE;
+  $('#ev-salva').disabled = lleno;
+  $('#err-ev').textContent = lleno ? 'Ci sono già ' + EV_TOPE + ' eventi: togline uno per aggiungerne altri.' : '';
+}
+function pintarCartel(url) {
+  var caja = $('#sub-ev'), img = caja.querySelector('img'), txt = caja.querySelector('span');
+  if (url) { img.src = url; img.hidden = false; txt.hidden = true; }
+  else { img.removeAttribute('src'); img.hidden = true; txt.hidden = false; }
+  caja.querySelector('[data-togli]').hidden = !url;
+}
+function formEvento(e) {
+  EV.editando = e; EV.cartel = null;
+  $('#ev-form-titulo').textContent = e ? 'Modifica: ' + e.titolo : 'Nuovo evento';
+  $('#ev-salva').textContent = e ? 'Salva le modifiche' : 'Aggiungi l\'evento';
+  $('#ev-nuevo').hidden = !e;
+  $('#ev-titolo').value = e ? e.titolo : '';
+  $('#ev-giorno').value = e ? e.giorno : '';
+  $('#ev-ora').value = e ? e.ora : '';
+  $('#ev-luogo').value = e ? e.luogo : '';
+  $('#ev-testo').value = e ? e.testo : '';
+  $('#ev-link').value = e ? e.link : '';
+  $('#err-ev').textContent = '';
+  pintarCartel(e ? e.foto : '');
+  if (!e && EV.cartella) pintarEventos();
+}
+(function () {
+  var caja = $('#sub-ev'), input = caja.querySelector('input[type=file]');
+  input.addEventListener('change', function () {
+    var f = input.files && input.files[0];
+    input.value = '';
+    if (!f) return;
+    achicar(f, 1200, 'copertina').then(function (blob) {
+      EV.cartel = blob; pintarCartel(URL.createObjectURL(blob));
+    }).catch(function (x) { $('#err-ev').textContent = x.message; });
+  });
+  caja.querySelector('[data-togli]').addEventListener('click', function () { EV.cartel = 'quitar'; pintarCartel(''); });
+})();
+$('#f-ev').addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  var err = $('#err-ev'), b = $('#ev-salva');
+  var datos = {
+    id: EV.editando ? EV.editando.id : undefined,
+    titolo: $('#ev-titolo').value.trim(), giorno: $('#ev-giorno').value,
+    ora: $('#ev-ora').value.trim(), luogo: $('#ev-luogo').value.trim(),
+    testo: $('#ev-testo').value.trim(), link: $('#ev-link').value.trim(),
+    foto: EV.editando ? EV.editando.foto : ''
+  };
+  err.textContent = '';
+  if (!datos.titolo) { err.textContent = 'Manca il titolo.'; return; }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(datos.giorno)) { err.textContent = 'Manca la data.'; return; }
+  var hoy = new Date(); hoy = hoy.getFullYear() + '-' + ('0' + (hoy.getMonth() + 1)).slice(-2) + '-' + ('0' + hoy.getDate()).slice(-2);
+  if (datos.giorno < hoy) { err.textContent = 'La data è già passata.'; return; }
+  if (datos.link && !/^(https?:\/\/)?[^\s<>"']+\.[^\s<>"']+$/i.test(datos.link)) { err.textContent = 'Il link al post non sembra giusto.'; return; }
+  var vieja = datos.foto, cartel = EV.cartel;
+  b.disabled = true; b.textContent = cartel instanceof Blob ? 'Carico la locandina…' : 'Salvo…';
+  (cartel instanceof Blob
+    ? ALMACEN.subirImagen(EV.cartella, 'eventi/locandina', cartel).then(function (url) { datos.foto = url; })
+    : Promise.resolve(cartel === 'quitar' ? (datos.foto = '') : null)
+  ).then(function () {
+    return ALMACEN.guardaEvento(EV.cartella, datos);
+  }).then(function () {
+    if (vieja && vieja !== datos.foto) ALMACEN.borrarImagen(vieja);
+    avisar(datos.id ? 'Evento salvato.' : 'Evento aggiunto: è già sul sito.');
+    formEvento(null);
+    return recargarEventos();
+  }).catch(function (x) {
+    /* Si el evento no entra, el cartel recien subido no se queda huerfano. */
+    if (cartel instanceof Blob && datos.foto && datos.foto !== vieja) ALMACEN.borrarImagen(datos.foto);
+    err.textContent = /row-level security|403|Unauthorized/i.test(x.message || '')
+      ? 'Non è stato accettato: o ci sono già ' + EV_TOPE + ' eventi, o questa chiesa non è tua.'
+      : 'Non sono riuscito a salvarlo: ' + x.message;
+  }).then(function () {
+    b.disabled = false; b.textContent = EV.editando ? 'Salva le modifiche' : 'Aggiungi l\'evento';
+  });
+});
+$('#ev-nuevo').addEventListener('click', function () { formEvento(null); });
+$('#ev-cerrar').addEventListener('click', cerrarEventi);
+$('#ev-capa').addEventListener('click', function (e) { if (e.target === this) cerrarEventi(); });
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && $('#ev-capa').style.display === 'block') cerrarEventi();
+});
+$('#sito-eventi').addEventListener('click', function () { abrirEventi('generale', ''); });
 
 /* --- las preguntas (solo el general) --------------------------------------
    Se edita una copia; nada se guarda hasta «Salva le domande». La primera vez
@@ -2033,6 +2388,9 @@ $('#f-sede').addEventListener('submit', function (e) {
     return;
   }
 
+  var dona = leerDona('dn'), errDona = malaDona(dona);
+  if (errDona) { $('#err-sede').textContent = errDona; return; }
+
   var lat = parseFloat($('#lat').value), lon = parseFloat($('#lon').value);
   var sede = {
     id: editando.id || slugUnico(citta),
@@ -2054,6 +2412,8 @@ $('#f-sede').addEventListener('submit', function (e) {
     whatsapp: $('#whatsapp').value.trim(),
     email: correo,
     pastori: textoAPastori($('#pastori').value),
+    foto_pastori: $('#foto_pastori').value.trim(),
+    donazioni: dona,
     social: social,
     publicada: $('#publicada').checked,
     apple: $('#apple').value.trim(),
@@ -2064,22 +2424,20 @@ $('#f-sede').addEventListener('submit', function (e) {
      apunta a las nuevas se borran las viejas. En otro orden, un fallo a
      medias dejaria la ficha apuntando a una foto borrada. */
   var eraNueva = !editando.id;
-  var viejas = { copertina: editando.copertina || '', logo: editando.logo || '' };
+  var viejas = { copertina: editando.copertina || '', logo: editando.logo || '', foto_pastori: editando.foto_pastori || '' };
   var botonGuardar = $('#f-sede button[type=submit]');
   botonGuardar.disabled = true;
-  if (FOTOS_PENDIENTES.copertina instanceof Blob || FOTOS_PENDIENTES.logo instanceof Blob) {
-    botonGuardar.textContent = 'Carico le foto…';
-  }
+  var hayFotos = TIPOS_FOTO.some(function (t) { return FOTOS_PENDIENTES[t] instanceof Blob; });
+  if (hayFotos) botonGuardar.textContent = 'Carico le foto…';
   /* Antes de subir, se limpian los restos de la carpeta (dejando las fotos
      que la ficha usa ahora): asi nunca se choca con el tope de 6 archivos.
      Despues de guardar, otra vez, y se van las que acaban de quedar viejas. */
-  var hayFotos = FOTOS_PENDIENTES.copertina instanceof Blob || FOTOS_PENDIENTES.logo instanceof Blob;
-  (hayFotos && !eraNueva ? ALMACEN.limpiarCarpeta(sede.id, [viejas.copertina, viejas.logo]) : Promise.resolve())
+  (hayFotos && !eraNueva ? ALMACEN.limpiarCarpeta(sede.id, [viejas.copertina, viejas.logo, viejas.foto_pastori]) : Promise.resolve())
   .then(function () { return subirFotos(sede); }).then(function () {
     return ALMACEN.guardar(sede);
   }).then(function () {
-    if (hayFotos || viejas.copertina !== sede.copertina || viejas.logo !== sede.logo) {
-      ALMACEN.limpiarCarpeta(sede.id, [sede.copertina, sede.logo]);
+    if (hayFotos || TIPOS_FOTO.some(function (t) { return viejas[t] !== sede[t]; })) {
+      ALMACEN.limpiarCarpeta(sede.id, [sede.copertina, sede.logo, sede.foto_pastori]);
     }
     cerrarEditor(); pintarLista();
     avisar(eraNueva ? 'Chiesa creata. La sua pagina: /' + sede.id + '/' : 'Scheda salvata.');

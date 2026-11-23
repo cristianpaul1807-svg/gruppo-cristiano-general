@@ -154,9 +154,17 @@ function pagina(plantilla, s, elPie) {
     + ', ' + s.cap + '. ' + primera + 'Horarios de las reuniones y cómo llegar.';
   else descEs = 'Gruppo Cristiano ' + s.citta + ', una de las iglesias del Gruppo Cristiano '
     + 'Latino Americano en Italia.';
+  /* Y en ingles. */
+  const tituloEn = 'Gruppo Cristiano ' + s.citta + ' — Evangelical church in ' + s.citta;
+  let descEn;
+  if (dir) descEn = 'Gruppo Cristiano ' + s.citta + ', evangelical church at ' + s.via
+    + ', ' + s.cap + '. Meeting times and how to get there.';
+  else descEn = 'Gruppo Cristiano ' + s.citta + ', one of the churches of the Gruppo Cristiano '
+    + 'Latino Americano in Italy.';
   const meta = JSON.stringify({
     it: { t: titulo, d: desc },
-    es: { t: tituloEs, d: descEs }
+    es: { t: tituloEs, d: descEs },
+    en: { t: tituloEn, d: descEn }
   }, null, 2);
 
   const viaHtml = dir
