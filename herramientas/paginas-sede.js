@@ -77,7 +77,9 @@ function pie() {
   const a = html.indexOf('<footer>');
   const b = html.indexOf('</footer>');
   if (a < 0 || b < 0) throw new Error('no encuentro el pie en index.html');
-  return html.slice(a, b + 9).replace(/(src|href)="media\//g, '$1="../media/');
+  /* Las rutas del pie son de la raiz: dentro de /parma/ hay que subir un
+     nivel. Sin esto, «Area riservata» llevaba a /parma/panel/ y daba 404. */
+  return html.slice(a, b + 9).replace(/(src|href)="(media|panel)\//g, '$1="../$2/');
 }
 
 /* --- la ficha de datos estructurados de UNA iglesia -------------------------- */
