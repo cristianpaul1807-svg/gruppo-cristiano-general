@@ -431,9 +431,7 @@ a.btn{text-decoration:none;}
       <form class="hoja" id="f-sito-dona" style="max-width:none;margin:16px 0 0" novalidate>
         <b style="font-weight:500">Donazioni del gruppo</b>
         <p class="pista" style="margin:4px 0 14px">Il bottone «Dona» della pagina principale. Basta uno
-          dei due: il link di PayPal o l'IBAN. Se li lasci vuoti tutti e due, la sezione non esce.
-          La causale si può scrivere anche in spagnolo e in inglese.</p>
-        <div class="lingue-tab" data-tabs></div>
+          dei due: il link di PayPal o l'IBAN. Se li lasci vuoti tutti e due, la sezione non esce.</p>
         <div class="rejilla" id="sito-dona-campi"></div>
         <p class="error" id="err-sito-dona" role="alert"></p>
         <div class="pie-hoja">
@@ -757,7 +755,7 @@ a.btn{text-decoration:none;}
   <form class="hoja" id="f-sede" novalidate>
     <h2 id="titulo-hoja">Nuova chiesa</h2>
     <p>I campi con il trattino restano vuoti e nella pagina escono come «da confermare».
-      La descrizione, gli orari, i ruoli dei pastori e la causale delle donazioni si possono
+      La descrizione, gli orari e i ruoli dei pastori si possono
       scrivere anche in spagnolo e in inglese: tocca «Español» o «English» qui sotto. Quello che
       lasci vuoto esce in italiano.</p>
     <div class="lingue-tab" data-tabs></div>
@@ -1829,16 +1827,21 @@ function camposDona(cont, pre) {
   [['paypal', 'Link di PayPal', 'https://paypal.me/...', 'url'],
    ['iban', 'IBAN', 'IT60 X054 2811 1010 0000 0123 456', 'text'],
    ['intestatario', 'Intestato a', 'Associazione Gruppo Cristiano', 'text'],
-   ['causale', 'Causale', 'Offerta libera', 'text', 'it'],
-   ['causale_es', 'Concepto (en español)', 'Ofrenda libre', 'text', 'es'],
-   ['causale_en', 'Reference (in English)', 'Free offering', 'text', 'en']].forEach(function (c) {
+   ['causale', 'Causale del bonifico', 'Donazione liberale', 'text']].forEach(function (c) {
     var d = document.createElement('div'); d.className = 'campo';
-    if (c[4]) d.setAttribute('data-l', c[4]);
     var l = document.createElement('label'); l.htmlFor = pre + '-' + c[0]; l.textContent = c[1];
     var i = document.createElement('input'); i.type = c[3]; i.id = pre + '-' + c[0];
     i.placeholder = c[2]; i.autocomplete = 'off'; i.spellcheck = false;
     if (c[0] === 'paypal' || c[0] === 'iban') i.autocapitalize = 'none';
-    d.appendChild(l); d.appendChild(i); cont.appendChild(d);
+    d.appendChild(l); d.appendChild(i);
+    if (c[0] === 'causale') {
+      var ps = document.createElement('p'); ps.className = 'pista';
+      ps.textContent = 'Quello che chi dona deve scrivere nel bonifico, per riconoscerlo in banca. Sul sito esce '
+        + '«Nella causale scrivi: …» con il bottone per copiarlo, uguale in tutte le lingue. Se lo lasci '
+        + 'vuoto esce «Donazione liberale».';
+      d.appendChild(ps);
+    }
+    cont.appendChild(d);
   });
 }
 camposDona($('#dona-campi'), 'dn');
@@ -1849,8 +1852,6 @@ function ponerDona(pre, d) {
   $('#' + pre + '-iban').value = String(d.iban || '').replace(/(.{4})/g, '$1 ').trim();
   $('#' + pre + '-intestatario').value = d.intestatario || '';
   $('#' + pre + '-causale').value = d.causale || '';
-  $('#' + pre + '-causale_es').value = d.causale_es || '';
-  $('#' + pre + '-causale_en').value = d.causale_en || '';
 }
 function leerDona(pre) {
   var pp = $('#' + pre + '-paypal').value.trim();
@@ -1859,9 +1860,7 @@ function leerDona(pre) {
     paypal: pp.replace(/^http:\/\//i, 'https://'),
     iban: $('#' + pre + '-iban').value.toUpperCase().replace(/[^A-Z0-9]/g, ''),
     intestatario: $('#' + pre + '-intestatario').value.trim(),
-    causale: $('#' + pre + '-causale').value.trim(),
-    causale_es: $('#' + pre + '-causale_es').value.trim(),
-    causale_en: $('#' + pre + '-causale_en').value.trim()
+    causale: $('#' + pre + '-causale').value.trim()
   };
 }
 function ibanValido(iban) {

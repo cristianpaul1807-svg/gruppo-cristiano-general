@@ -1184,30 +1184,43 @@ function DONAZIONI(cont, d) {
     var acc = el('div', 'acciones'); acc.appendChild(b); c1.appendChild(acc);
     cont.appendChild(c1);
   }
+  /* Un boton que copia un texto y dice "Copiato ✓" un momento. */
+  function copiar(btn, valor, txt) {
+    btn.addEventListener('click', function () {
+      function ok() {
+        btn.textContent = TEXTO('dn_copiato', 'Copiato ✓');
+        setTimeout(function () { btn.textContent = txt(); }, 2200);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(valor).then(ok, function () {});
+      else {
+        var t = document.createElement('textarea'); t.value = valor; document.body.appendChild(t);
+        t.select(); try { document.execCommand('copy'); ok(); } catch (e) {} document.body.removeChild(t);
+      }
+    });
+  }
   if (iban) {
     var c2 = el('div', 'dona-card reveal der');
     c2.appendChild(el('h3', '', TEXTO('dn_bonifico', 'Bonifico bancario')));
     var dl = el('dl', 'dona-dati');
     function fila(k, v, cls) {
-      if (!v) return;
-      var f = el('div'); f.appendChild(el('dt', '', k)); f.appendChild(el('dd', cls || '', v)); dl.appendChild(f);
+      if (!v) return null;
+      var f = el('div'); f.appendChild(el('dt', '', k)); var dd = el('dd', cls || '', v); f.appendChild(dd); dl.appendChild(f);
+      return dd;
     }
     fila(TEXTO('dn_intest', 'Intestato a'), d.intestatario);
     fila('IBAN', iban.replace(/(.{4})/g, '$1 ').trim(), 'iban');
-    fila(TEXTO('dn_causale', 'Causale'), LOC(d, 'causale'));
+    /* La causale NO se traduce: es lo que quien dona copia tal cual en su
+       transferencia, para que la iglesia la reconozca en el banco. Lo que
+       se traduce es la frase de encima. Sin causale escrita en el panel,
+       la de siempre en Italia. */
+    var causale = String(d.causale || '').trim() || 'Donazione liberale';
+    var ddc = fila(TEXTO('dn_causale', 'Nella causale scrivi'), '«' + causale + '»', 'causale');
+    var cc = el('button', 'mini-copia', TEXTO('dn_copia_c', 'Copia')); cc.type = 'button';
+    copiar(cc, causale, function () { return TEXTO('dn_copia_c', 'Copia'); });
+    ddc.appendChild(cc);
     c2.appendChild(dl);
     var cp = el('button', 'btn', TEXTO('dn_copia', 'Copia l’IBAN')); cp.type = 'button';
-    cp.addEventListener('click', function () {
-      function ok() {
-        cp.textContent = TEXTO('dn_copiato', 'Copiato ✓');
-        setTimeout(function () { cp.textContent = TEXTO('dn_copia', 'Copia l’IBAN'); }, 2200);
-      }
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(iban).then(ok, function () {});
-      else {
-        var t = document.createElement('textarea'); t.value = iban; document.body.appendChild(t);
-        t.select(); try { document.execCommand('copy'); ok(); } catch (e) {} document.body.removeChild(t);
-      }
-    });
+    copiar(cp, iban, function () { return TEXTO('dn_copia', 'Copia l’IBAN'); });
     var acc2 = el('div', 'acciones'); acc2.appendChild(cp); c2.appendChild(acc2);
     cont.appendChild(c2);
   }
@@ -1360,8 +1373,8 @@ var I18N = {
     dn_p: "Si quieres contribuir a la misión del grupo, puedes hacerlo así. Toda ofrenda es libre y voluntaria.",
     sp_dn_h2: "Apoya esta iglesia.",
     dn_paypal_p: "Con tarjeta o con tu cuenta PayPal. Se tarda un minuto.", dn_paypal: "Dona con PayPal",
-    dn_bonifico: "Transferencia bancaria", dn_intest: "A nombre de", dn_causale: "Concepto",
-    dn_copia: "Copiar el IBAN", dn_copiato: "Copiado ✓",
+    dn_bonifico: "Transferencia bancaria", dn_intest: "A nombre de", dn_causale: "En el concepto escribe",
+    dn_copia: "Copiar el IBAN", dn_copiato: "Copiado ✓", dn_copia_c: "Copiar",
     sp_pastori_alt: "Los pastores de la iglesia de",
     banda: "Prototipo Digitatex · contenidos por confirmar"
   },
@@ -1446,8 +1459,8 @@ var I18N = {
     dn_p: "If you would like to contribute to the mission of the group, this is how. Every gift is free and voluntary.",
     sp_dn_h2: "Support this church.",
     dn_paypal_p: "By card or with your PayPal account. It takes a minute.", dn_paypal: "Give with PayPal",
-    dn_bonifico: "Bank transfer", dn_intest: "Account holder", dn_causale: "Reference",
-    dn_copia: "Copy the IBAN", dn_copiato: "Copied ✓",
+    dn_bonifico: "Bank transfer", dn_intest: "Account holder", dn_causale: "In the payment reference write",
+    dn_copia: "Copy the IBAN", dn_copiato: "Copied ✓", dn_copia_c: "Copy",
     sp_pastori_alt: "The pastors of the church in",
     banda: "Digitatex prototype · content to be confirmed"
   }

@@ -622,6 +622,10 @@ a.ev-chi:hover{text-decoration:underline;text-underline-offset:3px;}
 .dona-dati{margin-top:14px;display:grid;gap:12px;}
 .dona-dati dt{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--apagado);font-weight:600;}
 .dona-dati dd{margin-top:3px;font-size:15.5px;color:var(--texto);word-break:break-word;}
+.dona-dati dd.causale{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-weight:600;}
+.mini-copia{font:600 12px/1 'Inter',sans-serif;padding:7px 12px;border-radius:999px;cursor:pointer;
+  border:1.5px solid var(--linea-2);background:var(--blanco);color:var(--blu-dark);}
+.mini-copia:hover{border-color:var(--blu-dark);}
 .dona-dati dd.iban{font-family:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;font-size:15px;
   letter-spacing:.02em;}
 

@@ -179,7 +179,7 @@ var ALMACEN = (function () {
       paypal: pp,
       iban: c(d.iban, 50).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 34),
       intestatario: c(d.intestatario, 120),
-      causale: c(d.causale, 160), causale_es: c(d.causale_es, 160), causale_en: c(d.causale_en, 160)
+      causale: c(d.causale, 160)
     };
   }
 
