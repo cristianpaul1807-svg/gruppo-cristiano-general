@@ -54,9 +54,13 @@ function db(ruta: string, init: RequestInit = {}) {
   });
 }
 
+// Lo que ha pasado en esta llamada, para el campo "estado" de la respuesta:
+// asi se ve desde fuera por que no traduce, sin ensenar ninguna clave.
+let fallosBase = 0;
 async function leer(ruta: string): Promise<any[]> {
   const r = await db(ruta);
-  return r.ok ? await r.json() : [];
+  if (!r.ok) { fallosBase++; return []; }
+  return await r.json();
 }
 
 async function huella(t: string): Promise<string> {
@@ -100,6 +104,7 @@ async function textos(): Promise<string[]> {
 }
 
 async function deepl(lista: string[], lingua: string): Promise<string[]> {
+  // (el estado de abajo dice que paso si esto falla)
   const host = DEEPL.endsWith(":fx") ? "https://api-free.deepl.com" : "https://api.deepl.com";
   const r = await fetch(host + "/v2/translate", {
     method: "POST",
@@ -111,7 +116,10 @@ async function deepl(lista: string[], lingua: string): Promise<string[]> {
       preserve_formatting: true,
     }),
   });
-  if (!r.ok) throw new Error("DeepL " + r.status);
+  if (!r.ok) {
+    const det = r.status === 403 ? " (la clave no vale)" : r.status === 456 ? " (cuota del mes agotada)" : "";
+    throw new Error("DeepL " + r.status + det);
+  }
   const d = await r.json();
   return (d.translations || []).map((t: any) => String(t.text || ""));
 }
@@ -125,6 +133,8 @@ Deno.serve(async (req) => {
     });
   }
 
+  fallosBase = 0;
+  let deeplEstado = DEEPL ? (DEEPL.endsWith(":fx") ? "clave gratuita" : "clave de pago") : "SIN CLAVE: falta el secreto DEEPL_KEY";
   const lista = await textos();
   const claves = await Promise.all(lista.map(huella));
 
@@ -155,8 +165,11 @@ Deno.serve(async (req) => {
           headers: { Prefer: "resolution=merge-duplicates,return=minimal" },
           body: JSON.stringify(filas),
         });
-      } catch (_e) {
-        break; // sin cuota o sin red: se devuelve lo que haya, la web ensena el italiano en lo demas
+      } catch (e) {
+        // sin cuota, clave mal o sin red: se devuelve lo que haya, la web
+        // ensena el italiano en lo demas
+        deeplEstado = "ERROR de DeepL: " + String((e as Error).message || e);
+        break;
       }
     }
   }
@@ -164,7 +177,13 @@ Deno.serve(async (req) => {
   const testi: Record<string, string> = {};
   lista.forEach((t, i) => { const v = guardadas.get(claves[i]); if (v) testi[t] = v; });
 
-  return new Response(JSON.stringify({ lingua, testi }), {
+  const estado = {
+    textos_italianos: lista.length,
+    traducidos: Object.keys(testi).length,
+    deepl: deeplEstado,
+    base_de_datos: fallosBase ? "ERROR: no puede leer " + fallosBase + " tablas" : "ok",
+  };
+  return new Response(JSON.stringify({ lingua, estado, testi }), {
     headers: {
       ...CORS,
       "Content-Type": "application/json; charset=utf-8",
