@@ -565,8 +565,6 @@ html.dominio body{padding-bottom:0;}
 }
 @media (max-width:360px){ .brand-text{display:none;} }
 
-footer .pie-trad{margin-top:8px;font-size:11.5px;color:#93a3bd;}
-footer .pie-trad:empty{display:none;}
 
 /* ============================================================================
    LOS EVENTOS — una fila por evento: la fecha grande a la izquierda, el texto

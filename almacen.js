@@ -104,6 +104,10 @@ var ALMACEN = (function () {
       cap: s.cap || '',
       web: s.web || '',
       testo: (s.testo || '').slice(0, 240),
+      /* La descripcion en espanol y en ingles: las escribe la iglesia si
+         quiere. Vacias, sale la italiana. */
+      testo_es: (s.testo_es || '').slice(0, 240),
+      testo_en: (s.testo_en || '').slice(0, 240),
       lingue: s.lingue || '',
       logo: s.logo || '',
       whatsapp: s.whatsapp || '',
@@ -125,7 +129,8 @@ var ALMACEN = (function () {
   function deFila(f) {
     return {
       id: f.id, orden: f.orden, citta: f.citta, via: f.via, cap: f.cap,
-      web: f.web, testo: f.testo, lingue: f.lingue, logo: f.logo,
+      web: f.web, testo: f.testo, testo_es: f.testo_es || '', testo_en: f.testo_en || '',
+      lingue: f.lingue, logo: f.logo,
       whatsapp: f.whatsapp || '', email: f.email || '', copertina: f.copertina || '',
       foto_pastori: f.foto_pastori || '', donazioni: f.donazioni || {},
       pastori: f.pastori || [], social: f.social || {},
@@ -174,7 +179,7 @@ var ALMACEN = (function () {
       paypal: pp,
       iban: c(d.iban, 50).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 34),
       intestatario: c(d.intestatario, 120),
-      causale: c(d.causale, 160)
+      causale: c(d.causale, 160), causale_es: c(d.causale_es, 160), causale_en: c(d.causale_en, 160)
     };
   }
 
@@ -193,8 +198,10 @@ var ALMACEN = (function () {
     link = link.replace(/^http:\/\//i, 'https://');
     if (!/^https:\/\/[^\s<>"']+$/i.test(link)) link = '';
     return {
-      titolo: c(e.titolo, 120), giorno: c(e.giorno, 10), ora: c(e.ora, 40),
-      luogo: c(e.luogo, 160), testo: c(e.testo, 1000), link: link, foto: c(e.foto, 600)
+      titolo: c(e.titolo, 120), titolo_es: c(e.titolo_es, 120), titolo_en: c(e.titolo_en, 120),
+      giorno: c(e.giorno, 10), ora: c(e.ora, 40), luogo: c(e.luogo, 160),
+      testo: c(e.testo, 1000), testo_es: c(e.testo_es, 1000), testo_en: c(e.testo_en, 1000),
+      link: link, foto: c(e.foto, 600)
     };
   }
 
@@ -224,18 +231,20 @@ var ALMACEN = (function () {
       o.domande = d.domande === null ? null : (Array.isArray(d.domande) ? d.domande : []).slice(0, 30)
         .map(function (q) {
           function c(v, n) { return String(v || '').trim().slice(0, n); }
-          return { d_it: c(q.d_it, 300), r_it: c(q.r_it, 1500), d_es: c(q.d_es, 300), r_es: c(q.r_es, 1500), conf: !!q.conf };
-        }).filter(function (q) { return q.d_it || q.d_es; });
+          return { d_it: c(q.d_it, 300), r_it: c(q.r_it, 1500), d_es: c(q.d_es, 300), r_es: c(q.r_es, 1500),
+            d_en: c(q.d_en, 300), r_en: c(q.r_en, 1500), conf: !!q.conf };
+        }).filter(function (q) { return q.d_it || q.d_es || q.d_en; });
     }
     function c(v, n) { return String(v || '').trim().slice(0, n); }
     /* La vision: una frase de entrada y los puntos (titulo + texto). */
     if (d && d.visione !== undefined) {
       var v = d.visione;
       o.visione = v === null ? null : {
-        intro_it: c(v.intro_it, 600), intro_es: c(v.intro_es, 600),
+        intro_it: c(v.intro_it, 600), intro_es: c(v.intro_es, 600), intro_en: c(v.intro_en, 600),
         punti: (Array.isArray(v.punti) ? v.punti : []).slice(0, 12).map(function (q) {
-          return { t_it: c(q.t_it, 120), p_it: c(q.p_it, 1500), t_es: c(q.t_es, 120), p_es: c(q.p_es, 1500) };
-        }).filter(function (q) { return q.t_it || q.p_it || q.t_es || q.p_es; })
+          return { t_it: c(q.t_it, 120), p_it: c(q.p_it, 1500), t_es: c(q.t_es, 120), p_es: c(q.p_es, 1500),
+            t_en: c(q.t_en, 120), p_en: c(q.p_en, 1500) };
+        }).filter(function (q) { return q.t_it || q.p_it || q.t_es || q.p_es || q.t_en || q.p_en; })
       };
     }
     /* «Chi siamo»: la historia, los fundadores (con su foto, solo de NUESTRO
@@ -243,13 +252,13 @@ var ALMACEN = (function () {
     if (d && d.storia !== undefined) {
       var s = d.storia, pre = SUPABASE.url + '/storage/v1/object/public/media/generale/';
       o.storia = s === null ? null : {
-        testo_it: c(s.testo_it, 4000), testo_es: c(s.testo_es, 4000),
+        testo_it: c(s.testo_it, 4000), testo_es: c(s.testo_es, 4000), testo_en: c(s.testo_en, 4000),
         fondatori: (Array.isArray(s.fondatori) ? s.fondatori : []).slice(0, 6).map(function (f) {
           var foto = String(f.foto || '');
           if (conBase ? foto.indexOf(pre) !== 0 : !/^data:image\//.test(foto)) foto = '';
-          return { nome: c(f.nome, 120), foto: foto, t_it: c(f.t_it, 3000), t_es: c(f.t_es, 3000) };
+          return { nome: c(f.nome, 120), foto: foto, t_it: c(f.t_it, 3000), t_es: c(f.t_es, 3000), t_en: c(f.t_en, 3000) };
         }).filter(function (f) { return f.nome; }),
-        pie_it: c(s.pie_it, 1000), pie_es: c(s.pie_es, 1000)
+        pie_it: c(s.pie_it, 1000), pie_es: c(s.pie_es, 1000), pie_en: c(s.pie_en, 1000)
       };
     }
     return o;
@@ -564,7 +573,7 @@ var ALMACEN = (function () {
        ====================================================================== */
     leerFotos: function (cartella) {
       if (conBase) {
-        return rest('foto?select=id,cartella,url,testo,orden&cartella=eq.' + encodeURIComponent(cartella)
+        return rest('foto?select=id,cartella,url,testo,testo_es,testo_en,orden&cartella=eq.' + encodeURIComponent(cartella)
           + '&order=orden.asc,creada.asc', {}, false).catch(function () { return []; })
           .then(function (f) { return f || []; });
       }
@@ -595,7 +604,9 @@ var ALMACEN = (function () {
     /* Cambia el texto o el orden. Devuelve error si las reglas no dejan. */
     cambiaFoto: function (id, datos) {
       var d = {};
-      if (datos.testo !== undefined) d.testo = String(datos.testo || '').slice(0, 200);
+      ['testo', 'testo_es', 'testo_en'].forEach(function (k) {
+        if (datos[k] !== undefined) d[k] = String(datos[k] || '').slice(0, 200);
+      });
       if (datos.orden !== undefined) d.orden = datos.orden;
       if (!conBase) {
         var todas = fotosDemo();
@@ -697,7 +708,7 @@ var ALMACEN = (function () {
     leerEventi: function (cartella) {
       var desde = hoy();
       if (conBase) {
-        return rest('evento?select=id,cartella,titolo,giorno,ora,luogo,testo,foto,link'
+        return rest('evento?select=id,cartella,titolo,titolo_es,titolo_en,giorno,ora,luogo,testo,testo_es,testo_en,foto,link'
           + '&giorno=gte.' + desde + (cartella ? '&cartella=eq.' + encodeURIComponent(cartella) : '')
           + '&order=giorno.asc,ora.asc&limit=60', {}, false)
           .then(function (f) { return f || []; }).catch(function () { return []; });
@@ -765,22 +776,6 @@ var ALMACEN = (function () {
         return Promise.all(viejos.map(function (e) { return self.togliEvento(e).catch(function () {}); }))
           .then(function () { return (lista || []).filter(function (e) { return e.giorno >= h; }); });
       });
-    },
-
-    /* ======================================================================
-       LAS TRADUCCIONES AUTOMATICAS — lo escrito en el panel, en espanol o
-       en ingles. Las hace la funcion `traduci` del servidor (DeepL) y las
-       guarda: aqui solo se piden. Devuelve {texto italiano: traduccion}.
-       Sin funcion, sin red o sin llave de DeepL: {} y la web ensena el
-       italiano, que es mejor que un hueco.
-       ====================================================================== */
-    traduzioni: function (lingua) {
-      if (!conBase || (lingua !== 'es' && lingua !== 'en')) return Promise.resolve({});
-      return fetch(SUPABASE.url + '/functions/v1/traduci?lingua=' + lingua, {
-        headers: { 'apikey': SUPABASE.key, 'Authorization': 'Bearer ' + SUPABASE.key }
-      }).then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (d) { return (d && d.testi && typeof d.testi === 'object') ? d.testi : {}; })
-        .catch(function () { return {}; });
     },
 
     /* Anular una invitacion que se quedo a medias. */

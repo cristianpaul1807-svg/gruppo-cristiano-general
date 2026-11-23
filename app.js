@@ -51,25 +51,67 @@ function BLOQUES(cont, texto) {
 var $ = function (s) { return document.querySelector(s); };
 
 /* --- el idioma de lo que escriben ellos -----------------------------------
-   Lo fijo (menus, botones, titulos) esta traducido a mano en I18N, al final.
-   Lo que escriben el general y cada iglesia en el panel va en italiano, y lo
-   traduce el servidor con DeepL (ALMACEN.traduzioni): aqui se guarda lo que
-   devuelve. Si una pregunta, la vision o la historia tienen su version
-   espanola escrita a mano en el panel, manda esa. Sin traduccion, el
-   italiano: mejor que un hueco. */
+   Lo fijo (menus, botones, titulos) esta traducido en I18N, al final. Lo que
+   escriben el general y cada iglesia en el panel lo escriben ELLOS en los
+   idiomas que quieran: el italiano siempre, el espanol y el ingles si los
+   ponen. Lo que no esta en el idioma elegido sale en italiano: mejor que un
+   hueco. Sin traductores de fuera, a proposito: lo decidieron ellos. */
 function LINGUA() { var l = document.documentElement.lang; return (l === 'es' || l === 'en') ? l : 'it'; }
-var TRAD = {};
-function TR(t) {
-  t = t == null ? '' : String(t);
-  var l = LINGUA(), m = TRAD[l];
-  return (l !== 'it' && m && m[t]) ? m[t] : t;
-}
+/* Los contenidos del general guardan "t_it", "t_es", "t_en". */
 function CAMPO(o, k) {
   if (!o) return '';
   var l = LINGUA();
   if (l !== 'it' && o[k + '_' + l]) return o[k + '_' + l];
-  if (o[k + '_it']) return TR(o[k + '_it']);
-  return o[k + '_es'] || o[k + '_en'] || '';
+  return o[k + '_it'] || o[k + '_es'] || o[k + '_en'] || '';
+}
+/* Lo de las iglesias, eventos y fotos guarda "testo" (italiano), "testo_es"
+   y "testo_en". */
+function LOC(o, k) {
+  if (!o) return '';
+  var l = LINGUA();
+  return (l !== 'it' && o[k + '_' + l]) || o[k] || '';
+}
+/* Los dias de la semana de un horario, para cuando la iglesia no ha escrito
+   el horario en ese idioma: "Lunedì e venerdì 19:30" -> "Monday and Friday
+   19:30". Un diccionario fijo de siete dias, no un traductor. */
+var GIORNI = {
+  es: { 'domenica': 'domingo', 'lunedì': 'lunes', 'lunedi': 'lunes', 'martedì': 'martes', 'martedi': 'martes',
+        'mercoledì': 'miércoles', 'mercoledi': 'miércoles', 'giovedì': 'jueves', 'giovedi': 'jueves',
+        'venerdì': 'viernes', 'venerdi': 'viernes', 'sabato': 'sábado', 'e': 'y', 'ore': '', 'alle': 'a las',
+        'dalle': 'de', 'ogni': 'cada', 'tutti': 'todos', 'i': 'los', 'giorni': 'días' },
+  en: { 'domenica': 'Sunday', 'lunedì': 'Monday', 'lunedi': 'Monday', 'martedì': 'Tuesday', 'martedi': 'Tuesday',
+        'mercoledì': 'Wednesday', 'mercoledi': 'Wednesday', 'giovedì': 'Thursday', 'giovedi': 'Thursday',
+        'venerdì': 'Friday', 'venerdi': 'Friday', 'sabato': 'Saturday', 'e': 'and', 'ore': '', 'alle': 'at',
+        'dalle': 'from', 'ogni': 'every', 'tutti': 'all', 'i': 'the', 'giorni': 'days' }
+};
+function DIAS(t) {
+  var l = LINGUA(), d = GIORNI[l];
+  if (!d || !t) return t || '';
+  /* "dalle 18 alle 20": ahi "alle" es "hasta", no "a las". */
+  if (/\bdalle\b/i.test(t)) { d = Object.assign({}, d); d.alle = l === 'en' ? 'to' : 'a'; }
+  /* Solo si TODAS las palabras son dias o enlaces: una frase cualquiera
+     ("Domenica pomeriggio in chiesa") se queda como esta. */
+  var palabras = String(t).replace(/[\d:.,–·\-\/]+/g, ' ').trim().split(/\s+/).filter(Boolean);
+  if (!palabras.length || !palabras.every(function (w) { return d[w.toLowerCase()] !== undefined; })) return t;
+  var out = String(t).replace(/[A-Za-zÀ-ÿ]+/g, function (w) {
+    var x = d[w.toLowerCase()];
+    if (x === undefined) return w;
+    if (l === 'es' && w.charAt(0) === w.charAt(0).toUpperCase()) x = x.charAt(0).toUpperCase() + x.slice(1);
+    return x;
+  });
+  return out.replace(/\s{2,}/g, ' ').trim();
+}
+/* Un horario de la ficha: [que, cuando] en italiano y, si la iglesia los ha
+   escrito, {es: [que, cuando], en: [que, cuando]} como tercer elemento. */
+function ORARIO(o) {
+  var l = LINGUA(), t = (l !== 'it' && o && o[2] && Array.isArray(o[2][l])) ? o[2][l] : [];
+  return [t[0] || (o && o[0]) || '', t[1] || DIAS(o && o[1])];
+}
+/* El papel de un pastor: ["Nombre", "pastore giovani", {es: "...", en: "..."}]. */
+function RUOLO(p) {
+  if (!Array.isArray(p)) return '';
+  var l = LINGUA();
+  return (l !== 'it' && p[2] && p[2][l]) || p[1] || '';
 }
 /* Una fecha "2026-12-14" escrita en el idioma de la pagina. */
 function FECHA(g, opc) {
@@ -514,14 +556,14 @@ function MAPA_DE(sede) {
 
     if (sede.testo) {
       var t = document.createElement('p');
-      t.className = 'sede-testo'; t.textContent = TR(sede.testo);
+      t.className = 'sede-testo'; t.textContent = LOC(sede, 'testo');
       corpo.appendChild(t);
     }
 
     if (sede.lingue) {
       var cont = document.createElement('div');
       cont.className = 'sede-lingue';
-      TR(sede.lingue).split(',').forEach(function (l) {
+      String(sede.lingue).split(',').forEach(function (l) {
         l = l.trim(); if (!l) return;
         var s = document.createElement('span'); s.textContent = l; cont.appendChild(s);
       });
@@ -539,8 +581,9 @@ function MAPA_DE(sede) {
       var MAX = 2;
       sede.orari.slice(0, MAX).forEach(function (o) {
         var fila = document.createElement('div');
-        var dt = document.createElement('dt'); dt.textContent = TR(o[0]);
-        var dd = document.createElement('dd'); dd.textContent = TR(o[1]);
+        var oo = ORARIO(o);
+        var dt = document.createElement('dt'); dt.textContent = oo[0];
+        var dd = document.createElement('dd'); dd.textContent = oo[1];
         fila.appendChild(dt); fila.appendChild(dd); dl.appendChild(fila);
       });
       if (sede.orari.length > MAX && pagina) {
@@ -864,11 +907,11 @@ function MAPA_DE(sede) {
   function ir(d) { actual = (actual + d + fotos.length) % fotos.length; pintarVisor(); }
 
   /* --- la rejilla ---------------------------------------------------------- */
-  /* Se vuelve a pintar al cambiar de idioma: el texto de cada foto se
-     traduce. */
+  /* Se vuelve a pintar al cambiar de idioma: cada foto puede llevar su
+     texto en los tres. */
   var crudas = [];
   function pintar() {
-    fotos = crudas.map(function (f) { return { src: IMAGEN(f.url), testo: TR(f.testo || '') }; })
+    fotos = crudas.map(function (f) { return { src: IMAGEN(f.url), testo: LOC(f, 'testo') }; })
       .filter(function (f) { return f.src; });
     cont.textContent = '';
     if (!fotos.length) { sec.hidden = true; return; }
@@ -1036,18 +1079,18 @@ function MAPA_DE(sede) {
       chi.className = 'ev-chi';
       cuerpo.appendChild(chi);
     }
-    var h = document.createElement('h3'); h.textContent = TR(e.titolo); cuerpo.appendChild(h);
+    var h = document.createElement('h3'); h.textContent = LOC(e, 'titolo'); cuerpo.appendChild(h);
     var cuando = document.createElement('p'); cuando.className = 'ev-quando';
     var largo = FECHA(e.giorno, { weekday: 'long', day: 'numeric', month: 'long' });
-    cuando.textContent = [largo.charAt(0).toUpperCase() + largo.slice(1), TR(e.ora)].filter(Boolean).join(' · ');
+    cuando.textContent = [largo.charAt(0).toUpperCase() + largo.slice(1), e.ora].filter(Boolean).join(' · ');
     cuerpo.appendChild(cuando);
     if (e.luogo) {
-      var lu = document.createElement('p'); lu.className = 'ev-luogo'; lu.textContent = TR(e.luogo);
+      var lu = document.createElement('p'); lu.className = 'ev-luogo'; lu.textContent = e.luogo;
       cuerpo.appendChild(lu);
     }
-    if (e.testo) {
+    if (LOC(e, 'testo')) {
       var tx = document.createElement('div'); tx.className = 'ev-testo';
-      BLOQUES(tx, TR(e.testo)); cuerpo.appendChild(tx);
+      BLOQUES(tx, LOC(e, 'testo')); cuerpo.appendChild(tx);
     }
     var link = SEGURO(e.link);
     if (link) {
@@ -1063,7 +1106,7 @@ function MAPA_DE(sede) {
       var fa = document.createElement('a'); fa.className = 'ev-foto';
       fa.href = foto; fa.target = '_blank'; fa.rel = 'noopener';
       var im = document.createElement('img'); im.src = foto; im.loading = 'lazy';
-      im.alt = TEXTO('ev_foto_alt', 'Locandina:') + ' ' + TR(e.titolo);
+      im.alt = TEXTO('ev_foto_alt', 'Locandina:') + ' ' + LOC(e, 'titolo');
       fa.appendChild(im); art.appendChild(fa);
       art.classList.add('con-foto');
     }
@@ -1151,7 +1194,7 @@ function DONAZIONI(cont, d) {
     }
     fila(TEXTO('dn_intest', 'Intestato a'), d.intestatario);
     fila('IBAN', iban.replace(/(.{4})/g, '$1 ').trim(), 'iban');
-    fila(TEXTO('dn_causale', 'Causale'), TR(d.causale));
+    fila(TEXTO('dn_causale', 'Causale'), LOC(d, 'causale'));
     c2.appendChild(dl);
     var cp = el('button', 'btn', TEXTO('dn_copia', 'Copia l’IBAN')); cp.type = 'button';
     cp.addEventListener('click', function () {
@@ -1320,7 +1363,6 @@ var I18N = {
     dn_bonifico: "Transferencia bancaria", dn_intest: "A nombre de", dn_causale: "Concepto",
     dn_copia: "Copiar el IBAN", dn_copiato: "Copiado ✓",
     sp_pastori_alt: "Los pastores de la iglesia de",
-    foot_trad: "Algunos textos se traducen automáticamente del italiano.",
     banda: "Prototipo Digitatex · contenidos por confirmar"
   },
   en: {
@@ -1407,7 +1449,6 @@ var I18N = {
     dn_bonifico: "Bank transfer", dn_intest: "Account holder", dn_causale: "Reference",
     dn_copia: "Copy the IBAN", dn_copiato: "Copied ✓",
     sp_pastori_alt: "The pastors of the church in",
-    foot_trad: "Some texts are translated automatically from Italian.",
     banda: "Digitatex prototype · content to be confirmed"
   }
 };
@@ -1436,20 +1477,11 @@ function aplicarIdioma(lang) {
     b.classList.toggle('active', b.dataset.lang === lang);
   });
   RIDISEGNA();
-  /* Lo escrito en el panel: la primera vez que se pide este idioma, se
-     traen sus traducciones y se vuelve a pintar todo con ellas. */
-  if (lang !== 'it' && !TRAD[lang] && window.ALMACEN && ALMACEN.traduzioni) {
-    TRAD[lang] = {};
-    ALMACEN.traduzioni(lang).then(function (m) {
-      TRAD[lang] = m || {};
-      if (LINGUA() === lang && Object.keys(TRAD[lang]).length) RIDISEGNA();
-    });
-  }
   try { localStorage.setItem('gc_lang', lang); } catch (e) {}
 }
 
 /* Lo que dibuja JS no lo alcanza el barrido de [data-i18n]: se vuelve a pintar
-   con el diccionario cargado (y con las traducciones, si ya han llegado). */
+   con el diccionario cargado. */
 function RIDISEGNA() {
   ['__dibujarSedi', '__dibujarFede', '__dibujarFaq', '__dibujarContenidos', '__dibujarSede',
    '__dibujarGaleria', '__dibujarEventi', '__dibujarDona'].forEach(function (k) {

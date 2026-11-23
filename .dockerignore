@@ -20,8 +20,6 @@ herramientas/
 README.md
 *.md
 supabase-setup.sql
-# El codigo de la funcion de traduccion: vive en Supabase, no en esta web.
-supabase/
 
 node_modules/
 *.py

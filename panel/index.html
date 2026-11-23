@@ -261,6 +261,21 @@ a.btn{text-decoration:none;}
 .subida.cartel .subida-previa{width:120px;aspect-ratio:4/5;}
 .subida.pastori .subida-previa{width:168px;aspect-ratio:4/3;}
 
+/* --- los tres idiomas -------------------------------------------------------
+   Arriba de cada ventana, Italiano · Español · English. Cada campo que se
+   escribe en un idioma lleva data-l, y solo se ven los del idioma elegido.
+   Los que no tienen idioma (fecha, foto, IBAN...) se ven siempre. */
+.lingue-tab{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px;padding:5px;border:1px solid var(--line-strong);
+  border-radius:999px;width:max-content;max-width:100%;background:var(--ink-3);}
+.lingue-tab button{background:none;border:0;color:var(--bone-dim);font:500 13px/1 'Inter',sans-serif;
+  padding:9px 15px;border-radius:999px;cursor:pointer;}
+.lingue-tab button.on{background:var(--blu-dark);color:#fff;}
+.lingue-tab button i{font-style:normal;color:var(--verde);margin-left:5px;}
+[data-vista="it"] [data-l]:not([data-l="it"]),
+[data-vista="es"] [data-l]:not([data-l="es"]),
+[data-vista="en"] [data-l]:not([data-l="en"]){display:none !important;}
+.faq-item .lado{grid-template-columns:1fr !important;}
+
 /* --- capas ----------------------------------------------------------------- */
 .capa{display:none;position:fixed;inset:0;z-index:45;background:rgba(5,7,10,0.72);
   overflow-y:auto;padding:clamp(14px,6vh,70px) 14px;}
@@ -416,7 +431,9 @@ a.btn{text-decoration:none;}
       <form class="hoja" id="f-sito-dona" style="max-width:none;margin:16px 0 0" novalidate>
         <b style="font-weight:500">Donazioni del gruppo</b>
         <p class="pista" style="margin:4px 0 14px">Il bottone «Dona» della pagina principale. Basta uno
-          dei due: il link di PayPal o l'IBAN. Se li lasci vuoti tutti e due, la sezione non esce.</p>
+          dei due: il link di PayPal o l'IBAN. Se li lasci vuoti tutti e due, la sezione non esce.
+          La causale si può scrivere anche in spagnolo e in inglese.</p>
+        <div class="lingue-tab" data-tabs></div>
         <div class="rejilla" id="sito-dona-campi"></div>
         <p class="error" id="err-sito-dona" role="alert"></p>
         <div class="pie-hoja">
@@ -578,7 +595,8 @@ a.btn{text-decoration:none;}
     <h2 id="gal-titulo">Galleria</h2>
     <p>Fino a 12 foto, ognuna con un testo breve sotto (al massimo 200 caratteri).
       Sul sito escono in quest'ordine. Le foto si rimpiccioliscono da sole sul telefono
-      prima di caricarle.</p>
+      prima di caricarle. Il testo in spagnolo e in inglese è facoltativo.</p>
+    <div class="lingue-tab" data-tabs></div>
     <div id="gal-lista" class="gal-lista"></div>
     <div class="subida-acc" style="align-items:center">
       <label class="btn piena" id="gal-add">+ Aggiungi foto
@@ -600,8 +618,8 @@ a.btn{text-decoration:none;}
 <div class="capa" id="faq-capa">
   <div class="hoja">
     <h2>Domande frequenti</h2>
-    <p>Basta scrivere in italiano: lo spagnolo e l'inglese si traducono da soli. Se scrivi tu
-      lo spagnolo, esce il tuo. Sul sito escono in quest'ordine.</p>
+    <p>Scrivi in italiano. Lo spagnolo e l'inglese sono facoltativi: tocca «Español» o «English» qui sopra. Quello che lasci vuoto esce in italiano. Sul sito escono in quest'ordine.</p>
+    <div class="lingue-tab" data-tabs></div>
     <div id="faq-lista"></div>
     <div class="subida-acc" style="margin-top:14px">
       <button class="btn piena" type="button" id="faq-add">+ Aggiungi domanda</button>
@@ -621,9 +639,9 @@ a.btn{text-decoration:none;}
 <div class="capa" id="vis-capa">
   <div class="hoja">
     <h2>La visione</h2>
-    <p>Basta scrivere in italiano: lo spagnolo e l'inglese si traducono da soli (se scrivi tu lo
-      spagnolo, esce il tuo). Una riga che comincia con «- » diventa un punto di un elenco; una riga
+    <p>Scrivi in italiano. Lo spagnolo e l'inglese sono facoltativi: tocca «Español» o «English» qui sopra. Quello che lasci vuoto esce in italiano. Una riga che comincia con «- » diventa un punto di un elenco; una riga
       vuota separa i paragrafi.</p>
+    <div class="lingue-tab" data-tabs></div>
     <div id="vis-cuerpo"></div>
     <p class="error" id="err-vis" role="alert"></p>
     <div class="pie-hoja">
@@ -637,9 +655,9 @@ a.btn{text-decoration:none;}
 <div class="capa" id="sto-capa">
   <div class="hoja">
     <h2>Chi siamo e fondatori</h2>
-    <p>Basta scrivere in italiano: lo spagnolo e l'inglese si traducono da soli (se scrivi tu lo
-      spagnolo, esce il tuo). Una riga vuota separa i paragrafi. La foto di ogni fondatore esce in un
+    <p>Scrivi in italiano. Lo spagnolo e l'inglese sono facoltativi: tocca «Español» o «English» qui sopra. Quello che lasci vuoto esce in italiano. Una riga vuota separa i paragrafi. La foto di ogni fondatore esce in un
       cerchio.</p>
+    <div class="lingue-tab" data-tabs></div>
     <div id="sto-cuerpo"></div>
     <p class="error" id="err-sto" role="alert"></p>
     <div class="pie-hoja">
@@ -658,16 +676,25 @@ a.btn{text-decoration:none;}
   <div class="hoja">
     <h2 id="ev-titulo">Eventi</h2>
     <p>I prossimi eventi. Escono nella pagina della chiesa e, tutti insieme, nella pagina
-      principale. Quando la data è passata, l'evento si toglie da solo. Basta scrivere in
-      italiano: si traduce da solo.</p>
+      principale. Quando la data è passata, l'evento si toglie da solo.</p>
     <div id="ev-lista"></div>
 
     <form class="ev-form" id="f-ev" novalidate>
       <h3 id="ev-form-titulo">Nuovo evento</h3>
+      <p class="pista" style="margin:-4px 0 12px">Scrivi in italiano. Lo spagnolo e l'inglese sono facoltativi: tocca «Español» o «English» qui sopra. Quello che lasci vuoto esce in italiano.</p>
+      <div class="lingue-tab" data-tabs></div>
       <div class="rejilla">
-        <div class="campo">
+        <div class="campo" data-l="it">
           <label for="ev-titolo">Titolo *</label>
           <input type="text" id="ev-titolo" maxlength="120" placeholder="Serata di lode e preghiera">
+        </div>
+        <div class="campo" data-l="es">
+          <label for="ev-titolo-es">Título en español</label>
+          <input type="text" id="ev-titolo-es" maxlength="120" placeholder="Noche de alabanza y oración">
+        </div>
+        <div class="campo" data-l="en">
+          <label for="ev-titolo-en">Title in English</label>
+          <input type="text" id="ev-titolo-en" maxlength="120" placeholder="Evening of praise and prayer">
         </div>
         <div class="rejilla dos">
           <div class="campo">
@@ -683,9 +710,17 @@ a.btn{text-decoration:none;}
           <label for="ev-luogo">Luogo</label>
           <input type="text" id="ev-luogo" maxlength="160" placeholder="In chiesa (o l'indirizzo, se è fuori)">
         </div>
-        <div class="campo">
+        <div class="campo" data-l="it">
           <label for="ev-testo">Descrizione</label>
           <textarea id="ev-testo" rows="4" maxlength="1000" placeholder="Due righe: di cosa si tratta, per chi è."></textarea>
+        </div>
+        <div class="campo" data-l="es">
+          <label for="ev-testo-es">Descripción en español</label>
+          <textarea id="ev-testo-es" rows="4" maxlength="1000" placeholder="Dos líneas: de qué se trata, para quién es."></textarea>
+        </div>
+        <div class="campo" data-l="en">
+          <label for="ev-testo-en">Description in English</label>
+          <textarea id="ev-testo-en" rows="4" maxlength="1000" placeholder="A couple of lines: what it is, who it's for."></textarea>
         </div>
         <div class="campo">
           <label for="ev-link">Link al post (Instagram o Facebook)</label>
@@ -721,7 +756,11 @@ a.btn{text-decoration:none;}
 <div id="editor">
   <form class="hoja" id="f-sede" novalidate>
     <h2 id="titulo-hoja">Nuova chiesa</h2>
-    <p>I campi con il trattino restano vuoti e nella pagina escono come «da confermare».</p>
+    <p>I campi con il trattino restano vuoti e nella pagina escono come «da confermare».
+      La descrizione, gli orari, i ruoli dei pastori e la causale delle donazioni si possono
+      scrivere anche in spagnolo e in inglese: tocca «Español» o «English» qui sotto. Quello che
+      lasci vuoto esce in italiano.</p>
+    <div class="lingue-tab" data-tabs></div>
 
     <div class="rejilla">
       <div class="campo">
@@ -759,7 +798,15 @@ a.btn{text-decoration:none;}
           il bottone «Vai al sito» e diventa quello principale. Se è vuoto, non compare.</p>
       </div>
 
-      <div class="campo">
+      <div class="campo" data-l="es">
+        <label for="testo-es">Descripción en español</label>
+        <textarea id="testo-es" maxlength="240" rows="3" placeholder="Dos líneas sobre esta iglesia."></textarea>
+      </div>
+      <div class="campo" data-l="en">
+        <label for="testo-en">Description in English</label>
+        <textarea id="testo-en" maxlength="240" rows="3" placeholder="A couple of lines about this church."></textarea>
+      </div>
+      <div class="campo" data-l="it">
         <label for="testo">Descrizione <span id="cuenta" style="text-transform:none;letter-spacing:0;float:right">0 / 240</span></label>
         <textarea id="testo" maxlength="240" rows="3"
           placeholder="Due righe su questa chiesa: chi siete, cosa si trova qui."></textarea>
@@ -789,11 +836,23 @@ a.btn{text-decoration:none;}
           placeholder="gruppocristiano@gmail.com">
       </div>
 
-      <div class="campo">
+      <div class="campo" data-l="it">
         <label for="pastori">Pastori</label>
         <textarea id="pastori" rows="3" placeholder="Daniel Lana&#10;Samuele Lorenzini (pastore giovani)"></textarea>
         <p class="pista">Uno per riga. Se ha un ruolo, tra parentesi dopo il nome — come
           «Samuele Lorenzini (pastore giovani)».</p>
+      </div>
+      <div class="campo" data-l="es">
+        <label for="pastori-es">Pastores — el papel en español</label>
+        <textarea id="pastori-es" rows="3" placeholder="Daniel Lana&#10;Samuele Lorenzini (pastor de jóvenes)"></textarea>
+        <p class="pista">Los mismos nombres y en el mismo orden que en italiano: aquí solo cambia
+          el papel entre paréntesis. Sin paréntesis, sale el italiano.</p>
+      </div>
+      <div class="campo" data-l="en">
+        <label for="pastori-en">Pastors — the role in English</label>
+        <textarea id="pastori-en" rows="3" placeholder="Daniel Lana&#10;Samuele Lorenzini (youth pastor)"></textarea>
+        <p class="pista">Same names, same order as in Italian: only the role in brackets changes.
+          Without brackets, the Italian one is shown.</p>
       </div>
 
       <div class="campo">
@@ -902,7 +961,9 @@ a.btn{text-decoration:none;}
           + Aggiungi un orario
         </button>
         <p class="pista">A sinistra cosa (Incontro, Preghiera, Giovani), a destra quando
-          (Domenica 10:30). Se lasci tutto vuoto, la scheda dice «da confermare».</p>
+          (Domenica 10:30). Se lasci tutto vuoto, la scheda dice «da confermare». In spagnolo e in
+          inglese, se non scrivi il «quando», i giorni della settimana si cambiano da soli
+          (Domenica → Domingo, Sunday).</p>
       </div>
     </div>
 
@@ -1283,18 +1344,59 @@ $('#restaurar').addEventListener('click', function () {
   });
 });
 
+/* --- las pestañas de idioma -------------------------------------------------
+   Una barra Italiano · Español · English en cada ventana. Elegir una pone
+   data-vista en la ventana, y el CSS ensena solo los campos de ese idioma.
+   Al abrir una ventana se vuelve siempre al italiano. */
+var LINGUE = [['it', 'Italiano'], ['es', 'Español'], ['en', 'English']];
+document.querySelectorAll('[data-tabs]').forEach(function (bar) {
+  var caja = bar.closest('.ev-form') || bar.closest('.hoja');
+  LINGUE.forEach(function (l) {
+    var b = document.createElement('button'); b.type = 'button'; b.dataset.tab = l[0]; b.textContent = l[1];
+    b.addEventListener('click', function () { vistaLingua(caja, l[0]); });
+    bar.appendChild(b);
+  });
+  vistaLingua(caja, 'it');
+});
+function vistaLingua(caja, l) {
+  caja.setAttribute('data-vista', l);
+  caja.querySelectorAll('[data-tabs] button').forEach(function (b) { b.classList.toggle('on', b.dataset.tab === l); });
+}
+function vistaItaliano(sel) { vistaLingua(document.querySelector(sel), 'it'); }
+
 /* --- editor --------------------------------------------------------------- */
-function filaHorario(que, cuando) {
+/* Un horario: que y cuando en italiano, y si quieren, en espanol y en ingles
+   (cada pareja se ve en su pestaña). */
+function filaHorario(que, cuando, trad) {
+  trad = trad || {};
   var fila = document.createElement('div');
   fila.className = 'horario';
-  var a = document.createElement('input'); a.type = 'text'; a.placeholder = 'Incontro'; a.value = que || '';
-  var b = document.createElement('input'); b.type = 'text'; b.placeholder = 'Domenica 10:30'; b.value = cuando || '';
+  var ph = { it: ['Incontro', 'Domenica 10:30'], es: ['Reunión', 'Domingo 10:30'], en: ['Meeting', 'Sunday 10:30'] };
+  LINGUE.forEach(function (l) {
+    var v = l[0] === 'it' ? [que, cuando] : (Array.isArray(trad[l[0]]) ? trad[l[0]] : []);
+    [0, 1].forEach(function (k) {
+      var i = document.createElement('input'); i.type = 'text';
+      i.setAttribute('data-l', l[0]); i.dataset.k = k;
+      i.placeholder = ph[l[0]][k] + (l[0] === 'it' ? '' : ' (facoltativo)');
+      i.value = v[k] || '';
+      fila.appendChild(i);
+    });
+  });
   var x = document.createElement('button');
   x.type = 'button'; x.className = 'quitar'; x.textContent = '×';
   x.setAttribute('aria-label', 'Togli questo orario');
   x.addEventListener('click', function () { fila.remove(); });
-  fila.appendChild(a); fila.appendChild(b); fila.appendChild(x);
+  fila.appendChild(x);
   return fila;
+}
+function leerHorario(f) {
+  function v(l, k) { var i = f.querySelector('input[data-l="' + l + '"][data-k="' + k + '"]'); return i ? i.value.trim() : ''; }
+  var a = v('it', 0), b = v('it', 1);
+  if (!a || !b) return null;
+  var o = [a, b], t = {};
+  ['es', 'en'].forEach(function (l) { if (v(l, 0) || v(l, 1)) t[l] = [v(l, 0), v(l, 1)]; });
+  if (Object.keys(t).length) o.push(t);
+  return o;
 }
 $('#mas-horario').addEventListener('click', function () {
   $('#horarios').appendChild(filaHorario('', ''));
@@ -1342,6 +1444,9 @@ function abrirEditor(sede) {
   $('#lon').value   = editando.lon != null ? editando.lon : '';
   $('#web').value = editando.web || '';
   $('#testo').value = editando.testo || '';
+  $('#testo-es').value = editando.testo_es || '';
+  $('#testo-en').value = editando.testo_en || '';
+  vistaItaliano('#f-sede');
   $('#lingue').value = editando.lingue || '';
   $('#logo').value = editando.logo || '';
   $('#copertina').value = editando.copertina || '';
@@ -1354,6 +1459,8 @@ function abrirEditor(sede) {
   $('#whatsapp').value = editando.whatsapp || '';
   $('#email').value = editando.email || '';
   $('#pastori').value = pastoriATexto(editando.pastori);
+  $('#pastori-es').value = pastoriATexto(editando.pastori, 'es');
+  $('#pastori-en').value = pastoriATexto(editando.pastori, 'en');
   var soc = editando.social || {};
   $('#soc-instagram').value = soc.instagram || '';
   $('#soc-facebook').value = soc.facebook || '';
@@ -1367,7 +1474,7 @@ function abrirEditor(sede) {
   ponerMapa(editando.mapa || '');
   var h = $('#horarios'); h.textContent = '';
   (editando.orari && editando.orari.length ? editando.orari : [['', '']])
-    .forEach(function (o) { h.appendChild(filaHorario(o[0], o[1])); });
+    .forEach(function (o) { h.appendChild(filaHorario(o[0], o[1], o[2])); });
   /* Eliminar una iglesia: solo el general, y solo si ya existe. */
   $('#borrar').style.display = (sede && esGenerale()) ? '' : 'none';
   $('#editor').style.display = 'block';
@@ -1575,6 +1682,7 @@ var GAL_TOPE = 12;
 
 function abrirGaleria(cartella, nombre) {
   GAL = { cartella: cartella, fotos: [], cambios: {} };
+  vistaItaliano('#galeria-capa .hoja');
   $('#gal-titulo').textContent = cartella === 'generale' ? 'Galleria del gruppo' : 'Galleria · ' + nombre;
   $('#err-gal').textContent = '';
   $('#gal-salva').disabled = true;
@@ -1612,16 +1720,25 @@ function pintarGaleria() {
     var it = document.createElement('div'); it.className = 'gal-item';
     var img = document.createElement('img'); img.src = f.url; img.alt = ''; img.loading = 'lazy';
     var der = document.createElement('div');
-    var ta = document.createElement('textarea');
-    ta.maxLength = 200; ta.placeholder = 'Il testo sotto la foto (facoltativo)';
-    ta.value = GAL.cambios[f.id] !== undefined ? GAL.cambios[f.id] : (f.testo || '');
     var cuenta = document.createElement('span');
-    function contar() { cuenta.textContent = ta.value.length + '/200'; }
-    ta.addEventListener('input', function () {
-      if (ta.value === (f.testo || '')) delete GAL.cambios[f.id]; else GAL.cambios[f.id] = ta.value;
-      $('#gal-salva').disabled = !Object.keys(GAL.cambios).length;
-      contar();
+    var tas = [];
+    /* Un texto por idioma; cada uno en su pestaña. */
+    [['testo', 'it', 'Il testo sotto la foto (facoltativo)'], ['testo_es', 'es', 'El texto en español (facoltativo)'],
+     ['testo_en', 'en', 'The text in English (optional)']].forEach(function (c) {
+      var ta = document.createElement('textarea'); ta.setAttribute('data-l', c[1]);
+      ta.maxLength = 200; ta.placeholder = c[2];
+      var cam = GAL.cambios[f.id] || {};
+      ta.value = cam[c[0]] !== undefined ? cam[c[0]] : (f[c[0]] || '');
+      ta.addEventListener('input', function () {
+        var x = GAL.cambios[f.id] || (GAL.cambios[f.id] = {});
+        if (ta.value === (f[c[0]] || '')) delete x[c[0]]; else x[c[0]] = ta.value;
+        if (!Object.keys(x).length) delete GAL.cambios[f.id];
+        $('#gal-salva').disabled = !Object.keys(GAL.cambios).length;
+        contar();
+      });
+      tas.push(ta); der.appendChild(ta);
     });
+    function contar() { cuenta.textContent = tas[0].value.length + '/200'; }
     var acc = document.createElement('div'); acc.className = 'gal-acc';
     function boton(txt, clase, fn, off) {
       var b = document.createElement('button'); b.type = 'button'; b.className = 'btn mini' + (clase ? ' ' + clase : '');
@@ -1631,7 +1748,7 @@ function pintarGaleria() {
     boton('↓', '', function () { mover(i, 1); }, i === n - 1);
     boton('Togli', 'peligro', function () { quitar(f); });
     acc.appendChild(cuenta); contar();
-    der.appendChild(ta); der.appendChild(acc);
+    der.appendChild(acc);
     it.appendChild(img); it.appendChild(der);
     cont.appendChild(it);
   });
@@ -1686,7 +1803,7 @@ $('#gal-add input').addEventListener('change', function () {
 $('#gal-salva').addEventListener('click', function () {
   var b = this, ids = Object.keys(GAL.cambios);
   b.disabled = true;
-  Promise.all(ids.map(function (id) { return ALMACEN.cambiaFoto(id, { testo: GAL.cambios[id] }); }))
+  Promise.all(ids.map(function (id) { return ALMACEN.cambiaFoto(id, GAL.cambios[id]); }))
     .then(function () {
       GAL.cambios = {};
       avisar('Testi salvati.');
@@ -1712,8 +1829,11 @@ function camposDona(cont, pre) {
   [['paypal', 'Link di PayPal', 'https://paypal.me/...', 'url'],
    ['iban', 'IBAN', 'IT60 X054 2811 1010 0000 0123 456', 'text'],
    ['intestatario', 'Intestato a', 'Associazione Gruppo Cristiano', 'text'],
-   ['causale', 'Causale', 'Offerta libera', 'text']].forEach(function (c) {
+   ['causale', 'Causale', 'Offerta libera', 'text', 'it'],
+   ['causale_es', 'Concepto (en español)', 'Ofrenda libre', 'text', 'es'],
+   ['causale_en', 'Reference (in English)', 'Free offering', 'text', 'en']].forEach(function (c) {
     var d = document.createElement('div'); d.className = 'campo';
+    if (c[4]) d.setAttribute('data-l', c[4]);
     var l = document.createElement('label'); l.htmlFor = pre + '-' + c[0]; l.textContent = c[1];
     var i = document.createElement('input'); i.type = c[3]; i.id = pre + '-' + c[0];
     i.placeholder = c[2]; i.autocomplete = 'off'; i.spellcheck = false;
@@ -1729,6 +1849,8 @@ function ponerDona(pre, d) {
   $('#' + pre + '-iban').value = String(d.iban || '').replace(/(.{4})/g, '$1 ').trim();
   $('#' + pre + '-intestatario').value = d.intestatario || '';
   $('#' + pre + '-causale').value = d.causale || '';
+  $('#' + pre + '-causale_es').value = d.causale_es || '';
+  $('#' + pre + '-causale_en').value = d.causale_en || '';
 }
 function leerDona(pre) {
   var pp = $('#' + pre + '-paypal').value.trim();
@@ -1737,7 +1859,9 @@ function leerDona(pre) {
     paypal: pp.replace(/^http:\/\//i, 'https://'),
     iban: $('#' + pre + '-iban').value.toUpperCase().replace(/[^A-Z0-9]/g, ''),
     intestatario: $('#' + pre + '-intestatario').value.trim(),
-    causale: $('#' + pre + '-causale').value.trim()
+    causale: $('#' + pre + '-causale').value.trim(),
+    causale_es: $('#' + pre + '-causale_es').value.trim(),
+    causale_en: $('#' + pre + '-causale_en').value.trim()
   };
 }
 function ibanValido(iban) {
@@ -1818,7 +1942,8 @@ function pintarEventos() {
     var der = document.createElement('div');
     var h = document.createElement('h4'); h.textContent = e.titolo;
     var p = document.createElement('p');
-    p.textContent = [e.ora, e.luogo, e.foto ? 'con locandina' : '', e.link ? 'con link al post' : '']
+    p.textContent = [e.ora, e.luogo, e.foto ? 'con locandina' : '', e.link ? 'con link al post' : '',
+      (e.titolo_es ? 'ES' : '') + (e.titolo_es && e.titolo_en ? ' + ' : '') + (e.titolo_en ? 'EN' : '')]
       .filter(Boolean).join(' · ');
     var acc = document.createElement('div'); acc.className = 'gal-acc';
     var m = document.createElement('button'); m.type = 'button'; m.className = 'btn mini'; m.textContent = 'Modifica';
@@ -1853,6 +1978,11 @@ function formEvento(e) {
   $('#ev-salva').textContent = e ? 'Salva le modifiche' : 'Aggiungi l\'evento';
   $('#ev-nuevo').hidden = !e;
   $('#ev-titolo').value = e ? e.titolo : '';
+  $('#ev-titolo-es').value = e ? (e.titolo_es || '') : '';
+  $('#ev-titolo-en').value = e ? (e.titolo_en || '') : '';
+  $('#ev-testo-es').value = e ? (e.testo_es || '') : '';
+  $('#ev-testo-en').value = e ? (e.testo_en || '') : '';
+  vistaItaliano('#f-ev');
   $('#ev-giorno').value = e ? e.giorno : '';
   $('#ev-ora').value = e ? e.ora : '';
   $('#ev-luogo').value = e ? e.luogo : '';
@@ -1882,10 +2012,12 @@ $('#f-ev').addEventListener('submit', function (ev) {
     titolo: $('#ev-titolo').value.trim(), giorno: $('#ev-giorno').value,
     ora: $('#ev-ora').value.trim(), luogo: $('#ev-luogo').value.trim(),
     testo: $('#ev-testo').value.trim(), link: $('#ev-link').value.trim(),
+    titolo_es: $('#ev-titolo-es').value.trim(), titolo_en: $('#ev-titolo-en').value.trim(),
+    testo_es: $('#ev-testo-es').value.trim(), testo_en: $('#ev-testo-en').value.trim(),
     foto: EV.editando ? EV.editando.foto : ''
   };
   err.textContent = '';
-  if (!datos.titolo) { err.textContent = 'Manca il titolo.'; return; }
+  if (!datos.titolo) { vistaItaliano('#f-ev'); err.textContent = 'Manca il titolo in italiano.'; return; }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(datos.giorno)) { err.textContent = 'Manca la data.'; return; }
   var hoy = new Date(); hoy = hoy.getFullYear() + '-' + ('0' + (hoy.getMonth() + 1)).slice(-2) + '-' + ('0' + hoy.getDate()).slice(-2);
   if (datos.giorno < hoy) { err.textContent = 'La data è già passata.'; return; }
@@ -1927,7 +2059,8 @@ $('#sito-eventi').addEventListener('click', function () { abrirEventi('generale'
 var FAQ = { lista: [], sucio: false };
 function copiaFaq(l) {
   return (l || []).map(function (q) {
-    return { d_it: q.d_it || '', r_it: q.r_it || '', d_es: q.d_es || '', r_es: q.r_es || '', conf: !!q.conf };
+    return { d_it: q.d_it || '', r_it: q.r_it || '', d_es: q.d_es || '', r_es: q.r_es || '',
+      d_en: q.d_en || '', r_en: q.r_en || '', conf: !!q.conf };
   });
 }
 function abrirFaq() {
@@ -1935,6 +2068,7 @@ function abrirFaq() {
   $('#err-faq').textContent = '';
   $('#faq-salva').disabled = true;
   $('#faq-serie').hidden = !SITO.domande;
+  vistaItaliano('#faq-capa .hoja');
   pintarFaq();
   $('#faq-capa').style.display = 'block';
   document.body.style.overflow = 'hidden';
@@ -1957,15 +2091,15 @@ function pintarFaq() {
     var num = document.createElement('p'); num.className = 'faq-num'; num.textContent = 'Domanda ' + (i + 1);
     it.appendChild(num);
     var lado = document.createElement('div'); lado.className = 'lado';
-    [['it', 'Italiano'], ['es', 'Español']].forEach(function (l) {
-      var col = document.createElement('div');
+    LINGUE.forEach(function (l) {
+      var col = document.createElement('div'); col.setAttribute('data-l', l[0]);
       var lb = document.createElement('label'); lb.textContent = l[1];
       var d = document.createElement('input'); d.type = 'text'; d.maxLength = 300;
-      d.placeholder = l[0] === 'it' ? 'La domanda' : 'La pregunta (facoltativa)';
+      d.placeholder = { it: 'La domanda', es: 'La pregunta (facoltativa)', en: 'The question (optional)' }[l[0]];
       d.value = q['d_' + l[0]];
       d.addEventListener('input', function () { q['d_' + l[0]] = d.value; marcarFaq(); });
       var r = document.createElement('textarea'); r.maxLength = 1500;
-      r.placeholder = l[0] === 'it' ? 'La risposta' : 'La respuesta (facoltativa)';
+      r.placeholder = { it: 'La risposta', es: 'La respuesta (facoltativa)', en: 'The answer (optional)' }[l[0]];
       r.value = q['r_' + l[0]];
       r.addEventListener('input', function () { q['r_' + l[0]] = r.value; marcarFaq(); });
       col.appendChild(lb); col.appendChild(d); col.appendChild(r);
@@ -1998,7 +2132,8 @@ function mover2(i, d) {
   marcarFaq(); pintarFaq();
 }
 $('#faq-add').addEventListener('click', function () {
-  FAQ.lista.push({ d_it: '', r_it: '', d_es: '', r_es: '', conf: false });
+  FAQ.lista.push({ d_it: '', r_it: '', d_es: '', r_es: '', d_en: '', r_en: '', conf: false });
+  vistaItaliano('#faq-capa .hoja');
   marcarFaq(); pintarFaq();
   var ins = $('#faq-lista').querySelectorAll('.faq-item input[type=text]');
   if (ins.length) ins[ins.length - 2].focus();
@@ -2008,11 +2143,12 @@ $('#faq-salva').addEventListener('click', function () {
   var mal = FAQ.lista.findIndex(function (q) {
     return (q.d_it.trim() && !q.r_it.trim()) || (!q.d_it.trim() && q.r_it.trim())
       || (q.d_es.trim() && !q.r_es.trim()) || (!q.d_es.trim() && q.r_es.trim())
-      || (!q.d_it.trim() && !q.d_es.trim());
+      || (q.d_en.trim() && !q.r_en.trim()) || (!q.d_en.trim() && q.r_en.trim())
+      || !q.d_it.trim();
   });
   if (mal >= 0) {
     err.textContent = 'La domanda ' + (mal + 1) + ' è a metà: ogni domanda ha bisogno della sua risposta '
-      + '(e almeno l’italiano).';
+      + 'in ogni lingua che usi (e l’italiano c’è sempre).';
     return;
   }
   var b = this; b.disabled = true;
@@ -2059,12 +2195,12 @@ function campoEd(cont, etiqueta, obj, clave, opc, alCambiar) {
 }
 function ladoEd(cont, obj, campos, alCambiar) {
   var lado = document.createElement('div'); lado.className = 'lado';
-  [['it', 'Italiano'], ['es', 'Español']].forEach(function (l) {
-    var col = document.createElement('div');
+  LINGUE.forEach(function (l) {
+    var col = document.createElement('div'); col.setAttribute('data-l', l[0]);
     var lb = document.createElement('label'); lb.textContent = l[1]; col.appendChild(lb);
     campos.forEach(function (c) {
       campoEd(col, '', obj, c.k + '_' + l[0], { multi: c.multi, max: c.max, clase: c.clase,
-        ph: (l[0] === 'it' ? c.ph : c.phEs || (c.ph + ' (facoltativo)')) }, alCambiar);
+        ph: (l[0] === 'it' ? c.ph : c.ph + ' (facoltativo)') }, alCambiar);
     });
     lado.appendChild(col);
   });
@@ -2090,6 +2226,7 @@ function editorCapa(pre, campo, base, pintar, validar, titulos) {
     $('#err-' + pre).textContent = '';
     $('#' + pre + '-salva').disabled = true;
     $('#' + pre + '-serie').hidden = !SITO[campo];
+    vistaItaliano('#' + pre + '-capa .hoja');
     pintar(E, marcar);
     $('#' + pre + '-capa').style.display = 'block';
     document.body.style.overflow = 'hidden';
@@ -2151,7 +2288,7 @@ var abrirVis = editorCapa('vis', 'visione', function () { return window.VISIONE_
     if (v.punti.length < 12) {
       var add = document.createElement('button'); add.type = 'button'; add.className = 'btn piena';
       add.style.marginTop = '12px'; add.textContent = '+ Aggiungi punto';
-      add.addEventListener('click', function () { v.punti.push({ t_it: '', p_it: '', t_es: '', p_es: '' }); marcar(); repintar(); });
+      add.addEventListener('click', function () { v.punti.push({ t_it: '', p_it: '', t_es: '', p_es: '', t_en: '', p_en: '' }); marcar(); repintar(); });
       b2.appendChild(add);
     }
     c.appendChild(b2);
@@ -2212,7 +2349,7 @@ var abrirSto = editorCapa('sto', 'storia', function () { return window.STORIA_BA
     if (s.fondatori.length < 6) {
       var add = document.createElement('button'); add.type = 'button'; add.className = 'btn piena';
       add.style.marginTop = '12px'; add.textContent = '+ Aggiungi fondatore';
-      add.addEventListener('click', function () { s.fondatori.push({ nome: '', foto: '', t_it: '', t_es: '' }); marcar(); repintar(); });
+      add.addEventListener('click', function () { s.fondatori.push({ nome: '', foto: '', t_it: '', t_es: '', t_en: '' }); marcar(); repintar(); });
       b2.appendChild(add);
     }
     c.appendChild(b2);
@@ -2242,11 +2379,24 @@ $('#sito-sto').addEventListener('click', abrirSto);
    El formato es el que usaron ellos en su documento: un nombre por linea, y
    el papel entre parentesis si lo tiene. "Samuele Lorenzini (pastore
    giovani)" -> ['Samuele Lorenzini', 'pastore giovani']. */
-function pastoriATexto(lista) {
+function pastoriATexto(lista, l) {
   return (Array.isArray(lista) ? lista : []).map(function (p) {
     var n = Array.isArray(p) ? p[0] : p, r = Array.isArray(p) ? p[1] : '';
+    if (l) r = (Array.isArray(p) && p[2] && p[2][l]) || '';
     return r ? n + ' (' + r + ')' : n;
   }).join('\n');
+}
+/* El papel en espanol y en ingles va por ORDEN: la tercera linea de la
+   pestaña Español es el tercer pastor. Se guarda como tercer elemento:
+   ["Samuele Lorenzini", "pastore giovani", {"es": "pastor de jóvenes"}]. */
+function pastoriConRuoli(lista, tes, ten) {
+  var es = textoAPastori(tes), en = textoAPastori(ten);
+  return lista.map(function (p, i) {
+    var t = {};
+    if (es[i] && es[i][1]) t.es = es[i][1];
+    if (en[i] && en[i][1]) t.en = en[i][1];
+    return Object.keys(t).length ? [p[0], p[1], t] : p;
+  });
 }
 function textoAPastori(t) {
   return String(t || '').split('\n').map(function (l) { return l.trim(); })
@@ -2362,9 +2512,8 @@ $('#f-sede').addEventListener('submit', function (e) {
 
   var orari = [];
   $('#horarios').querySelectorAll('.horario').forEach(function (f) {
-    var i = f.querySelectorAll('input');
-    var a = i[0].value.trim(), b = i[1].value.trim();
-    if (a && b) orari.push([a, b]);
+    var o = leerHorario(f);
+    if (o) orari.push(o);
   });
 
   /* Los enlaces y el correo se comprueban aqui, ANTES de guardar: un enlace
@@ -2406,12 +2555,14 @@ $('#f-sede').addEventListener('submit', function (e) {
     orari: orari,
     web: $('#web').value.trim(),
     testo: $('#testo').value.trim(),
+    testo_es: $('#testo-es').value.trim(),
+    testo_en: $('#testo-en').value.trim(),
     lingue: $('#lingue').value.trim(),
     logo: $('#logo').value.trim(),
     copertina: $('#copertina').value.trim(),
     whatsapp: $('#whatsapp').value.trim(),
     email: correo,
-    pastori: textoAPastori($('#pastori').value),
+    pastori: pastoriConRuoli(textoAPastori($('#pastori').value), $('#pastori-es').value, $('#pastori-en').value),
     foto_pastori: $('#foto_pastori').value.trim(),
     donazioni: dona,
     social: social,
