@@ -1004,7 +1004,6 @@ var I18N = {
   es: {
     meta_title: "Gruppo Cristiano Latino Americano — Iglesias en Italia",
     meta_desc: "Gruppo Cristiano Latino Americano: iglesias evangélicas en Italia. Nuestras sedes, los horarios de las reuniones y cómo llegar. Italiano y español.",
-    marca_sub: "Latino Americano",
     nav_sedi: "Las comunidades", nav_storia: "Quiénes somos", nav_visione: "La visión", nav_fede: "Puntos de fe", nav_domande: "Preguntas",
     hero_h1: "Una única familia de comunidades cristianas.",
     hero_p: "«Creemos que este mundo lleno de problemas y sufrimientos necesita una esperanza verdadera.»",
