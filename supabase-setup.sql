@@ -651,6 +651,10 @@ alter table public.evento add column if not exists testo_en  text not null defau
 -- La tabla de traducciones automaticas de una version anterior: ya no se usa.
 drop table if exists public.traduzione;
 
+-- Que la API vea al momento las columnas nuevas (si no, el panel dice "Could
+-- not find the '...' column in the schema cache" hasta que se refresca sola).
+notify pgrst, 'reload schema';
+
 -- ============================================================================
 -- DESPUES DE EJECUTAR ESTO — en este orden
 --
