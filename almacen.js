@@ -778,6 +778,22 @@ var ALMACEN = (function () {
       });
     },
 
+    /* ======================================================================
+       LAS TRADUCCIONES AUTOMATICAS — lo que dejan vacio en espanol o en
+       ingles. Las hace la funcion `traduci` del servidor (DeepL) y las
+       guarda: aqui solo se piden. Devuelve {texto italiano: traduccion}.
+       Sin funcion, sin red o sin llave de DeepL: {} y la web ensena el
+       italiano, que es mejor que un hueco.
+       ====================================================================== */
+    traduzioni: function (lingua) {
+      if (!conBase || (lingua !== 'es' && lingua !== 'en')) return Promise.resolve({});
+      return fetch(SUPABASE.url + '/functions/v1/traduci?lingua=' + lingua, {
+        headers: { 'apikey': SUPABASE.key, 'Authorization': 'Bearer ' + SUPABASE.key }
+      }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { return (d && d.testi && typeof d.testi === 'object') ? d.testi : {}; })
+        .catch(function () { return {}; });
+    },
+
     /* Anular una invitacion que se quedo a medias. */
     annullaInvito: function (email) {
       if (!conBase) return Promise.resolve();

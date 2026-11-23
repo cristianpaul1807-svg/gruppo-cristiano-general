@@ -52,24 +52,32 @@ var $ = function (s) { return document.querySelector(s); };
 
 /* --- el idioma de lo que escriben ellos -----------------------------------
    Lo fijo (menus, botones, titulos) esta traducido en I18N, al final. Lo que
-   escriben el general y cada iglesia en el panel lo escriben ELLOS en los
-   idiomas que quieran: el italiano siempre, el espanol y el ingles si los
-   ponen. Lo que no esta en el idioma elegido sale en italiano: mejor que un
-   hueco. Sin traductores de fuera, a proposito: lo decidieron ellos. */
+   escriben el general y cada iglesia en el panel, por este orden:
+     1. lo que ELLOS han escrito en ese idioma (pestañas Español / English);
+     2. si lo dejaron vacio, la traduccion automatica del italiano, que hace
+        el servidor con DeepL (ALMACEN.traduzioni) y se guarda en TRAD;
+     3. si tampoco hay, el italiano: mejor que un hueco. */
 function LINGUA() { var l = document.documentElement.lang; return (l === 'es' || l === 'en') ? l : 'it'; }
+var TRAD = {};
+function TR(t) {
+  t = t == null ? '' : String(t);
+  var l = LINGUA(), m = TRAD[l];
+  return (l !== 'it' && m && m[t]) ? m[t] : t;
+}
 /* Los contenidos del general guardan "t_it", "t_es", "t_en". */
 function CAMPO(o, k) {
   if (!o) return '';
   var l = LINGUA();
   if (l !== 'it' && o[k + '_' + l]) return o[k + '_' + l];
-  return o[k + '_it'] || o[k + '_es'] || o[k + '_en'] || '';
+  if (o[k + '_it']) return TR(o[k + '_it']);
+  return o[k + '_es'] || o[k + '_en'] || '';
 }
 /* Lo de las iglesias, eventos y fotos guarda "testo" (italiano), "testo_es"
    y "testo_en". */
 function LOC(o, k) {
   if (!o) return '';
   var l = LINGUA();
-  return (l !== 'it' && o[k + '_' + l]) || o[k] || '';
+  return (l !== 'it' && o[k + '_' + l]) || TR(o[k] || '');
 }
 /* Los dias de la semana de un horario, para cuando la iglesia no ha escrito
    el horario en ese idioma: "Lunedì e venerdì 19:30" -> "Monday and Friday
@@ -105,13 +113,14 @@ function DIAS(t) {
    escrito, {es: [que, cuando], en: [que, cuando]} como tercer elemento. */
 function ORARIO(o) {
   var l = LINGUA(), t = (l !== 'it' && o && o[2] && Array.isArray(o[2][l])) ? o[2][l] : [];
-  return [t[0] || (o && o[0]) || '', t[1] || DIAS(o && o[1])];
+  var cuando = o && o[1], auto = TR(cuando);
+  return [t[0] || TR((o && o[0]) || ''), t[1] || (auto !== cuando ? auto : DIAS(cuando))];
 }
 /* El papel de un pastor: ["Nombre", "pastore giovani", {es: "...", en: "..."}]. */
 function RUOLO(p) {
   if (!Array.isArray(p)) return '';
   var l = LINGUA();
-  return (l !== 'it' && p[2] && p[2][l]) || p[1] || '';
+  return (l !== 'it' && p[2] && p[2][l]) || TR(p[1] || '');
 }
 /* Una fecha "2026-12-14" escrita en el idioma de la pagina. */
 function FECHA(g, opc) {
@@ -563,7 +572,7 @@ function MAPA_DE(sede) {
     if (sede.lingue) {
       var cont = document.createElement('div');
       cont.className = 'sede-lingue';
-      String(sede.lingue).split(',').forEach(function (l) {
+      TR(sede.lingue).split(',').forEach(function (l) {
         l = l.trim(); if (!l) return;
         var s = document.createElement('span'); s.textContent = l; cont.appendChild(s);
       });
@@ -1082,10 +1091,10 @@ function MAPA_DE(sede) {
     var h = document.createElement('h3'); h.textContent = LOC(e, 'titolo'); cuerpo.appendChild(h);
     var cuando = document.createElement('p'); cuando.className = 'ev-quando';
     var largo = FECHA(e.giorno, { weekday: 'long', day: 'numeric', month: 'long' });
-    cuando.textContent = [largo.charAt(0).toUpperCase() + largo.slice(1), e.ora].filter(Boolean).join(' · ');
+    cuando.textContent = [largo.charAt(0).toUpperCase() + largo.slice(1), TR(e.ora)].filter(Boolean).join(' · ');
     cuerpo.appendChild(cuando);
     if (e.luogo) {
-      var lu = document.createElement('p'); lu.className = 'ev-luogo'; lu.textContent = e.luogo;
+      var lu = document.createElement('p'); lu.className = 'ev-luogo'; lu.textContent = TR(e.luogo);
       cuerpo.appendChild(lu);
     }
     if (LOC(e, 'testo')) {
@@ -1376,6 +1385,7 @@ var I18N = {
     dn_bonifico: "Transferencia bancaria", dn_intest: "A nombre de", dn_causale: "En el concepto escribe",
     dn_copia: "Copiar el IBAN", dn_copiato: "Copiado ✓", dn_copia_c: "Copiar",
     sp_pastori_alt: "Los pastores de la iglesia de",
+    foot_trad: "Algunos textos se traducen automáticamente del italiano.",
     banda: "Prototipo Digitatex · contenidos por confirmar"
   },
   en: {
@@ -1462,6 +1472,7 @@ var I18N = {
     dn_bonifico: "Bank transfer", dn_intest: "Account holder", dn_causale: "In the payment reference write",
     dn_copia: "Copy the IBAN", dn_copiato: "Copied ✓", dn_copia_c: "Copy",
     sp_pastori_alt: "The pastors of the church in",
+    foot_trad: "Some texts are translated automatically from Italian.",
     banda: "Digitatex prototype · content to be confirmed"
   }
 };
@@ -1490,6 +1501,15 @@ function aplicarIdioma(lang) {
     b.classList.toggle('active', b.dataset.lang === lang);
   });
   RIDISEGNA();
+  /* Lo que dejaron vacio en este idioma: la primera vez que se pide, se
+     traen las traducciones automaticas y se vuelve a pintar con ellas. */
+  if (lang !== 'it' && !TRAD[lang] && window.ALMACEN && ALMACEN.traduzioni) {
+    TRAD[lang] = {};
+    ALMACEN.traduzioni(lang).then(function (m) {
+      TRAD[lang] = m || {};
+      if (LINGUA() === lang && Object.keys(TRAD[lang]).length) RIDISEGNA();
+    });
+  }
   try { localStorage.setItem('gc_lang', lang); } catch (e) {}
 }
 

@@ -196,7 +196,7 @@
     var ling = $('#sp-lingue');
     if (ling) {
       ling.textContent = '';
-      String(s.lingue || '').split(',').forEach(function (l) {
+      (window.TR ? TR(s.lingue || '') : String(s.lingue || '')).split(',').forEach(function (l) {
         l = l.trim(); if (!l) return;
         var e = document.createElement('span'); e.textContent = l; ling.appendChild(e);
       });

@@ -633,9 +633,9 @@ grant execute on function public.eventi_in(text) to authenticated;
 -- ----------------------------------------------------------------------------
 -- LOS TRES IDIOMAS — italiano, espanol e ingles
 --
--- Lo escriben ELLOS desde el panel, sin traductores de fuera: el italiano
--- siempre, y el espanol y el ingles si quieren. Lo que no esta en un idioma
--- sale en italiano. Las preguntas, la vision y la historia ya lo guardan
+-- El italiano lo escriben siempre; el espanol y el ingles, si quieren. Lo
+-- que dejan vacio lo traduce la funcion `traduci` (mas abajo); sin
+-- traduccion, sale el italiano. Las preguntas, la vision y la historia ya lo guardan
 -- dentro de su jsonb (d_en, t_en...); los horarios y los pastores, en el
 -- propio jsonb de la ficha. Aqui, las columnas de texto que faltaban.
 -- ----------------------------------------------------------------------------
@@ -648,8 +648,26 @@ alter table public.evento add column if not exists titolo_en text not null defau
 alter table public.evento add column if not exists testo_es  text not null default '' check (char_length(testo_es)  <= 1000);
 alter table public.evento add column if not exists testo_en  text not null default '' check (char_length(testo_en)  <= 1000);
 
--- La tabla de traducciones automaticas de una version anterior: ya no se usa.
-drop table if exists public.traduzione;
+-- ----------------------------------------------------------------------------
+-- LAS TRADUCCIONES AUTOMATICAS (lo que NO escriben ellos)
+--
+-- Lo que se deja vacio en espanol o en ingles lo traduce del italiano la
+-- funcion `traduci` (supabase/functions/traduci) con DeepL, y guarda aqui
+-- cada frase: se traduce UNA vez y la siguiente visita la lee de aqui. Si
+-- cambian el texto, la frase nueva se traduce sola en la siguiente visita.
+--
+-- Sin reglas a proposito: con RLS activado y ninguna regla, ni la web ni el
+-- panel pueden leerla ni escribirla. Solo la funcion, con la llave de servicio.
+-- ----------------------------------------------------------------------------
+create table if not exists public.traduzione (
+  lingua   text not null check (lingua in ('es', 'en')),
+  chiave   text not null,            -- sha-256 del texto italiano
+  tradotto text not null,
+  creata   timestamptz not null default now(),
+  primary key (lingua, chiave)
+);
+alter table public.traduzione enable row level security;
+revoke all on public.traduzione from anon, authenticated;
 
 -- Que la API vea al momento las columnas nuevas (si no, el panel dice "Could
 -- not find the '...' column in the schema cache" hasta que se refresca sola).
