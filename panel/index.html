@@ -453,6 +453,15 @@ a.btn{text-decoration:none;}
         <button class="btn piena" type="button" id="sito-eventi">Apri gli eventi</button>
       </div>
 
+      <div class="hoja" style="max-width:none;margin:16px 0 0;display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+          <b style="font-weight:500">Il giornalino</b>
+          <p class="pista" style="margin:4px 0 0" id="gio-estado">Carica il PDF di ogni numero: esce nella pagina
+            principale e lo mandi per email a chi si è iscritto.</p>
+        </div>
+        <button class="btn piena" type="button" id="sito-gio">Apri il giornalino</button>
+      </div>
+
       <form class="hoja" id="f-sito-dona" style="max-width:none;margin:16px 0 0" novalidate>
         <b style="font-weight:500">Donazioni del gruppo</b>
         <p class="pista" style="margin:4px 0 14px">Il bottone «Dona» della pagina principale. Basta uno
@@ -773,6 +782,65 @@ a.btn{text-decoration:none;}
 
     <div class="pie-hoja">
       <button class="btn" type="button" id="ev-cerrar">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================================
+     IL GIORNALINO — subir cada numero (PDF), verlos, mandarlos por email a
+     los suscritos y ver quien esta suscrito. Solo el general.
+     ============================================================================ -->
+<div class="capa" id="gio-capa">
+  <div class="hoja">
+    <h2>Il giornalino</h2>
+    <p>Carica il PDF di ogni numero. La copertina si prende da sola dalla prima pagina. Il numero
+      più recente esce grande nella pagina principale; gli altri, sotto, come archivio.</p>
+
+    <form class="ev-form" id="f-gio" novalidate>
+      <h3>Nuovo numero</h3>
+      <div class="rejilla">
+        <div class="rejilla dos">
+          <div class="campo">
+            <label for="gio-tit">Titolo *</label>
+            <input type="text" id="gio-tit" maxlength="120" placeholder="Dicembre 2026">
+          </div>
+          <div class="campo">
+            <label for="gio-data">Data di uscita</label>
+            <input type="date" id="gio-data">
+          </div>
+        </div>
+        <div class="campo">
+          <label>Il PDF *</label>
+          <div class="subida cartel" id="sub-gio">
+            <div class="subida-previa"><img alt="" hidden><span>Nessun PDF</span></div>
+            <div class="subida-acc">
+              <label class="btn mini">Scegli il PDF<input type="file" accept="application/pdf" hidden></label>
+            </div>
+          </div>
+          <p class="pista" id="gio-pdf-info">Fino a 25 MB.</p>
+        </div>
+      </div>
+      <p class="error" id="err-gio" role="alert"></p>
+      <div class="pie-hoja">
+        <button class="btn piena" type="submit" id="gio-pubblica">Pubblica sul sito</button>
+      </div>
+    </form>
+
+    <div class="ed-bloque">
+      <h3>I numeri</h3>
+      <div id="gio-numeri"></div>
+    </div>
+
+    <div class="ed-bloque">
+      <h3>Gli iscritti</h3>
+      <p class="pista" id="gio-iscr-n"></p>
+      <details style="margin-top:8px"><summary class="pista" style="cursor:pointer">Vedi l'elenco</summary>
+        <div id="gio-iscr-lista" class="accessi" style="margin-top:10px"></div>
+      </details>
+    </div>
+
+    <div class="pie-hoja">
+      <button class="btn" type="button" id="gio-cerrar">Chiudi</button>
     </div>
   </div>
 </div>
@@ -1739,6 +1807,9 @@ function cargarSito() {
       ? (SITO.storia.fondatori || []).length + ' fondatori, scritti da te.' : 'Per ora esce quella di serie. Aprila per cambiarla.';
     $('#sito-wa').value = SITO.whatsapp;
     SITO.donazioni = (s && s.donazioni) || {};
+    ALMACEN.leerGiornalini().then(function (l) {
+      if (l && l.length) $('#gio-estado').textContent = l.length + (l.length === 1 ? ' numero' : ' numeri') + ' sul sito. L’ultimo: «' + l[0].titolo + '».';
+    });
     ponerDona('sdn', SITO.donazioni);
     SITO_PENDIENTE = null;
     $('#sito-salva').disabled = true;
@@ -2185,6 +2256,166 @@ document.addEventListener('keydown', function (e) {
   if (e.key === 'Escape' && $('#ev-capa').style.display === 'block') cerrarEventi();
 });
 $('#sito-eventi').addEventListener('click', function () { abrirEventi('generale', ''); });
+
+/* --- el giornalino ---------------------------------------------------------
+   Subir: se elige el PDF, se saca la portada de su primera pagina (con pdf.js,
+   en el propio navegador) y al pulsar «Pubblica» suben los dos y se apunta el
+   numero. Mandarlo por email es un boton aparte, para que nadie lo mande sin
+   querer: primero una prueba a uno mismo, despues a todos. */
+var GIO = { pdf: null, cop: null, numeri: [], iscritti: [] };
+var GIO_MAX = 25 * 1024 * 1024;
+function pdfjs() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  return new Promise(function (ok, mal) {
+    var sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    sc.onload = function () {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      ok(window.pdfjsLib);
+    };
+    sc.onerror = function () { mal(new Error('pdf.js')); };
+    document.head.appendChild(sc);
+  });
+}
+/* La primera pagina del PDF, como JPEG de 900 px de ancho. Si falla (PDF
+   raro, sin red para pdf.js), el numero se publica igual, sin portada. */
+function portadaDePdf(file) {
+  return pdfjs().then(function (lib) {
+    return file.arrayBuffer().then(function (buf) { return lib.getDocument({ data: buf }).promise; });
+  }).then(function (doc) { return doc.getPage(1); }).then(function (pag) {
+    var v1 = pag.getViewport({ scale: 1 }), esc = 900 / v1.width, v = pag.getViewport({ scale: esc });
+    var c = document.createElement('canvas'); c.width = Math.round(v.width); c.height = Math.round(v.height);
+    var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    return pag.render({ canvasContext: ctx, viewport: v }).promise.then(function () {
+      return new Promise(function (ok) { c.toBlob(function (b) { ok(b); }, 'image/jpeg', 0.82); });
+    });
+  }).catch(function () { return null; });
+}
+function abrirGio() {
+  GIO.pdf = null; GIO.cop = null;
+  $('#gio-tit').value = ''; $('#gio-data').value = new Date().toISOString().slice(0, 10);
+  $('#err-gio').textContent = ''; $('#gio-pdf-info').textContent = 'Fino a 25 MB.';
+  pintarGioPrevia('');
+  $('#gio-capa').style.display = 'block'; document.body.style.overflow = 'hidden';
+  cargarGio();
+}
+function cerrarGio() { $('#gio-capa').style.display = 'none'; document.body.style.overflow = ''; }
+function pintarGioPrevia(url) {
+  var caja = $('#sub-gio'), img = caja.querySelector('img'), sp = caja.querySelector('span');
+  if (url) { img.src = url; img.hidden = false; sp.hidden = true; }
+  else { img.removeAttribute('src'); img.hidden = true; sp.hidden = false; sp.textContent = GIO.pdf ? 'PDF pronto' : 'Nessun PDF'; }
+}
+function cargarGio() {
+  return Promise.all([ALMACEN.leerGiornalini(), ALMACEN.iscritti().catch(function () { return []; })]).then(function (r) {
+    GIO.numeri = r[0] || []; GIO.iscritti = r[1] || [];
+    pintarGio();
+  });
+}
+function pintarGio() {
+  var conf = GIO.iscritti.filter(function (i) { return i.confermato; }).length;
+  var pend = GIO.iscritti.length - conf;
+  $('#gio-iscr-n').textContent = conf + (conf === 1 ? ' iscritto confermato' : ' iscritti confermati')
+    + (pend ? ' · ' + pend + ' in attesa di conferma (non ricevono niente finché non confermano)' : '');
+  $('#gio-estado').textContent = GIO.numeri.length
+    ? GIO.numeri.length + (GIO.numeri.length === 1 ? ' numero' : ' numeri') + ' sul sito · ' + conf + ' iscritti'
+    : 'Carica il PDF di ogni numero: esce nella pagina principale e lo mandi per email a chi si è iscritto.';
+  var cont = $('#gio-numeri'); cont.textContent = '';
+  if (!GIO.numeri.length) {
+    var v = document.createElement('div'); v.className = 'gal-vacia';
+    v.textContent = 'Ancora nessun numero. Finché non ne carichi uno, sul sito la sezione non si vede.';
+    cont.appendChild(v);
+  }
+  GIO.numeri.forEach(function (g, i) {
+    var it = document.createElement('div'); it.className = 'gal-item';
+    var im = document.createElement('img'); im.alt = '';
+    if (g.copertina) im.src = g.copertina; else im.style.background = '#222';
+    var der = document.createElement('div');
+    var h = document.createElement('h4'); h.style.fontFamily = 'Fraunces,serif'; h.style.fontWeight = '400'; h.style.fontSize = '18px';
+    h.textContent = g.titolo + (i === 0 ? '  · in primo piano' : '');
+    var p = document.createElement('p'); p.className = 'pista';
+    p.textContent = g.data + ' · ' + (g.inviato ? 'Mandato per email il ' + String(g.inviato).slice(0, 10) : 'Non ancora mandato per email');
+    var acc = document.createElement('div'); acc.className = 'gal-acc';
+    function b(txt, clase, fn) { var x = document.createElement('button'); x.type = 'button'; x.className = 'btn mini' + (clase ? ' ' + clase : ''); x.textContent = txt; x.addEventListener('click', fn); acc.appendChild(x); return x; }
+    var a = document.createElement('a'); a.className = 'btn mini'; a.href = g.pdf; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Apri PDF'; acc.appendChild(a);
+    b('Prova a me', '', function () {
+      var a2 = prompt('A quale email mando la prova?', '');
+      if (!a2) return;
+      ALMACEN.funzioneGiornalino({ azione: 'prova', id: g.id, a: a2.trim() }, true)
+        .then(function () { avisar('Prova mandata a ' + a2.trim() + '. Guarda anche nello spam.'); })
+        .catch(function (e) { avisar('Non è partita: ' + e.message, true); });
+    });
+    var bi = b(g.inviato ? 'Rimanda a tutti' : 'Manda a tutti (' + conf + ')', 'piena', function () {
+      if (!conf) { avisar('Non ci sono ancora iscritti confermati.', true); return; }
+      if (!confirm((g.inviato ? 'Questo numero è già stato mandato. Lo rimando a tutti ' : 'Mando «' + g.titolo + '» a tutti ') + 'i ' + conf + ' iscritti?')) return;
+      bi.disabled = true; bi.textContent = 'Invio…';
+      ALMACEN.funzioneGiornalino({ azione: 'invia', id: g.id, forza: !!g.inviato }, true).then(function (r) {
+        avisar(r.stato === 'gia_inviato' ? 'Era già stato mandato.' : 'Mandato a ' + r.inviati + ' iscritti.');
+        return cargarGio();
+      }).catch(function (e) { avisar('Non è partito: ' + e.message, true); bi.disabled = false; });
+    });
+    b('Togli', 'peligro', function () {
+      if (!confirm('Tolgo «' + g.titolo + '» dal sito?')) return;
+      ALMACEN.togliGiornalino(g).then(function () { avisar('Numero tolto.'); return cargarGio(); })
+        .catch(function (e) { avisar('Non sono riuscito: ' + e.message, true); });
+    });
+    der.appendChild(h); der.appendChild(p); der.appendChild(acc);
+    it.appendChild(im); it.appendChild(der); cont.appendChild(it);
+  });
+  var li = $('#gio-iscr-lista'); li.textContent = '';
+  GIO.iscritti.forEach(function (x) {
+    var r = document.createElement('div'); r.className = 'acceso' + (x.confermato ? '' : ' apagado');
+    var q = document.createElement('div'); q.className = 'q';
+    var bb = document.createElement('b'); bb.textContent = x.email;
+    var sp = document.createElement('span'); sp.textContent = (x.confermato ? 'confermato' : 'in attesa di conferma') + ' · ' + String(x.creato).slice(0, 10);
+    q.appendChild(bb); q.appendChild(sp);
+    var t = document.createElement('button'); t.type = 'button'; t.className = 'btn mini peligro'; t.textContent = 'Togli';
+    t.addEventListener('click', function () {
+      if (!confirm('Tolgo ' + x.email + ' dagli iscritti?')) return;
+      ALMACEN.togliIscritto(x.email).then(function () { avisar('Tolto.'); return cargarGio(); })
+        .catch(function (e) { avisar('Non sono riuscito: ' + e.message, true); });
+    });
+    r.appendChild(q); r.appendChild(t); li.appendChild(r);
+  });
+}
+$('#sub-gio input[type=file]').addEventListener('change', function () {
+  var f = this.files && this.files[0]; this.value = '';
+  var err = $('#err-gio'); err.textContent = '';
+  if (!f) return;
+  if (f.type !== 'application/pdf' && !/\.pdf$/i.test(f.name)) { err.textContent = 'Serve un file PDF.'; return; }
+  if (f.size > GIO_MAX) { err.textContent = 'Il PDF pesa ' + (f.size / 1048576).toFixed(1) + ' MB: il massimo è 25 MB. Esportalo di nuovo «per il web» o «dimensione ridotta».'; return; }
+  GIO.pdf = f; GIO.cop = null;
+  $('#gio-pdf-info').textContent = f.name + ' · ' + (f.size / 1048576).toFixed(1) + ' MB · preparo la copertina…';
+  if (!$('#gio-tit').value) $('#gio-tit').value = f.name.replace(/\.pdf$/i, '').replace(/[_-]+/g, ' ').slice(0, 120);
+  pintarGioPrevia('');
+  portadaDePdf(f).then(function (b) {
+    GIO.cop = b;
+    $('#gio-pdf-info').textContent = f.name + ' · ' + (f.size / 1048576).toFixed(1) + ' MB' + (b ? '' : ' · (copertina non disponibile: esce senza)');
+    if (b) pintarGioPrevia(URL.createObjectURL(b));
+  });
+});
+$('#f-gio').addEventListener('submit', function (e) {
+  e.preventDefault();
+  var err = $('#err-gio'), b = $('#gio-pubblica'), tit = $('#gio-tit').value.trim();
+  err.textContent = '';
+  if (!tit) { err.textContent = 'Manca il titolo.'; return; }
+  if (!GIO.pdf) { err.textContent = 'Manca il PDF.'; return; }
+  b.disabled = true; b.textContent = 'Carico il PDF…';
+  var dati = { titolo: tit, data: $('#gio-data').value || new Date().toISOString().slice(0, 10), copertina: '' };
+  ALMACEN.subirGiornalino(new Blob([GIO.pdf], { type: 'application/pdf' }), 'numero').then(function (url) {
+    dati.pdf = url;
+    return GIO.cop ? ALMACEN.subirGiornalino(GIO.cop, 'copertina').then(function (u) { dati.copertina = u; }) : null;
+  }).then(function () { return ALMACEN.guardaGiornalino(dati); }).then(function () {
+    avisar('Pubblicato: «' + tit + '» è già sul sito. Per mandarlo agli iscritti usa «Manda a tutti».');
+    GIO.pdf = null; GIO.cop = null; $('#gio-tit').value = ''; pintarGioPrevia(''); $('#gio-pdf-info').textContent = 'Fino a 25 MB.';
+    return cargarGio();
+  }).catch(function (x) {
+    err.textContent = 'Non sono riuscito a pubblicarlo: ' + x.message;
+  }).then(function () { b.disabled = false; b.textContent = 'Pubblica sul sito'; });
+});
+$('#gio-cerrar').addEventListener('click', cerrarGio);
+$('#gio-capa').addEventListener('click', function (e) { if (e.target === this) cerrarGio(); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && $('#gio-capa').style.display === 'block') cerrarGio(); });
+$('#sito-gio').addEventListener('click', abrirGio);
 
 /* --- las preguntas (solo el general) --------------------------------------
    Se edita una copia; nada se guarda hasta «Salva le domande». La primera vez

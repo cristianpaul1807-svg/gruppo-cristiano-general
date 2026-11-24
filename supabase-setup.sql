@@ -673,6 +673,87 @@ revoke all on public.traduzione from anon, authenticated;
 -- not find the '...' column in the schema cache" hasta que se refresca sola).
 notify pgrst, 'reload schema';
 
+-- ----------------------------------------------------------------------------
+-- EL GIORNALINO — el periodico de las iglesias, en PDF, y quien lo recibe
+--
+-- giornalino: cada numero (titulo, fecha, el PDF y su portada). Lo sube el
+-- general desde el panel; la web lo lee. `inviato` = cuando se mando por
+-- email a los suscritos (null = todavia no): asi no se manda dos veces.
+--
+-- iscritto: quien quiere recibirlo por email. Se apunta desde la web, recibe
+-- un correo para CONFIRMAR (lo exige la ley: doble confirmacion) y solo
+-- entonces cuenta. Cada email lleva su enlace para darse de baja, que borra
+-- la fila. La web NO puede leer ni escribir esta tabla: todo pasa por la
+-- funcion `giornalino`, que entra con la llave de servicio. El general si la
+-- ve desde el panel (cuantos hay, y quitar a alguien si se lo piden).
+-- ----------------------------------------------------------------------------
+create table if not exists public.giornalino (
+  id        uuid primary key default gen_random_uuid(),
+  titolo    text not null check (char_length(titolo) between 1 and 120),
+  data      date not null default current_date,
+  pdf       text not null,
+  copertina text not null default '',
+  inviato   timestamptz,
+  creato    timestamptz not null default now()
+);
+create index if not exists giornalino_data_idx on public.giornalino (data desc);
+
+alter table public.giornalino enable row level security;
+drop policy if exists "giornalino: lo ve cualquiera" on public.giornalino;
+drop policy if exists "giornalino: solo el general"  on public.giornalino;
+create policy "giornalino: lo ve cualquiera"
+  on public.giornalino for select to anon, authenticated using (true);
+create policy "giornalino: solo el general"
+  on public.giornalino for all to authenticated
+  using (public.es_generale())
+  with check (public.es_generale()
+    and pdf like 'https://ifmrqbnnvlmnrfbseonr.supabase.co/storage/v1/object/public/giornalino/%'
+    and (copertina = '' or copertina like 'https://ifmrqbnnvlmnrfbseonr.supabase.co/storage/v1/object/public/giornalino/%'));
+grant select on public.giornalino to anon, authenticated;
+grant insert, update, delete on public.giornalino to authenticated;
+
+create table if not exists public.iscritto (
+  email      text primary key check (email = lower(email) and char_length(email) <= 200),
+  token      uuid not null default gen_random_uuid(),
+  lingua     text not null default 'it' check (lingua in ('it', 'es', 'en')),
+  confermato boolean not null default false,
+  creato     timestamptz not null default now(),
+  confermato_il timestamptz
+);
+alter table public.iscritto enable row level security;
+drop policy if exists "iscritti: el general los ve"   on public.iscritto;
+drop policy if exists "iscritti: el general los quita" on public.iscritto;
+create policy "iscritti: el general los ve"
+  on public.iscritto for select to authenticated using (public.es_generale());
+create policy "iscritti: el general los quita"
+  on public.iscritto for delete to authenticated using (public.es_generale());
+revoke all on public.iscritto from anon;
+grant select, delete on public.iscritto to authenticated;
+
+-- El almacen de los PDF: aparte del de las fotos, porque aquel solo acepta
+-- imagenes de hasta 3 MB y un giornalino en PDF pesa mas. Publico para leer;
+-- subir y borrar, solo el general. Hasta 25 MB por archivo.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('giornalino', 'giornalino', true, 26214400, array['application/pdf', 'image/jpeg'])
+on conflict (id) do update
+  set public = excluded.public,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "giornalino: ver"    on storage.objects;
+drop policy if exists "giornalino: subir"  on storage.objects;
+drop policy if exists "giornalino: borrar" on storage.objects;
+create policy "giornalino: ver"
+  on storage.objects for select to authenticated using (bucket_id = 'giornalino');
+create policy "giornalino: subir"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'giornalino' and public.es_generale());
+create policy "giornalino: borrar"
+  on storage.objects for delete to authenticated
+  using (bucket_id = 'giornalino' and public.es_generale());
+
+notify pgrst, 'reload schema';
+
 -- ============================================================================
 -- DESPUES DE EJECUTAR ESTO — en este orden
 --

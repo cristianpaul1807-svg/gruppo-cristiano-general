@@ -848,6 +848,107 @@ var ALMACEN = (function () {
         .catch(function () { return {}; });
     },
 
+    /* ======================================================================
+       EL GIORNALINO — los numeros (PDF + portada) y la suscripcion por email.
+       Los numeros los lee cualquiera; los sube y los manda el general. La
+       suscripcion pasa por la funcion `giornalino` del servidor: la web no
+       ve nunca la lista de emails.
+       ====================================================================== */
+    leerGiornalini: function () {
+      if (conBase) {
+        return rest('giornalino?select=*&order=data.desc,creato.desc&limit=36', {}, false)
+          .then(function (f) { return f || []; }).catch(function () { return []; });
+      }
+      try { return Promise.resolve(JSON.parse(localStorage.getItem('gcf_giornalino') || '[]') || []); }
+      catch (e) { return Promise.resolve([]); }
+    },
+
+    /* Sube el PDF o su portada al almacen `giornalino` y devuelve su direccion. */
+    subirGiornalino: function (blob, nombre) {
+      if (!conBase) {
+        return new Promise(function (ok, mal) {
+          var fr = new FileReader(); fr.onload = function () { ok(fr.result); }; fr.onerror = function () { mal(fr.error); };
+          fr.readAsDataURL(blob);
+        });
+      }
+      var s = sesion();
+      if (!viva(s)) return Promise.reject(new Error('Sessione scaduta.'));
+      var ruta = nombre + '-' + Date.now() + (blob.type === 'application/pdf' ? '.pdf' : '.jpg');
+      return fetch(SUPABASE.url + '/storage/v1/object/giornalino/' + ruta, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE.key, 'Authorization': 'Bearer ' + s.access_token,
+                   'Content-Type': blob.type, 'cache-control': '31536000' },
+        body: blob
+      }).then(function (r) {
+        return r.text().then(function (t) {
+          if (!r.ok) { var m = t; try { var j = JSON.parse(t); m = j.message || j.error || t; } catch (e) {} throw new Error(m || ('HTTP ' + r.status)); }
+          return SUPABASE.url + '/storage/v1/object/public/giornalino/' + ruta;
+        });
+      });
+    },
+
+    guardaGiornalino: function (g) {
+      var fila = { titolo: String(g.titolo || '').trim().slice(0, 120), data: g.data, pdf: g.pdf, copertina: g.copertina || '' };
+      if (!conBase) {
+        var l = []; try { l = JSON.parse(localStorage.getItem('gcf_giornalino') || '[]') || []; } catch (e) {}
+        fila.id = 'g' + Date.now(); fila.inviato = null; l.unshift(fila);
+        try { localStorage.setItem('gcf_giornalino', JSON.stringify(l)); } catch (e) {}
+        return Promise.resolve(fila);
+      }
+      return rest('giornalino', { method: 'POST', headers: { 'Prefer': 'return=representation' }, body: JSON.stringify(fila) }, true)
+        .then(function (f) { return f && f[0]; });
+    },
+
+    /* Quita un numero y sus dos archivos. */
+    togliGiornalino: function (g) {
+      if (!conBase) {
+        var l = []; try { l = JSON.parse(localStorage.getItem('gcf_giornalino') || '[]') || []; } catch (e) {}
+        try { localStorage.setItem('gcf_giornalino', JSON.stringify(l.filter(function (x) { return x.id !== g.id; }))); } catch (e) {}
+        return Promise.resolve();
+      }
+      var s = sesion(), pre = SUPABASE.url + '/storage/v1/object/public/giornalino/';
+      return rest('giornalino?id=eq.' + encodeURIComponent(g.id), { method: 'DELETE', headers: { 'Prefer': 'return=representation' } }, true)
+        .then(function (f) {
+          if (!f || !f.length) throw new Error('solo l\'amministratore generale');
+          var archivos = [g.pdf, g.copertina].filter(function (u) { return u && u.indexOf(pre) === 0; })
+            .map(function (u) { return u.slice(pre.length); });
+          if (!archivos.length || !viva(s)) return;
+          return fetch(SUPABASE.url + '/storage/v1/object/giornalino', {
+            method: 'DELETE',
+            headers: { 'apikey': SUPABASE.key, 'Authorization': 'Bearer ' + s.access_token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prefixes: archivos })
+          }).catch(function () {});
+        });
+    },
+
+    /* Llama a la funcion `giornalino`. Desde la web (apuntarse) con la clave
+       publica; desde el panel (enviar) con la sesion del general. */
+    funzioneGiornalino: function (datos, comoGeneral) {
+      if (!conBase) return Promise.resolve({ stato: 'inviata', demo: true });
+      var s = comoGeneral ? sesion() : null;
+      return fetch(SUPABASE.url + '/functions/v1/giornalino', {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE.key, 'Content-Type': 'application/json',
+                   'Authorization': 'Bearer ' + (s && viva(s) ? s.access_token : SUPABASE.key) },
+        body: JSON.stringify(datos)
+      }).then(function (r) {
+        return r.text().then(function (t) {
+          var d = {}; try { d = JSON.parse(t); } catch (e) {}
+          if (!r.ok) { var e2 = new Error(d.errore || ('HTTP ' + r.status)); e2.codigo = d.errore; e2.status = r.status; throw e2; }
+          return d;
+        });
+      });
+    },
+
+    /* Los suscritos, para el general (las reglas no se los dan a nadie mas). */
+    iscritti: function () {
+      if (!conBase) return Promise.resolve([]);
+      return rest('iscritto?select=email,lingua,confermato,creato&order=creato.desc', {}, true).then(function (f) { return f || []; });
+    },
+    togliIscritto: function (email) {
+      return rest('iscritto?email=eq.' + encodeURIComponent(email), { method: 'DELETE' }, true);
+    },
+
     /* Anular una invitacion que se quedo a medias. */
     annullaInvito: function (email) {
       if (!conBase) return Promise.resolve();

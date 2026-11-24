@@ -1094,7 +1094,7 @@ function MAPA_DE(sede) {
     /* En la portada, un evento de una iglesia que ya no esta no sale. */
     if (!YO && e.cartella !== 'generale' && (!s || s.publicada === false)) return null;
     var art = document.createElement('article');
-    art.className = 'evento reveal ' + (i % 2 ? 'der' : 'izq');
+    art.className = 'evento reveal ' + (i % 2 ? 'der' : 'izq') + (!YO && e.cartella === 'generale' ? ' gruppo' : '');
 
     var fecha = document.createElement('div'); fecha.className = 'ev-data';
     var dia = document.createElement('b'); dia.textContent = FECHA(e.giorno, { day: 'numeric' });
@@ -1230,6 +1230,76 @@ function MAPA_DE(sede) {
   }
   window.__dibujarPastori = pintar;
   pintar();
+})();
+
+/* ============================================================================
+   EL GIORNALINO — el ultimo numero con su portada, los anteriores y el
+   formulario para recibirlo por email. La suscripcion la hace la funcion
+   `giornalino` del servidor, que manda un correo para confirmar.
+   ============================================================================ */
+(function () {
+  var sec = document.getElementById('giornalino');
+  if (!sec || !window.ALMACEN || !ALMACEN.leerGiornalini) return;
+  var nav = document.getElementById('nav-gio'), numeros = [];
+  function fecha(g) { return FECHA(g.data, { day: 'numeric', month: 'long', year: 'numeric' }); }
+  function pintar() {
+    var g = numeros[0];
+    sec.hidden = !g; if (nav) nav.hidden = !g;
+    if (!g) return;
+    var pdf = SEGURO(g.pdf), cop = IMAGEN(g.copertina);
+    var a = document.getElementById('gio-cop'); a.textContent = ''; a.href = pdf;
+    if (cop) { var im = document.createElement('img'); im.src = cop; im.alt = g.titolo; im.loading = 'lazy'; a.appendChild(im); }
+    else { var v = document.createElement('span'); v.className = 'gio-cop-vuota'; v.textContent = g.titolo; a.appendChild(v); }
+    document.getElementById('gio-titolo').textContent = g.titolo;
+    document.getElementById('gio-data').textContent = fecha(g);
+    document.getElementById('gio-leggi').href = pdf;
+    document.getElementById('gio-scarica').href = pdf;
+    document.getElementById('gio-email').placeholder = TEXTO('gi_email', 'La tua email');
+    var lista = document.getElementById('gio-lista'); lista.textContent = '';
+    numeros.slice(1).forEach(function (x) {
+      var l = document.createElement('a'); l.className = 'gio-num'; l.href = SEGURO(x.pdf); l.target = '_blank'; l.rel = 'noopener';
+      var c = IMAGEN(x.copertina);
+      if (c) { var i2 = document.createElement('img'); i2.src = c; i2.alt = ''; i2.loading = 'lazy'; l.appendChild(i2); }
+      var b = document.createElement('b'); b.textContent = x.titolo; l.appendChild(b);
+      var s = document.createElement('span'); s.textContent = fecha(x); l.appendChild(s);
+      lista.appendChild(l);
+    });
+    document.getElementById('gio-arch-bloque').hidden = numeros.length < 2;
+    if (observarReveal) observarReveal(sec);
+  }
+  window.__dibujarGiornalino = pintar;
+  ALMACEN.leerGiornalini().then(function (l) { numeros = l || []; pintar(); avisoUrl(); });
+
+  /* Al volver del enlace del correo (confirmar o darse de baja). */
+  function avisoUrl() {
+    var e = new URLSearchParams(location.search).get('giornalino');
+    if (!e) return;
+    var m = { confermato: ['gi_confermato', 'Iscrizione confermata: riceverai il prossimo giornalino.'],
+              cancellato: ['gi_cancellato', 'Ti abbiamo cancellato: non riceverai più il giornalino.'],
+              errore: ['gi_link_err', 'Questo link non è più valido. Se vuoi, iscriviti di nuovo qui sotto.'] }[e];
+    if (!m) return;
+    var es = document.getElementById('gio-esito');
+    es.textContent = TEXTO(m[0], m[1]); es.className = 'gio-esito ' + (e === 'errore' ? 'mal' : 'bien');
+    if (!sec.hidden) setTimeout(function () { sec.scrollIntoView({ behavior: 'smooth' }); }, 400);
+  }
+
+  var form = document.getElementById('gio-form');
+  form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var email = document.getElementById('gio-email').value.trim(), ok = document.getElementById('gio-ok').checked;
+    var es = document.getElementById('gio-esito'), b = document.getElementById('gio-btn');
+    function di(k, alt, mal) { es.textContent = TEXTO(k, alt); es.className = 'gio-esito ' + (mal ? 'mal' : 'bien'); }
+    if (!/^[^@\s<>"']+@[^@\s<>"']+\.[a-z]{2,}$/i.test(email)) return di('gi_err_email', 'L’email non sembra giusta.', true);
+    if (!ok) return di('gi_err_priv', 'Per iscriverti serve la spunta qui sopra.', true);
+    b.disabled = true;
+    ALMACEN.funzioneGiornalino({ azione: 'iscrivi', email: email, lingua: LINGUA(), privacy: true }).then(function (r) {
+      if (r.stato === 'gia') di('gi_gia', 'Sei già iscritto: riceverai il prossimo numero.');
+      else { di('gi_inviata', 'Fatto! Ti abbiamo mandato un’email: apri il link che c’è dentro per confermare.'); form.reset(); }
+    }).catch(function (e) {
+      if (e.codigo === 'email') di('gi_err_email', 'L’email non sembra giusta.', true);
+      else di('gi_err', 'In questo momento non riusciamo a iscriverti. Riprova più tardi.', true);
+    }).then(function () { b.disabled = false; });
+  });
 })();
 
 /* ============================================================================
@@ -1449,6 +1519,17 @@ var I18N = {
     dn_copia: "Copiar el IBAN", dn_copiato: "Copiado ✓", dn_copia_c: "Copiar",
     sp_pastori_alt: "Los pastores de la iglesia de",
     foot_trad: "Algunos textos se traducen automáticamente del italiano.",
+    nav_gio: "Giornalino", gi_eyebrow: "El giornalino", gi_p: "El periódico de nuestras iglesias: noticias, testimonios y citas.",
+    gi_leggi: "Leer el giornalino", gi_scarica: "Descargar el PDF", gi_iscr_h: "Recíbelo por email",
+    gi_iscr_p: "Te enviamos cada número nuevo en cuanto sale. Nada más.", gi_email: "Tu email", gi_btn: "Suscribirme",
+    gi_privacy: "Acepto que mi email se use solo para enviarme el giornalino. Puedo darme de baja cuando quiera con el enlace al final de cada email.",
+    gi_info_h: "Información de privacidad",
+    gi_info: "Responsable: Gruppo Cristiano. Usamos tu email solo para enviarte el giornalino y no se lo damos a nadie. Los emails salen a través del servicio Resend y los datos se guardan en Supabase, nuestros proveedores técnicos. Lo conservamos hasta que te des de baja: puedes hacerlo en cualquier momento con el enlace al final de cada email, o escribiéndonos.",
+    gi_prec: "Números anteriores", gi_inviata: "¡Hecho! Te hemos enviado un email: abre el enlace que hay dentro para confirmar.",
+    gi_gia: "Ya estás suscrito: recibirás el próximo número.", gi_err_email: "El email no parece correcto.",
+    gi_err_priv: "Para suscribirte hace falta marcar la casilla de arriba.", gi_err: "Ahora mismo no podemos suscribirte. Inténtalo más tarde.",
+    gi_confermato: "Suscripción confirmada: recibirás el próximo giornalino.", gi_cancellato: "Te hemos dado de baja: ya no recibirás el giornalino.",
+    gi_link_err: "Este enlace ya no es válido. Si quieres, suscríbete de nuevo aquí abajo.",
     nav_pastori: "Pastores", pa_eyebrow: "Los pastores", pa_h2: "Quién te recibe.",
     pa_p: "Los pastores de cada una de nuestras iglesias. Si vienes por primera vez, son ellos quienes te reciben.",
     banda: "Prototipo Digitatex · contenidos por confirmar"
@@ -1538,6 +1619,17 @@ var I18N = {
     dn_copia: "Copy the IBAN", dn_copiato: "Copied ✓", dn_copia_c: "Copy",
     sp_pastori_alt: "The pastors of the church in",
     foot_trad: "Some texts are translated automatically from Italian.",
+    nav_gio: "Newsletter", gi_eyebrow: "The newsletter", gi_p: "The newsletter of our churches: news, testimonies and events.",
+    gi_leggi: "Read the newsletter", gi_scarica: "Download the PDF", gi_iscr_h: "Get it by email",
+    gi_iscr_p: "We send you every new issue as soon as it comes out. Nothing else.", gi_email: "Your email", gi_btn: "Subscribe",
+    gi_privacy: "I agree that my email is used only to send me the newsletter. I can unsubscribe whenever I want with the link at the bottom of every email.",
+    gi_info_h: "Privacy notice",
+    gi_info: "Data controller: Gruppo Cristiano. We use your email only to send you the newsletter and never share it. Emails are sent through the Resend service and data is stored on Supabase, our technical providers. We keep it until you unsubscribe: you can do so at any time with the link at the bottom of every email, or by writing to us.",
+    gi_prec: "Past issues", gi_inviata: "Done! We have sent you an email: open the link inside to confirm.",
+    gi_gia: "You are already subscribed: you will receive the next issue.", gi_err_email: "The email doesn't look right.",
+    gi_err_priv: "To subscribe, please tick the box above.", gi_err: "We can't subscribe you right now. Please try again later.",
+    gi_confermato: "Subscription confirmed: you will receive the next newsletter.", gi_cancellato: "You have been unsubscribed: you won't receive the newsletter anymore.",
+    gi_link_err: "This link is no longer valid. If you like, subscribe again below.",
     nav_pastori: "Pastors", pa_eyebrow: "Our pastors", pa_h2: "Who will welcome you.",
     pa_p: "The pastors of each of our churches. If you come for the first time, they are the ones who will welcome you.",
     banda: "Digitatex prototype · content to be confirmed"
@@ -1584,7 +1676,7 @@ function aplicarIdioma(lang) {
    con el diccionario cargado. */
 function RIDISEGNA() {
   ['__dibujarSedi', '__dibujarFede', '__dibujarFaq', '__dibujarContenidos', '__dibujarSede',
-   '__dibujarGaleria', '__dibujarEventi', '__dibujarDona', '__dibujarPastori'].forEach(function (k) {
+   '__dibujarGaleria', '__dibujarEventi', '__dibujarDona', '__dibujarPastori', '__dibujarGiornalino'].forEach(function (k) {
     if (window[k]) window[k]();
   });
 }

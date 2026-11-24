@@ -147,7 +147,7 @@
 }
 </script>
 
-<link rel="stylesheet" href="estilo.css?v=13">
+<link rel="stylesheet" href="estilo.css?v=14">
 </head>
 <body>
 
@@ -172,6 +172,7 @@
       <a href="#visione" data-i18n="nav_visione">La visione</a>
       <a href="#fede" data-i18n="nav_fede">Punti di fede</a>
       <a href="#domande" data-i18n="nav_domande">Domande</a>
+      <a href="#giornalino" data-i18n="nav_gio" id="nav-gio" hidden>Giornalino</a>
       <a href="#dona" data-i18n="nav_dona" id="nav-dona" hidden>Dona</a>
     </div>
     <div class="langsw">
@@ -404,6 +405,51 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M7 9.6c3.4-1 7.2-.7 10.2 1"/><path d="M7.6 12.7c2.8-.8 5.8-.5 8.3.9"/><path d="M8.2 15.6c2.2-.6 4.4-.4 6.4.7"/></svg>
         <span data-i18n="pr_btn">Ascolta su Spotify</span></a>
     </div>
+  </div>
+</section>
+
+<!-- ============================================================================
+     IL GIORNALINO — el periodico de las iglesias en PDF: el ultimo numero con
+     su portada, los anteriores, y apuntarse para recibirlo por email. Lo sube
+     el general desde su panel. Escondida mientras no haya ningun numero.
+     ============================================================================ -->
+<section id="giornalino" class="gio-sec" hidden>
+  <div class="wrap gio">
+    <a class="gio-cop reveal izq" id="gio-cop" target="_blank" rel="noopener"></a>
+    <div class="reveal der">
+      <p class="eyebrow" data-i18n="gi_eyebrow">Il giornalino</p>
+      <h2 id="gio-titolo"></h2>
+      <p class="gio-data" id="gio-data"></p>
+      <p class="sub" data-i18n="gi_p">Il giornalino delle nostre chiese: notizie, testimonianze e
+        appuntamenti.</p>
+      <div class="acciones">
+        <a class="btn oro" id="gio-leggi" target="_blank" rel="noopener" data-i18n="gi_leggi">Leggi il giornalino</a>
+        <a class="btn" id="gio-scarica" download data-i18n="gi_scarica">Scarica il PDF</a>
+      </div>
+
+      <form class="gio-iscr" id="gio-form" novalidate>
+        <h3 data-i18n="gi_iscr_h">Ricevilo per email</h3>
+        <p data-i18n="gi_iscr_p">Ti mandiamo ogni nuovo numero appena esce. Nient'altro.</p>
+        <div class="gio-riga">
+          <input type="email" id="gio-email" autocomplete="email" required>
+          <button class="btn piena" type="submit" id="gio-btn" data-i18n="gi_btn">Iscriviti</button>
+        </div>
+        <label class="gio-priv"><input type="checkbox" id="gio-ok">
+          <span data-i18n="gi_privacy">Accetto che la mia email venga usata solo per mandarmi il giornalino.
+            Posso cancellarmi quando voglio con il link in fondo a ogni email.</span></label>
+        <details class="gio-info"><summary data-i18n="gi_info_h">Informativa privacy</summary>
+          <p data-i18n="gi_info">Titolare: Gruppo Cristiano. Usiamo la tua email solo per mandarti il
+            giornalino e non la diamo a nessuno. Le email partono tramite il servizio Resend e i dati sono
+            conservati su Supabase, i nostri fornitori tecnici. La conserviamo finché non ti cancelli: lo
+            puoi fare in ogni momento con il link in fondo a ogni email, o scrivendoci.</p>
+        </details>
+        <p class="gio-esito" id="gio-esito" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+  <div class="wrap gio-arch" id="gio-arch-bloque" hidden>
+    <h3 data-i18n="gi_prec">Numeri precedenti</h3>
+    <div class="gio-lista" id="gio-lista"></div>
   </div>
 </section>
 
