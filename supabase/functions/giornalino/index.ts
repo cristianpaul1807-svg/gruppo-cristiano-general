@@ -205,6 +205,13 @@ function correoEvento(e: any, chi: string, pagina: string, a: string, lingua: st
     const [y, m, d] = String(e.giorno).split("-").map(Number);
     quando = new Intl.DateTimeFormat(loc2, { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
       .format(new Date(Date.UTC(y, m - 1, d)));
+    if (e.fine && e.fine > e.giorno) {
+      const [y2, m2, d2] = String(e.fine).split("-").map(Number);
+      const corto = new Intl.DateTimeFormat(loc2, { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" })
+        .format(new Date(Date.UTC(y, m - 1, d)));
+      quando = corto + " – " + new Intl.DateTimeFormat(loc2, { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
+        .format(new Date(Date.UTC(y2, m2 - 1, d2)));
+    }
     quando = quando.charAt(0).toUpperCase() + quando.slice(1);
   } catch (_x) { /* la fecha tal cual */ }
   const titolo = loc(e, "titolo", lingua), testo = loc(e, "testo", lingua);

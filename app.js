@@ -1099,7 +1099,8 @@ function MAPA_DE(sede) {
     var fecha = document.createElement('div'); fecha.className = 'ev-data';
     var dia = document.createElement('b'); dia.textContent = FECHA(e.giorno, { day: 'numeric' });
     var mes = document.createElement('span'); mes.textContent = FECHA(e.giorno, { month: 'short' }).replace('.', '');
-    fecha.appendChild(dia); fecha.appendChild(mes);
+    var ano = document.createElement('i'); ano.textContent = String(e.giorno).slice(0, 4);
+    fecha.appendChild(dia); fecha.appendChild(mes); fecha.appendChild(ano);
     art.appendChild(fecha);
 
     var cuerpo = document.createElement('div'); cuerpo.className = 'ev-corpo';
@@ -1115,7 +1116,12 @@ function MAPA_DE(sede) {
     }
     var h = document.createElement('h3'); h.textContent = LOC(e, 'titolo'); cuerpo.appendChild(h);
     var cuando = document.createElement('p'); cuando.className = 'ev-quando';
-    var largo = FECHA(e.giorno, { weekday: 'long', day: 'numeric', month: 'long' });
+    /* Con el año siempre, y «desde – hasta» si dura varios dias. */
+    var largo = FECHA(e.giorno, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    if (e.fine && e.fine > e.giorno) {
+      largo = FECHA(e.giorno, { weekday: 'long', day: 'numeric', month: 'long' }) + ' – '
+        + FECHA(e.fine, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
     cuando.textContent = [largo.charAt(0).toUpperCase() + largo.slice(1), TR(e.ora)].filter(Boolean).join(' · ');
     cuerpo.appendChild(cuando);
     if (e.luogo) {

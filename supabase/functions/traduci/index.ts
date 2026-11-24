@@ -80,7 +80,7 @@ async function textos(): Promise<string[]> {
     leer("sede?select=testo,lingue,orari,pastori&publicada=eq.true"),
     leer("sito?select=domande,visione,storia&limit=1"),
     leer("foto?select=testo"),
-    leer("evento?select=titolo,ora,luogo,testo&giorno=gte." + hoy),
+    leer("evento?select=titolo,ora,luogo,testo&or=(giorno.gte." + hoy + ",fine.gte." + hoy + ")"),
   ]);
 
   for (const s of sedi) {

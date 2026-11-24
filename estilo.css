@@ -582,6 +582,8 @@ html.dominio body{padding-bottom:0;}
 .ev-data b{display:block;font-family:'Fraunces',serif;font-size:34px;font-weight:500;}
 .ev-data span{display:block;margin-top:6px;font-size:11px;font-weight:600;letter-spacing:.16em;
   text-transform:uppercase;color:var(--oro);}
+.ev-data i{display:block;margin-top:4px;font-style:normal;font-size:10.5px;letter-spacing:.08em;color:rgba(255,255,255,.75);}
+.evento.gruppo .ev-data i{color:var(--marino);opacity:.8;}
 .ev-chi{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
   color:var(--blu-texto);margin-bottom:8px;}
 a.ev-chi:hover{text-decoration:underline;text-underline-offset:3px;}

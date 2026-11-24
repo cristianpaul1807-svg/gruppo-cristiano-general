@@ -756,6 +756,13 @@ create policy "giornalino: borrar"
 -- nunca se manda dos veces el mismo aviso.
 alter table public.evento add column if not exists avvisato timestamptz;
 
+-- El ultimo dia de un evento que dura varios (retiros, conferencias). Null =
+-- un solo dia. El evento sigue en la web hasta su ultimo dia.
+alter table public.evento add column if not exists fine date;
+do $$ begin
+  alter table public.evento add constraint evento_fine_dopo check (fine is null or fine >= giorno);
+exception when duplicate_object then null; end $$;
+
 notify pgrst, 'reload schema';
 
 -- ============================================================================

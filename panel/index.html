@@ -736,9 +736,13 @@ a.btn{text-decoration:none;}
             <input type="date" id="ev-giorno">
           </div>
           <div class="campo">
-            <label for="ev-ora">Ora</label>
-            <input type="text" id="ev-ora" maxlength="40" placeholder="19:30">
+            <label for="ev-fine">Fino al <span style="text-transform:none;letter-spacing:0">(se dura più giorni)</span></label>
+            <input type="date" id="ev-fine">
           </div>
+        </div>
+        <div class="campo">
+          <label for="ev-ora">Ora</label>
+          <input type="text" id="ev-ora" maxlength="40" placeholder="19:30">
         </div>
         <div class="campo">
           <label for="ev-luogo">Luogo</label>
@@ -2149,7 +2153,7 @@ function pintarEventos() {
     var der = document.createElement('div');
     var h = document.createElement('h4'); h.textContent = e.titolo;
     var p = document.createElement('p');
-    p.textContent = [e.ora, e.luogo, e.foto ? 'con locandina' : '', e.link ? 'con link al post' : '',
+    p.textContent = [e.fine ? 'fino al ' + e.fine.split('-').reverse().join('/') : '', e.ora, e.luogo, e.foto ? 'con locandina' : '', e.link ? 'con link al post' : '',
       (e.titolo_es ? 'ES' : '') + (e.titolo_es && e.titolo_en ? ' + ' : '') + (e.titolo_en ? 'EN' : '')]
       .filter(Boolean).join(' · ');
     var acc = document.createElement('div'); acc.className = 'gal-acc';
@@ -2191,6 +2195,7 @@ function formEvento(e) {
   $('#ev-testo-en').value = e ? (e.testo_en || '') : '';
   vistaItaliano('#f-ev');
   $('#ev-giorno').value = e ? e.giorno : '';
+  $('#ev-fine').value = e ? (e.fine || '') : '';
   $('#ev-ora').value = e ? e.ora : '';
   $('#ev-luogo').value = e ? e.luogo : '';
   $('#ev-testo').value = e ? e.testo : '';
@@ -2217,6 +2222,7 @@ $('#f-ev').addEventListener('submit', function (ev) {
   var datos = {
     id: EV.editando ? EV.editando.id : undefined,
     titolo: $('#ev-titolo').value.trim(), giorno: $('#ev-giorno').value,
+    fine: $('#ev-fine').value || null,
     ora: $('#ev-ora').value.trim(), luogo: $('#ev-luogo').value.trim(),
     testo: $('#ev-testo').value.trim(), link: $('#ev-link').value.trim(),
     titolo_es: $('#ev-titolo-es').value.trim(), titolo_en: $('#ev-titolo-en').value.trim(),
@@ -2227,7 +2233,8 @@ $('#f-ev').addEventListener('submit', function (ev) {
   if (!datos.titolo) { vistaItaliano('#f-ev'); err.textContent = 'Manca il titolo in italiano.'; return; }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(datos.giorno)) { err.textContent = 'Manca la data.'; return; }
   var hoy = new Date(); hoy = hoy.getFullYear() + '-' + ('0' + (hoy.getMonth() + 1)).slice(-2) + '-' + ('0' + hoy.getDate()).slice(-2);
-  if (datos.giorno < hoy) { err.textContent = 'La data è già passata.'; return; }
+  if ((datos.fine || datos.giorno) < hoy) { err.textContent = 'La data è già passata.'; return; }
+  if (datos.fine && datos.fine < datos.giorno) { err.textContent = '«Fino al» è prima della data di inizio.'; return; }
   if (datos.link && !/^(https?:\/\/)?[^\s<>"']+\.[^\s<>"']+$/i.test(datos.link)) { err.textContent = 'Il link al post non sembra giusto.'; return; }
   var vieja = datos.foto, cartel = EV.cartel;
   b.disabled = true; b.textContent = cartel instanceof Blob ? 'Carico la locandina…' : 'Salvo…';

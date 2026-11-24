@@ -253,6 +253,8 @@ var ALMACEN = (function () {
     return {
       titolo: c(e.titolo, 120), titolo_es: c(e.titolo_es, 120), titolo_en: c(e.titolo_en, 120),
       giorno: c(e.giorno, 10), ora: c(e.ora, 40), luogo: c(e.luogo, 160),
+      /* el ultimo dia, si dura varios (retiros, conferencias); si no, null */
+      fine: (/^\d{4}-\d{2}-\d{2}$/.test(String(e.fine || '')) && e.fine > e.giorno) ? e.fine : null,
       testo: c(e.testo, 1000), testo_es: c(e.testo_es, 1000), testo_en: c(e.testo_en, 1000),
       link: link, foto: c(e.foto, 600)
     };
@@ -762,13 +764,17 @@ var ALMACEN = (function () {
     leerEventi: function (cartella) {
       var desde = hoy();
       if (conBase) {
-        return rest('evento?select=id,cartella,titolo,titolo_es,titolo_en,giorno,ora,luogo,testo,testo_es,testo_en,foto,link'
-          + '&giorno=gte.' + desde + (cartella ? '&cartella=eq.' + encodeURIComponent(cartella) : '')
-          + '&order=giorno.asc,ora.asc&limit=60', {}, false)
+        /* Sigue saliendo mientras no haya terminado: hasta su ultimo dia. Si
+           la base todavia no tiene la columna `fine` (falta pegar el SQL), se
+           piden como antes: mejor sin el «hasta» que sin eventos. */
+        var filtro = (cartella ? '&cartella=eq.' + encodeURIComponent(cartella) : '') + '&order=giorno.asc,ora.asc&limit=60';
+        var campos = 'id,cartella,titolo,titolo_es,titolo_en,giorno,ora,luogo,testo,testo_es,testo_en,foto,link';
+        return rest('evento?select=' + campos + ',fine&or=(giorno.gte.' + desde + ',fine.gte.' + desde + ')' + filtro, {}, false)
+          .catch(function () { return rest('evento?select=' + campos + '&giorno=gte.' + desde + filtro, {}, false); })
           .then(function (f) { return f || []; }).catch(function () { return []; });
       }
       return Promise.resolve(eventiDemo().filter(function (e) {
-        return e.giorno >= desde && (!cartella || e.cartella === cartella);
+        return (e.fine || e.giorno) >= desde && (!cartella || e.cartella === cartella);
       }).sort(function (a, b) { return (a.giorno + a.ora) < (b.giorno + b.ora) ? -1 : 1; }));
     },
 
@@ -796,15 +802,24 @@ var ALMACEN = (function () {
         eventiDemo(todos);
         return Promise.resolve(fila);
       }
-      if (datos.id) {
-        return rest('evento?id=eq.' + encodeURIComponent(datos.id), {
-          method: 'PATCH', headers: { 'Prefer': 'return=representation' }, body: JSON.stringify(fila)
-        }, true).then(function (f) { if (!f || !f.length) throw new Error('non è un evento tuo'); return f[0]; });
+      if (!datos.id) fila.cartella = cartella;
+      function enviar(f) {
+        if (datos.id) {
+          return rest('evento?id=eq.' + encodeURIComponent(datos.id), {
+            method: 'PATCH', headers: { 'Prefer': 'return=representation' }, body: JSON.stringify(f)
+          }, true).then(function (r) { if (!r || !r.length) throw new Error('non è un evento tuo'); return r[0]; });
+        }
+        return rest('evento', {
+          method: 'POST', headers: { 'Prefer': 'return=representation' }, body: JSON.stringify(f)
+        }, true).then(function (r) { return r && r[0]; });
       }
-      fila.cartella = cartella;
-      return rest('evento', {
-        method: 'POST', headers: { 'Prefer': 'return=representation' }, body: JSON.stringify(fila)
-      }, true).then(function (f) { return f && f[0]; });
+      /* Si la base todavia no tiene la columna `fine` (falta el SQL), se
+         guarda sin el «hasta», en vez de no guardar nada. */
+      return enviar(fila).catch(function (e) {
+        if (!/'fine'/.test(e.message || '')) throw e;
+        var sin = Object.assign({}, fila); delete sin.fine;
+        return enviar(sin);
+      });
     },
 
     togliEvento: function (ev) {
@@ -826,9 +841,9 @@ var ALMACEN = (function () {
     pulisciEventi: function (cartella) {
       var self = this, h = hoy();
       return self.tuttiEventi(cartella).then(function (lista) {
-        var viejos = (lista || []).filter(function (e) { return e.giorno < h; });
+        var viejos = (lista || []).filter(function (e) { return (e.fine || e.giorno) < h; });
         return Promise.all(viejos.map(function (e) { return self.togliEvento(e).catch(function () {}); }))
-          .then(function () { return (lista || []).filter(function (e) { return e.giorno >= h; }); });
+          .then(function () { return (lista || []).filter(function (e) { return (e.fine || e.giorno) >= h; }); });
       });
     },
 
