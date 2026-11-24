@@ -765,6 +765,17 @@ exception when duplicate_object then null; end $$;
 
 notify pgrst, 'reload schema';
 
+-- ----------------------------------------------------------------------------
+-- LAS FUNCIONES DEL SERVIDOR (traduci, giornalino) entran con el papel
+-- service_role. En este proyecto Supabase no da permisos solo sobre las
+-- tablas nuevas, tampoco a ese papel: sin esto, las funciones no pueden leer
+-- nada ("permission denied").
+-- ----------------------------------------------------------------------------
+grant usage on schema public to service_role;
+grant select, insert, update, delete on all tables in schema public to service_role;
+alter default privileges in schema public grant select, insert, update, delete on tables to service_role;
+notify pgrst, 'reload schema';
+
 -- ============================================================================
 -- DESPUES DE EJECUTAR ESTO — en este orden
 --

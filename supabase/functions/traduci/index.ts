@@ -28,7 +28,22 @@
 // ============================================================================
 
 const URL_BASE = Deno.env.get("SUPABASE_URL")!;
-const SERVICIO = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// La llave de servicio. Los proyectos nuevos de Supabase usan llaves nuevas
+// ("sb_secret_..."), que van SOLO en la cabecera apikey: si ademas se mandan
+// como "Authorization: Bearer", la base las rechaza. Las viejas (un JWT,
+// "eyJ...") van en las dos. Se toma la que haya.
+function llaveServicio(): string {
+  const v = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (v) return v;
+  try {
+    const j = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}");
+    return String(Object.values(j)[0] || "");
+  } catch (_e) { return ""; }
+}
+const SERVICIO = llaveServicio();
+const LLAVE: Record<string, string> = SERVICIO.startsWith("eyJ")
+  ? { apikey: SERVICIO, Authorization: "Bearer " + SERVICIO }
+  : { apikey: SERVICIO };
 const DEEPL = Deno.env.get("DEEPL_KEY") || "";
 
 // Tope de caracteres nuevos por llamada: el plan gratuito de DeepL da 500.000
@@ -45,21 +60,16 @@ const CORS = {
 function db(ruta: string, init: RequestInit = {}) {
   return fetch(URL_BASE + "/rest/v1/" + ruta, {
     ...init,
-    headers: {
-      apikey: SERVICIO,
-      Authorization: "Bearer " + SERVICIO,
-      "Content-Type": "application/json",
-      ...(init.headers || {}),
-    },
+    headers: { ...LLAVE, "Content-Type": "application/json", ...(init.headers || {}) },
   });
 }
 
 // Lo que ha pasado en esta llamada, para el campo "estado" de la respuesta:
 // asi se ve desde fuera por que no traduce, sin ensenar ninguna clave.
-let fallosBase = 0;
+let fallosBase = 0, errorBase = "";
 async function leer(ruta: string): Promise<any[]> {
   const r = await db(ruta);
-  if (!r.ok) { fallosBase++; return []; }
+  if (!r.ok) { fallosBase++; if (!errorBase) errorBase = r.status + " " + (await r.text()).slice(0, 120); return []; }
   return await r.json();
 }
 
@@ -136,7 +146,7 @@ Deno.serve(async (req) => {
     });
   }
 
-  fallosBase = 0;
+  fallosBase = 0; errorBase = "";
   let deeplEstado = DEEPL ? (DEEPL.endsWith(":fx") ? "clave gratuita" : "clave de pago") : "SIN CLAVE: falta el secreto DEEPL_KEY";
   const lista = await textos();
   const claves = await Promise.all(lista.map(huella));
@@ -184,7 +194,7 @@ Deno.serve(async (req) => {
     textos_italianos: lista.length,
     traducidos: Object.keys(testi).length,
     deepl: deeplEstado,
-    base_de_datos: fallosBase ? "ERROR: no puede leer " + fallosBase + " tablas" : "ok",
+    base_de_datos: fallosBase ? "ERROR: no puede leer " + fallosBase + " tablas (" + errorBase + ")" : "ok",
   };
   return new Response(JSON.stringify({ lingua, estado, testi }), {
     headers: {

@@ -27,7 +27,22 @@
 // ============================================================================
 
 const URL_BASE = Deno.env.get("SUPABASE_URL")!;
-const SERVICIO = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// La llave de servicio. Los proyectos nuevos de Supabase usan llaves nuevas
+// ("sb_secret_..."), que van SOLO en la cabecera apikey: si ademas se mandan
+// como "Authorization: Bearer", la base las rechaza. Las viejas (un JWT,
+// "eyJ...") van en las dos. Se toma la que haya.
+function llaveServicio(): string {
+  const v = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (v) return v;
+  try {
+    const j = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}");
+    return String(Object.values(j)[0] || "");
+  } catch (_e) { return ""; }
+}
+const SERVICIO = llaveServicio();
+const LLAVE: Record<string, string> = SERVICIO.startsWith("eyJ")
+  ? { apikey: SERVICIO, Authorization: "Bearer " + SERVICIO }
+  : { apikey: SERVICIO };
 const ANON = Deno.env.get("SUPABASE_ANON_KEY") || "";
 const RESEND = Deno.env.get("RESEND_KEY") || "";
 const SITO = (Deno.env.get("SITO") || "https://www.gruppocristiano.it").replace(/\/$/, "");
@@ -51,7 +66,7 @@ function vai(stato: string) {
 function db(ruta: string, init: RequestInit = {}) {
   return fetch(URL_BASE + "/rest/v1/" + ruta, {
     ...init,
-    headers: { apikey: SERVICIO, Authorization: "Bearer " + SERVICIO, "Content-Type": "application/json", ...(init.headers || {}) },
+    headers: { ...LLAVE, "Content-Type": "application/json", ...(init.headers || {}) },
   });
 }
 async function leer(ruta: string): Promise<any[]> {
