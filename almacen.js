@@ -31,6 +31,12 @@ var SUPABASE = {
      porque esta es un JWT con el rol dentro, y es lo que entienden tanto la
      API de datos como la de entrada sin ninguna duda. */
   key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmbXJxYm5udmxtbnJmYnNlb25yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxODAzNTQsImV4cCI6MjExMDc1NjM1NH0.b1Zn5xpkgnYDf2PuueiT-pcwrBuW6RUZJP0OwErJ1jo'
+  ,
+  /* La direccion de la funcion del giornalino en Supabase. Se creo
+     reaprovechando una que ya existia, y Supabase no deja cambiar la
+     direccion de una funcion (solo el nombre que se ve): por eso no es
+     "giornalino". Si algun dia se crea de nuevo, se cambia aqui. */
+  funzioneGiornalino: 'bright-task'
 };
 
 /* ============================================================================
@@ -941,7 +947,7 @@ var ALMACEN = (function () {
     funzioneGiornalino: function (datos, comoGeneral) {
       if (!conBase) return Promise.resolve({ stato: 'inviata', demo: true });
       var s = comoGeneral ? sesion() : null;
-      return fetch(SUPABASE.url + '/functions/v1/giornalino', {
+      return fetch(SUPABASE.url + '/functions/v1/' + (SUPABASE.funzioneGiornalino || 'giornalino'), {
         method: 'POST',
         headers: { 'apikey': SUPABASE.key, 'Content-Type': 'application/json',
                    'Authorization': 'Bearer ' + (s && viva(s) ? s.access_token : SUPABASE.key) },

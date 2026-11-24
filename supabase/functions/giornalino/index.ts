@@ -47,7 +47,14 @@ const ANON = Deno.env.get("SUPABASE_ANON_KEY") || "";
 const RESEND = Deno.env.get("RESEND_KEY") || "";
 const SITO = (Deno.env.get("SITO") || "https://www.gruppocristiano.it").replace(/\/$/, "");
 const MITTENTE = Deno.env.get("MITTENTE") || "Gruppo Cristiano <giornalino@gruppocristiano.it>";
-const FN = URL_BASE + "/functions/v1/giornalino";
+// La direccion de esta misma funcion (para los enlaces de confirmar y darse
+// de baja). Se saca de la propia llamada: asi vale aunque en Supabase la
+// funcion tenga otra direccion (por ejemplo "bright-task").
+let FN = URL_BASE + "/functions/v1/giornalino";
+function fijarFN(req: Request) {
+  const slug = new URL(req.url).pathname.split("/").filter(Boolean).pop();
+  if (slug && /^[a-z0-9_-]+$/i.test(slug) && slug !== "v1" && slug !== "functions") FN = URL_BASE + "/functions/v1/" + slug;
+}
 const LOGO = SITO + "/media/logo-ufficiale.png";
 const SIMBOLO = SITO + "/media/simbolo-ufficiale-256.png";
 
@@ -271,6 +278,7 @@ async function esGenerale(req: Request) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  fijarFN(req);
   const u = new URL(req.url);
 
   // --- los enlaces de los correos ------------------------------------------
