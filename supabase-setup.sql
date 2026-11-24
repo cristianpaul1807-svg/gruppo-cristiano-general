@@ -752,6 +752,10 @@ create policy "giornalino: borrar"
   on storage.objects for delete to authenticated
   using (bucket_id = 'giornalino' and public.es_generale());
 
+-- Cuando se aviso por email de un evento nuevo (null = todavia no). Asi
+-- nunca se manda dos veces el mismo aviso.
+alter table public.evento add column if not exists avvisato timestamptz;
+
 notify pgrst, 'reload schema';
 
 -- ============================================================================

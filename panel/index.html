@@ -709,7 +709,8 @@ a.btn{text-decoration:none;}
   <div class="hoja">
     <h2 id="ev-titulo">Eventi</h2>
     <p>I prossimi eventi. Escono nella pagina della chiesa e, tutti insieme, nella pagina
-      principale. Quando la data è passata, l'evento si toglie da solo.</p>
+      principale. Quando la data è passata, l'evento si toglie da solo. Ogni evento nuovo parte da
+      solo per email agli iscritti al giornalino e alle chiese.</p>
     <div id="ev-lista"></div>
 
     <form class="ev-form" id="f-ev" novalidate>
@@ -794,7 +795,8 @@ a.btn{text-decoration:none;}
   <div class="hoja">
     <h2>Il giornalino</h2>
     <p>Carica il PDF di ogni numero. La copertina si prende da sola dalla prima pagina. Il numero
-      più recente esce grande nella pagina principale; gli altri, sotto, come archivio.</p>
+      più recente esce grande nella pagina principale; gli altri, sotto, come archivio. Appena lo
+      pubblichi, parte da solo per email a tutti gli iscritti e all’email di ogni chiesa.</p>
 
     <form class="ev-form" id="f-gio" novalidate>
       <h3>Nuovo numero</h3>
@@ -822,7 +824,7 @@ a.btn{text-decoration:none;}
       </div>
       <p class="error" id="err-gio" role="alert"></p>
       <div class="pie-hoja">
-        <button class="btn piena" type="submit" id="gio-pubblica">Pubblica sul sito</button>
+        <button class="btn piena" type="submit" id="gio-pubblica">Pubblica e manda</button>
       </div>
     </form>
 
@@ -2234,10 +2236,17 @@ $('#f-ev').addEventListener('submit', function (ev) {
     : Promise.resolve(cartel === 'quitar' ? (datos.foto = '') : null)
   ).then(function () {
     return ALMACEN.guardaEvento(EV.cartella, datos);
-  }).then(function () {
+  }).then(function (ev) {
     if (vieja && vieja !== datos.foto) ALMACEN.borrarImagen(vieja);
-    avisar(datos.id ? 'Evento salvato.' : 'Evento aggiunto: è già sul sito.');
     formEvento(null);
+    /* Un evento NUEVO se avisa por email a los suscritos y a las iglesias.
+       Al corregirlo no: nadie quiere tres correos por la misma cena. */
+    if (!datos.id && ev && ev.id) {
+      avisar('Evento aggiunto: è già sul sito. Lo mando per email…');
+      ALMACEN.funzioneGiornalino({ azione: 'evento', id: ev.id }, true).then(function (r) {
+        if (r.inviati != null) avisar('Evento aggiunto e mandato per email a ' + r.inviati + ' indirizzi.');
+      }, function () { avisar('Evento aggiunto sul sito. L’email non è partita (il servizio email non è ancora pronto).', true); });
+    } else avisar(datos.id ? 'Evento salvato.' : 'Evento aggiunto: è già sul sito.');
     return recargarEventos();
   }).catch(function (x) {
     /* Si el evento no entra, el cartel recien subido no se queda huerfano. */
@@ -2315,7 +2324,8 @@ function pintarGio() {
   var conf = GIO.iscritti.filter(function (i) { return i.confermato; }).length;
   var pend = GIO.iscritti.length - conf;
   $('#gio-iscr-n').textContent = conf + (conf === 1 ? ' iscritto confermato' : ' iscritti confermati')
-    + (pend ? ' · ' + pend + ' in attesa di conferma (non ricevono niente finché non confermano)' : '');
+    + (pend ? ' · ' + pend + ' in attesa di conferma (non ricevono niente finché non confermano)' : '')
+    + '. Il giornalino e gli eventi nuovi arrivano anche, sempre, all’email di ogni chiesa (quella della sua scheda).';
   $('#gio-estado').textContent = GIO.numeri.length
     ? GIO.numeri.length + (GIO.numeri.length === 1 ? ' numero' : ' numeri') + ' sul sito · ' + conf + ' iscritti'
     : 'Carica il PDF di ogni numero: esce nella pagina principale e lo mandi per email a chi si è iscritto.';
@@ -2344,12 +2354,12 @@ function pintarGio() {
         .then(function () { avisar('Prova mandata a ' + a2.trim() + '. Guarda anche nello spam.'); })
         .catch(function (e) { avisar('Non è partita: ' + e.message, true); });
     });
-    var bi = b(g.inviato ? 'Rimanda a tutti' : 'Manda a tutti (' + conf + ')', 'piena', function () {
-      if (!conf) { avisar('Non ci sono ancora iscritti confermati.', true); return; }
-      if (!confirm((g.inviato ? 'Questo numero è già stato mandato. Lo rimando a tutti ' : 'Mando «' + g.titolo + '» a tutti ') + 'i ' + conf + ' iscritti?')) return;
+    var bi = b(g.inviato ? 'Rimanda a tutti' : 'Manda a tutti', g.inviato ? '' : 'piena', function () {
+      if (!confirm((g.inviato ? 'Questo numero è già stato mandato. Lo rimando ' : 'Mando «' + g.titolo + '» ')
+        + 'a tutti: ' + conf + ' iscritti e il correo di ogni chiesa?')) return;
       bi.disabled = true; bi.textContent = 'Invio…';
       ALMACEN.funzioneGiornalino({ azione: 'invia', id: g.id, forza: !!g.inviato }, true).then(function (r) {
-        avisar(r.stato === 'gia_inviato' ? 'Era già stato mandato.' : 'Mandato a ' + r.inviati + ' iscritti.');
+        avisar(r.stato === 'gia_inviato' ? 'Era già stato mandato.' : 'Mandato a ' + r.inviati + ' indirizzi (iscritti e chiese).');
         return cargarGio();
       }).catch(function (e) { avisar('Non è partito: ' + e.message, true); bi.disabled = false; });
     });
@@ -2404,13 +2414,20 @@ $('#f-gio').addEventListener('submit', function (e) {
   ALMACEN.subirGiornalino(new Blob([GIO.pdf], { type: 'application/pdf' }), 'numero').then(function (url) {
     dati.pdf = url;
     return GIO.cop ? ALMACEN.subirGiornalino(GIO.cop, 'copertina').then(function (u) { dati.copertina = u; }) : null;
-  }).then(function () { return ALMACEN.guardaGiornalino(dati); }).then(function () {
-    avisar('Pubblicato: «' + tit + '» è già sul sito. Per mandarlo agli iscritti usa «Manda a tutti».');
+  }).then(function () { return ALMACEN.guardaGiornalino(dati); }).then(function (g) {
+    /* Y se manda solo, al momento: a los suscritos y al correo de cada
+       iglesia. Si el correo todavia no esta listo, se queda publicado igual
+       y el boton «Manda a tutti» de la lista sirve para mandarlo despues. */
+    b.textContent = 'Lo mando agli iscritti…';
+    return (g && g.id ? ALMACEN.funzioneGiornalino({ azione: 'invia', id: g.id }, true) : Promise.reject(new Error('')))
+      .then(function (r) { avisar('Pubblicato e mandato a ' + r.inviati + ' indirizzi (iscritti e chiese).'); },
+            function (x) { avisar('Pubblicato sul sito. L’email non è partita' + (x.message ? ' (' + x.message + ')' : '') + ': riprova con «Manda a tutti».', true); });
+  }).then(function () {
     GIO.pdf = null; GIO.cop = null; $('#gio-tit').value = ''; pintarGioPrevia(''); $('#gio-pdf-info').textContent = 'Fino a 25 MB.';
     return cargarGio();
   }).catch(function (x) {
     err.textContent = 'Non sono riuscito a pubblicarlo: ' + x.message;
-  }).then(function () { b.disabled = false; b.textContent = 'Pubblica sul sito'; });
+  }).then(function () { b.disabled = false; b.textContent = 'Pubblica e manda'; });
 });
 $('#gio-cerrar').addEventListener('click', cerrarGio);
 $('#gio-capa').addEventListener('click', function (e) { if (e.target === this) cerrarGio(); });

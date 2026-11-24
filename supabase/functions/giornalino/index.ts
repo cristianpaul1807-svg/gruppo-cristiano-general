@@ -7,8 +7,15 @@
 //   GET  ?azione=conferma&t=<token>   (el enlace del correo)
 //   GET  ?azione=baja&t=<token>       (el enlace "cancellati" de cada correo)
 //        Las dos vuelven a la web con ?giornalino=confermato / cancellato.
-//   POST {azione:"invia", id}              (panel, solo el general)
+//   POST {azione:"invia", id}              (panel, solo el general; el panel
+//        lo llama SOLO al publicar un numero)
 //   POST {azione:"prova", id, a: email}    (panel, solo el general: una prueba)
+//   POST {azione:"evento", id}             (panel, quien puede tocar ese evento;
+//        el panel lo llama SOLO al crear un evento nuevo)
+//
+// QUIEN LO RECIBE: los suscritos que han confirmado Y el correo de cada
+// iglesia (el de su ficha en el panel): los encargados lo reciben siempre,
+// sin apuntarse. Si un correo esta en las dos listas, va una sola vez.
 //
 // SECRETOS (Edge Functions -> Secrets):
 //   RESEND_KEY   la clave de Resend (de la cuenta del grupo).
@@ -27,6 +34,7 @@ const SITO = (Deno.env.get("SITO") || "https://www.gruppocristiano.it").replace(
 const MITTENTE = Deno.env.get("MITTENTE") || "Gruppo Cristiano <giornalino@gruppocristiano.it>";
 const FN = URL_BASE + "/functions/v1/giornalino";
 const LOGO = SITO + "/media/logo-ufficiale.png";
+const SIMBOLO = SITO + "/media/simbolo-ufficiale-256.png";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -67,6 +75,14 @@ const T: Record<string, Record<string, string>> = {
     num_h: "È uscito il nuovo giornalino",
     num_btn: "Leggi il giornalino",
     baja: "Non vuoi più riceverlo? Cancellati qui",
+    saluto: "Con affetto in Cristo,",
+    motto: "Un’unica famiglia di comunità cristiane",
+    ev_ogg: "Nuovo evento",
+    ev_h: "Nuovo evento",
+    ev_gruppo: "Tutto il Gruppo Cristiano",
+    ev_btn: "Vedi l’annuncio",
+    ev_sito: "Vedi sul sito",
+    chiesa: "Ricevi questa email come chiesa del Gruppo Cristiano.",
   },
   es: {
     conf_ogg: "Confirma tu suscripción al giornalino",
@@ -78,6 +94,14 @@ const T: Record<string, Record<string, string>> = {
     num_h: "Ha salido el nuevo giornalino",
     num_btn: "Leer el giornalino",
     baja: "¿Ya no quieres recibirlo? Date de baja aquí",
+    saluto: "Con cariño en Cristo,",
+    motto: "Una única familia de comunidades cristianas",
+    ev_ogg: "Nuevo evento",
+    ev_h: "Nuevo evento",
+    ev_gruppo: "Todo el Gruppo Cristiano",
+    ev_btn: "Ver el anuncio",
+    ev_sito: "Ver en la web",
+    chiesa: "Recibes este email como iglesia del Gruppo Cristiano.",
   },
   en: {
     conf_ogg: "Confirm your subscription to the newsletter",
@@ -89,17 +113,34 @@ const T: Record<string, Record<string, string>> = {
     num_h: "The new newsletter is out",
     num_btn: "Read the newsletter",
     baja: "Don't want it anymore? Unsubscribe here",
+    saluto: "With love in Christ,",
+    motto: "One family of Christian communities",
+    ev_ogg: "New event",
+    ev_h: "New event",
+    ev_gruppo: "The whole Gruppo Cristiano",
+    ev_btn: "See the announcement",
+    ev_sito: "See it on the website",
+    chiesa: "You receive this email as a church of the Gruppo Cristiano.",
   },
 };
 function t(l: string) { return T[l] || T.it; }
 
-function plantilla(cuerpo: string, pie: string) {
+// Todos los correos iguales: el LOGO del grupo arriba, el contenido, la FIRMA
+// del grupo abajo, y debajo de todo la letra pequena (darse de baja).
+function plantilla(cuerpo: string, pie: string, lingua = "it") {
+  const tt = t(lingua);
+  const firma = `<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:30px;border-top:1px solid #eee;padding-top:18px;width:100%"><tr>
+<td width="64" valign="top"><img src="${SIMBOLO}" alt="" width="56" style="width:56px;height:auto"></td>
+<td valign="top" style="font-size:14px;line-height:1.5;color:#10203f">${esc(tt.saluto)}<br>
+<b style="font-family:Georgia,serif;font-size:17px;font-weight:normal">Gruppo Cristiano</b><br>
+<span style="color:#8c6614;font-size:12px;letter-spacing:.06em">${esc(tt.motto)}</span><br>
+<a href="${SITO}" style="color:#0a6cb8;font-size:13px">www.gruppocristiano.it</a></td></tr></table>`;
   return `<!doctype html><html><body style="margin:0;background:#f4efe4;font-family:Arial,Helvetica,sans-serif;color:#10203f">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4efe4;padding:28px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:14px;overflow:hidden">
-<tr><td style="background:#0b2a55;padding:22px;text-align:center"><img src="${LOGO}" alt="Gruppo Cristiano" width="160" style="max-width:160px;height:auto"></td></tr>
-<tr><td style="padding:28px 26px;font-size:16px;line-height:1.6">${cuerpo}</td></tr>
-<tr><td style="padding:16px 26px 24px;font-size:12px;color:#5c677f;border-top:1px solid #eee">${pie}</td></tr>
+<tr><td style="background:#ffffff;padding:24px 22px 8px;text-align:center;border-bottom:3px solid #d4a843"><img src="${LOGO}" alt="Gruppo Cristiano" width="170" style="width:170px;max-width:170px;height:auto"></td></tr>
+<tr><td style="padding:28px 26px 26px;font-size:16px;line-height:1.6">${cuerpo}${firma}</td></tr>
+<tr><td style="padding:14px 26px 22px;font-size:12px;color:#5c677f;background:#faf7f0">${pie}</td></tr>
 </table></td></tr></table></body></html>`;
 }
 function boton(href: string, txt: string) {
@@ -131,10 +172,68 @@ function correoNumero(g: any, a: string, lingua: string, token: string | null) {
 <p style="text-align:center;color:#5c677f;margin:0 0 22px">${esc(g.titolo)}</p>${cop}${boton(g.pdf, tt.num_btn)}`;
   const c: any = {
     from: MITTENTE, to: [a], subject: tt.num_ogg + " — " + g.titolo,
-    html: plantilla(cuerpo, `<a href="${baja}" style="color:#5c677f">${esc(tt.baja)}</a>`),
+    html: plantilla(cuerpo, token ? `<a href="${baja}" style="color:#5c677f">${esc(tt.baja)}</a>` : esc(tt.chiesa), lingua),
   };
   if (token) c.headers = { "List-Unsubscribe": "<" + baja + ">", "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" };
   return c;
+}
+
+// A quien se manda: suscritos confirmados + el correo de cada iglesia
+// publicada (los encargados, siempre). Sin repetidos: si el correo de una
+// iglesia tambien esta suscrito, va una vez, con su enlace de baja.
+async function destinatari() {
+  const iscr = await leer("iscritto?confermato=eq.true&select=email,token,lingua");
+  const sedi = await leer("sede?publicada=eq.true&select=email");
+  const vistos = new Set<string>(iscr.map((i: any) => String(i.email).toLowerCase()));
+  const lista = iscr.map((i: any) => ({ email: i.email, lingua: i.lingua || "it", token: i.token }));
+  for (const s of sedi) {
+    const e = String(s.email || "").trim().toLowerCase();
+    if (/^[^@\s<>"']+@[^@\s<>"']+\.[a-z]{2,}$/i.test(e) && !vistos.has(e)) { vistos.add(e); lista.push({ email: e, lingua: "it", token: null }); }
+  }
+  return lista;
+}
+
+function loc(o: any, k: string, l: string) { return (l !== "it" && o[k + "_" + l]) || o[k] || ""; }
+function testoHtml(tx: string) {
+  return esc(tx).split(/\n\s*\n/).map((p) => "<p style=\"margin:0 0 10px\">" + p.replace(/\n/g, "<br>") + "</p>").join("");
+}
+function correoEvento(e: any, chi: string, pagina: string, a: string, lingua: string, token: string | null) {
+  const tt = t(lingua);
+  const loc2 = { it: "it-IT", es: "es-ES", en: "en-GB" }[lingua] || "it-IT";
+  let quando = e.giorno;
+  try {
+    const [y, m, d] = String(e.giorno).split("-").map(Number);
+    quando = new Intl.DateTimeFormat(loc2, { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
+      .format(new Date(Date.UTC(y, m - 1, d)));
+    quando = quando.charAt(0).toUpperCase() + quando.slice(1);
+  } catch (_x) { /* la fecha tal cual */ }
+  const titolo = loc(e, "titolo", lingua), testo = loc(e, "testo", lingua);
+  const baja = token ? FN + "?azione=baja&t=" + token : "";
+  const cartel = e.foto
+    ? `<p style="text-align:center;margin:18px 0"><img src="${esc(e.foto)}" alt="" width="320" style="max-width:100%;width:320px;height:auto;border-radius:8px"></p>` : "";
+  const cuerpo = `<p style="margin:0 0 6px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#8c6614;font-weight:bold">${esc(tt.ev_h)} · ${esc(chi)}</p>
+<h1 style="font-family:Georgia,serif;font-weight:normal;font-size:26px;margin:0 0 12px;line-height:1.25">${esc(titolo)}</h1>
+<p style="margin:0 0 4px;font-weight:bold">${esc(quando)}${e.ora ? " · " + esc(e.ora) : ""}</p>
+${e.luogo ? `<p style="margin:0 0 14px;color:#5c677f">${esc(e.luogo)}</p>` : ""}
+${testo ? testoHtml(testo) : ""}${cartel}
+${boton(e.link || pagina, e.link ? tt.ev_btn : tt.ev_sito)}`;
+  const c: any = {
+    from: MITTENTE, to: [a], subject: tt.ev_ogg + ": " + titolo + " — " + chi,
+    html: plantilla(cuerpo, token ? `<a href="${baja}" style="color:#5c677f">${esc(tt.baja)}</a>` : esc(tt.chiesa), lingua),
+  };
+  if (token) c.headers = { "List-Unsubscribe": "<" + baja + ">", "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" };
+  return c;
+}
+
+// ¿Puede quien llama tocar esta carpeta (su iglesia, o 'generale' si es el
+// general)? La misma regla de la base de datos, con su propia sesion.
+async function puoCartella(req: Request, c: string) {
+  const auth = req.headers.get("authorization") || "";
+  if (!auth.startsWith("Bearer ") || !ANON) return false;
+  const r = await fetch(URL_BASE + "/rest/v1/rpc/puo_cartella", {
+    method: "POST", headers: { apikey: ANON, Authorization: auth, "Content-Type": "application/json" }, body: JSON.stringify({ c }),
+  });
+  return r.ok && (await r.json()) === true;
 }
 
 // ¿Es el administrador general quien llama? Se pregunta a la base de datos
@@ -208,7 +307,7 @@ Deno.serve(async (req) => {
     const cuerpo = `<h1 style="font-family:Georgia,serif;font-weight:normal;font-size:24px;margin:0 0 14px">${esc(tt.conf_h)}</h1>
 <p>${esc(tt.conf_p)}</p>${boton(FN + "?azione=conferma&t=" + token, tt.conf_btn)}`;
     try {
-      await manda([{ from: MITTENTE, to: [email], subject: tt.conf_ogg, html: plantilla(cuerpo, esc(tt.conf_no)) }]);
+      await manda([{ from: MITTENTE, to: [email], subject: tt.conf_ogg, html: plantilla(cuerpo, esc(tt.conf_no), lingua) }]);
     } catch (_e) {
       return json({ errore: "servizio" }, 502);
     }
@@ -230,11 +329,33 @@ Deno.serve(async (req) => {
     }
 
     if (g.inviato && d.forza !== true) return json({ stato: "gia_inviato", inviato: g.inviato });
-    const iscritti = await leer("iscritto?confermato=eq.true&select=email,token,lingua");
+    const lista = await destinatari();
     let n = 0;
-    try { n = await manda(iscritti.map((i: any) => correoNumero(g, i.email, i.lingua, i.token))); }
+    try { n = await manda(lista.map((i: any) => correoNumero(g, i.email, i.lingua, i.token))); }
     catch (e) { return json({ errore: String((e as Error).message) }, 502); }
     await db("giornalino?id=eq." + g.id, { method: "PATCH", body: JSON.stringify({ inviato: new Date().toISOString() }) });
+    return json({ inviati: n });
+  }
+
+  // --- avisar de un evento nuevo (quien puede tocar ese evento) ---------------
+  if (d.azione === "evento") {
+    if (!RESEND) return json({ errore: "Manca il segreto RESEND_KEY" }, 503);
+    const e = (await leer("evento?id=eq." + encodeURIComponent(String(d.id || "")) + "&select=*"))[0];
+    if (!e) return json({ errore: "Evento non trovato" }, 404);
+    if (!(await puoCartella(req, e.cartella))) return json({ errore: "permesso" }, 403);
+    if (e.avvisato) return json({ stato: "gia_inviato" });
+    let chi = "", pagina = SITO + "/#eventi";
+    if (e.cartella !== "generale") {
+      const s = (await leer("sede?id=eq." + encodeURIComponent(e.cartella) + "&select=id,citta"))[0];
+      chi = "Gruppo Cristiano " + (s ? s.citta : e.cartella);
+      pagina = SITO + "/" + e.cartella + "/#eventi";
+    }
+    const lista = await destinatari();
+    let n = 0;
+    try {
+      n = await manda(lista.map((i: any) => correoEvento(e, chi || t(i.lingua).ev_gruppo, pagina, i.email, i.lingua, i.token)));
+    } catch (x) { return json({ errore: String((x as Error).message) }, 502); }
+    await db("evento?id=eq." + e.id, { method: "PATCH", body: JSON.stringify({ avvisato: new Date().toISOString() }) });
     return json({ inviati: n });
   }
 
