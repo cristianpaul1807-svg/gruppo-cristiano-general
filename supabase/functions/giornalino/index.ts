@@ -49,7 +49,7 @@ const SITO = (Deno.env.get("SITO") || "https://www.gruppocristiano.it").replace(
 const MITTENTE = Deno.env.get("MITTENTE") || "Gruppo Cristiano <giornalino@gruppocristiano.it>";
 // La direccion de esta misma funcion (para los enlaces de confirmar y darse
 // de baja). Se saca de la propia llamada: asi vale aunque en Supabase la
-// funcion tenga otra direccion (por ejemplo "bright-task").
+// funcion tenga otra direccion (por ejemplo otra que ya existiera).
 let FN = URL_BASE + "/functions/v1/giornalino";
 function fijarFN(req: Request) {
   const slug = new URL(req.url).pathname.split("/").filter(Boolean).pop();
