@@ -961,6 +961,51 @@ var ALMACEN = (function () {
     },
 
     /* Los suscritos, para el general (las reglas no se los dan a nadie mas). */
+    /* LAS ESTADISTICAS. Una visita = alguien abre esta pagina; si recarga o
+       vuelve en la misma pestana el mismo dia no cuenta otra vez (eso lo
+       recuerda sessionStorage, que muere al cerrar la pestana: no es una
+       cookie ni identifica a nadie). No cuentan los robots ni quien tiene el
+       panel abierto en este navegador. Si algo falla, no pasa nada: la web
+       sigue igual. */
+    contaVisita: function (pagina) {
+      if (!conBase) return;
+      try {
+        if (navigator.webdriver || /bot|crawl|spider|slurp|preview|lighthouse/i.test(navigator.userAgent)) return;
+        if (viva(sesion())) return;
+        var hoy = new Date().toISOString().slice(0, 10), k = 'gc_vis_' + pagina;
+        if (sessionStorage.getItem(k) === hoy) return;
+        sessionStorage.setItem(k, hoy);
+      } catch (e) { return; }
+      var ref = '', fonte = 'diretto';
+      try { ref = document.referrer ? new URL(document.referrer).hostname.toLowerCase() : ''; } catch (e) {}
+      var utm = '';
+      try { utm = (new URLSearchParams(location.search).get('utm_source') || '').toLowerCase(); } catch (e) {}
+      var de = utm || ref;
+      if (/(^|\.)google\./.test(de) || de === 'google') fonte = 'google';
+      else if (/facebook|(^|\.)fb\.|^fb$/.test(de)) fonte = 'facebook';
+      else if (/instagram|^ig$/.test(de)) fonte = 'instagram';
+      else if (ref && ref === location.hostname.toLowerCase()) fonte = 'interno';
+      else if (de) fonte = 'altro';
+      var disp = (window.matchMedia && matchMedia('(pointer:coarse)').matches) || /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'pc';
+      var lingua = (window.LINGUA ? LINGUA() : document.documentElement.lang || 'it').slice(0, 2);
+      try {
+        fetch(SUPABASE.url + '/rest/v1/rpc/conta_visita', {
+          method: 'POST', headers: cabeceras(false), keepalive: true,
+          body: JSON.stringify({ p: pagina, f: fonte, d: disp, l: lingua })
+        }).catch(function () {});
+      } catch (e) {}
+    },
+
+    /* Los totales de visitas desde un dia (AAAA-MM-DD), ya sumados por la
+       base. pagina = 'generale', el id de una iglesia, o null = todo lo que
+       esta cuenta puede ver (el general, todo; una iglesia, lo suyo). */
+    statistiche: function (desde, pagina) {
+      if (!conBase) return Promise.resolve(null);
+      return rest('rpc/statistiche', {
+        method: 'POST', body: JSON.stringify({ desde: desde, p: pagina || null })
+      }, true);
+    },
+
     iscritti: function () {
       if (!conBase) return Promise.resolve([]);
       return rest('iscritto?select=email,lingua,confermato,creato&order=creato.desc', {}, true).then(function (f) { return f || []; });

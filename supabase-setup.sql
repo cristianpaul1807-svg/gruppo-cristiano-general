@@ -776,6 +776,92 @@ grant select, insert, update, delete on all tables in schema public to service_r
 alter default privileges in schema public grant select, insert, update, delete on tables to service_role;
 notify pgrst, 'reload schema';
 
+-- ----------------------------------------------------------------------------
+-- LE STATISTICHE — cuantas visitas tiene la web, sin cookies.
+--
+-- No se guarda NADA de la persona: ni IP, ni identificador, ni cookie. Solo
+-- un contador por dia y por pagina (la general o cada iglesia), separado por
+-- de donde llega (Google, Facebook, Instagram, la web del grupo, directo u
+-- otro), por telefono u ordenador, y por idioma. Por eso no hace falta el
+-- aviso de cookies.
+--
+-- La web no puede escribir en la tabla: solo puede llamar a conta_visita(),
+-- que comprueba lo que le llega y suma uno. Leer: el general ve todo; el
+-- responsable de una iglesia, solo la suya. Se guardan unos 13 meses.
+-- ----------------------------------------------------------------------------
+create table if not exists public.visita (
+  giorno  date    not null,
+  pagina  text    not null,
+  fonte   text    not null,
+  disp    text    not null,
+  lingua  text    not null,
+  visite  integer not null default 0,
+  primary key (giorno, pagina, fonte, disp, lingua)
+);
+alter table public.visita enable row level security;
+drop policy if exists "visite: el general todas, cada iglesia la suya" on public.visita;
+create policy "visite: el general todas, cada iglesia la suya"
+  on public.visita for select to authenticated
+  using (public.es_generale() or pagina = public.mia_sede());
+revoke all on public.visita from anon;
+grant select on public.visita to authenticated;
+
+create or replace function public.conta_visita(p text, f text, d text, l text)
+returns void language plpgsql security definer set search_path = ''
+as $$
+begin
+  if f not in ('diretto', 'google', 'facebook', 'instagram', 'interno', 'altro') then f := 'altro'; end if;
+  if d not in ('mobile', 'pc') then d := 'mobile'; end if;
+  if l not in ('it', 'es', 'en') then l := 'it'; end if;
+  if p <> 'generale' and not exists (select 1 from public.sede s where s.id = p) then return; end if;
+
+  insert into public.visita as v (giorno, pagina, fonte, disp, lingua, visite)
+  values ((now() at time zone 'Europe/Rome')::date, p, f, d, l, 1)
+  on conflict (giorno, pagina, fonte, disp, lingua)
+  do update set visite = v.visite + 1
+  where v.visite < 100000;
+
+  -- De vez en cuando, lo de hace mas de 13 meses fuera.
+  if random() < 0.01 then
+    delete from public.visita where giorno < current_date - 400;
+  end if;
+end;
+$$;
+revoke all on function public.conta_visita(text, text, text, text) from public;
+grant execute on function public.conta_visita(text, text, text, text) to anon, authenticated;
+
+notify pgrst, 'reload schema';
+
+-- Los totales para el panel, ya sumados en la base (asi no hay que bajar
+-- miles de filas). Va SIN security definer a proposito: corre con la cuenta
+-- de quien la llama, y las reglas de arriba deciden que ve (el general todo,
+-- cada iglesia lo suyo). p = una pagina concreta, o null = todo lo visible.
+create or replace function public.statistiche(desde date, p text default null)
+returns json language sql stable set search_path = ''
+as $$
+  with v as (
+    select * from public.visita
+    where giorno >= desde and (p is null or pagina = p)
+  )
+  select json_build_object(
+    'oggi',   (now() at time zone 'Europe/Rome')::date,
+    'giorni', coalesce((select json_agg(json_build_object('g', giorno, 'n', n) order by giorno)
+                        from (select giorno, sum(visite)::int n from v group by giorno) x), '[]'::json),
+    'fonti',  coalesce((select json_object_agg(fonte, n)
+                        from (select fonte, sum(visite)::int n from v group by fonte) x), '{}'::json),
+    'disp',   coalesce((select json_object_agg(disp, n)
+                        from (select disp, sum(visite)::int n from v group by disp) x), '{}'::json),
+    'lingue', coalesce((select json_object_agg(lingua, n)
+                        from (select lingua, sum(visite)::int n from v group by lingua) x), '{}'::json),
+    'pagine', coalesce((select json_object_agg(pagina, n)
+                        from (select pagina, sum(visite)::int n from v group by pagina) x), '{}'::json)
+  );
+$$;
+revoke all on function public.statistiche(date, text) from public;
+grant execute on function public.statistiche(date, text) to authenticated;
+
+notify pgrst, 'reload schema';
+
 -- ============================================================================
 -- DESPUES DE EJECUTAR ESTO — en este orden
 --

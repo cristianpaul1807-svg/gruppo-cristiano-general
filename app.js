@@ -1699,3 +1699,16 @@ function RIDISEGNA() {
   var elegido = [url, guardado].filter(function (l) { return l === 'it' || l === 'es' || l === 'en'; })[0] || 'it';
   aplicarIdioma(elegido);
 })();
+
+/* ============================================================================
+   LA VISITA — suma uno al contador de esta pagina (la general o la de la
+   iglesia). Sin cookies y sin datos de nadie: ver ALMACEN.contaVisita. Se
+   espera un poco para que el idioma elegido ya este puesto.
+   ============================================================================ */
+(function () {
+  'use strict';
+  if (!window.ALMACEN || !ALMACEN.contaVisita) return;
+  var pagina = document.body.getAttribute('data-sede') || 'generale';
+  function va() { setTimeout(function () { ALMACEN.contaVisita(pagina); }, 1200); }
+  if (document.readyState === 'complete') va(); else window.addEventListener('load', va);
+})();

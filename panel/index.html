@@ -309,6 +309,52 @@ a.btn{text-decoration:none;}
 .capa-centro[hidden]{display:none;}
 .capa-centro h1{font-size:27px;}
 .capa-centro p{margin-top:12px;color:var(--bone-dim);font-size:14.5px;line-height:1.65;}
+
+/* --- statistiche ---------------------------------------------------------- */
+.stat-filtri{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+#stat-dove{padding:9px 12px;background:var(--ink-3);color:var(--bone);border:1px solid var(--line-strong);
+  border-radius:999px;font:500 13px 'Inter',sans-serif;max-width:100%;}
+.stat-periodo{display:inline-flex;border:1px solid var(--line-strong);border-radius:999px;overflow:hidden;}
+.stat-periodo button{background:none;border:0;color:var(--bone-dim);font:500 12.5px 'Inter',sans-serif;
+  padding:9px 14px;cursor:pointer;}
+.stat-periodo button + button{border-left:1px solid var(--line-strong);}
+.stat-periodo button[aria-pressed="true"]{background:var(--blu-dark);color:#fff;}
+.stat-hoja{max-width:none;margin:0;}
+.stat-cifre{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;}
+.stat-cifra b{display:block;font:500 30px/1.1 'Inter',sans-serif;color:var(--bone);font-variant-numeric:tabular-nums;}
+.stat-cifra span{font-size:12px;color:var(--stone);letter-spacing:.04em;}
+@media (max-width:560px){ .stat-cifre{grid-template-columns:1fr 1fr;} }
+.stat-graf{position:relative;margin:0 0 26px;}
+.stat-graf .tit{font-size:12px;color:var(--stone);margin-bottom:8px;}
+.stat-barras{position:relative;height:150px;display:flex;align-items:flex-end;gap:2px;
+  border-bottom:1px solid var(--line-strong);}
+.stat-barras .tope{position:absolute;left:0;right:0;top:0;border-top:1px dashed var(--line);
+  font-size:11px;color:var(--stone);pointer-events:none;}
+.stat-barras .tope span{position:absolute;right:0;top:-16px;}
+.stat-col{flex:1;height:100%;display:flex;align-items:flex-end;cursor:default;min-width:0;}
+.stat-col i{display:block;width:100%;max-width:28px;margin:0 auto;background:var(--blu);
+  border-radius:4px 4px 0 0;min-height:0;}
+.stat-col.cero i{background:none;}
+.stat-col:hover i,.stat-col.ver i{background:var(--blu-2);}
+.stat-eje{display:flex;justify-content:space-between;font-size:11px;color:var(--stone);margin-top:6px;}
+.stat-tip{position:absolute;z-index:3;transform:translate(-50%,-100%);background:var(--ink-3);
+  border:1px solid var(--line-strong);border-radius:5px;padding:6px 9px;font-size:12px;color:var(--bone);
+  white-space:nowrap;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.35);}
+.stat-tip b{font-variant-numeric:tabular-nums;}
+.stat-parti{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:22px;}
+.stat-parte h3{font:500 13px 'Inter',sans-serif;color:var(--bone-dim);margin-bottom:10px;}
+.stat-fila{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:13px;margin-bottom:9px;}
+.stat-fila .n{color:var(--bone);font-variant-numeric:tabular-nums;}
+.stat-fila .n small{color:var(--stone);margin-left:6px;}
+.stat-fila .bar{grid-column:1 / -1;height:6px;background:var(--line);border-radius:999px;overflow:hidden;}
+.stat-fila .bar i{display:block;height:100%;background:var(--blu);border-radius:999px;}
+.stat-tabla{margin-top:14px;font-size:13px;}
+.stat-tabla summary{cursor:pointer;color:var(--bone-dim);}
+.stat-tabla table{margin-top:10px;border-collapse:collapse;width:100%;max-width:360px;}
+.stat-tabla td,.stat-tabla th{padding:5px 8px;border-bottom:1px solid var(--line);text-align:left;font-weight:400;}
+.stat-tabla td + td,.stat-tabla th + th{text-align:right;font-variant-numeric:tabular-nums;}
+.stat-tabla th{color:var(--stone);font-size:12px;}
+.stat-vacio{padding:26px 10px;text-align:center;color:var(--stone);font-size:14px;}
 </style>
 </head>
 <body>
@@ -337,9 +383,9 @@ a.btn{text-decoration:none;}
       <button type="submit" class="btn piena" id="b-entrar">Entra</button>
     </form>
 
-    <!-- Hay dos avisos y se enseña UNO, el que diga la verdad en ese momento.
+    <!-- Hay dos avisos y se ensena UNO, el que diga la verdad en ese momento.
          El que sobra se borra del documento en el arranque: dejarlo escondido
-         con display:none es como acaba enseñandose el equivocado el dia que
+         con display:none es como acaba ensenandose el equivocado el dia que
          alguien toca el CSS. -->
     <div class="aviso" id="aviso-demo" style="margin-top:22px">
       <b>Da leggere prima di usarlo</b>
@@ -510,6 +556,34 @@ a.btn{text-decoration:none;}
     </div>
 
     <div id="lista" class="fichas"></div>
+
+    <!-- ========================================================================
+         STATISTICHE — cuantas visitas tiene la web. El general ve todo el
+         sitio y cada iglesia por separado; el responsable de una iglesia, solo
+         la suya (eso lo decide la base de datos, no este panel). Sin cookies:
+         solo numeros, ningun dato de nadie.
+         ======================================================================== -->
+    <section id="stat" hidden>
+      <div class="barra" style="margin-top:48px">
+        <h2>Statistiche</h2>
+      </div>
+      <p class="pista-sec" id="stat-pista">Quante volte viene aperto il sito. Senza cookie e senza
+        dati personali: si contano solo i numeri. Chi ricarica la pagina nello stesso giorno conta una volta.</p>
+      <div class="stat-filtri">
+        <select id="stat-dove" aria-label="Quale parte del sito" hidden></select>
+        <div class="stat-periodo" role="group" aria-label="Periodo">
+          <button type="button" data-giorni="7">7 giorni</button>
+          <button type="button" data-giorni="30" aria-pressed="true">30 giorni</button>
+          <button type="button" data-giorni="365">12 mesi</button>
+        </div>
+      </div>
+      <div class="hoja stat-hoja">
+        <div class="stat-cifre" id="stat-cifre"></div>
+        <div class="stat-graf" id="stat-graf"></div>
+        <div class="stat-parti" id="stat-parti"></div>
+      </div>
+      <p class="error" id="err-stat" role="alert"></p>
+    </section>
 
     <!-- ========================================================================
          ACCESSI — solo para el administrador general.
@@ -1091,7 +1165,7 @@ a.btn{text-decoration:none;}
 
      SIN ELLA se usa LLAVE, que NO es seguridad: esta escrita en una pagina que
      se descarga entera en el navegador de quien entra, asi que cualquiera que
-     sepa abrir el codigo la ve. Sirve para que el panel se pueda enseñar, no
+     sepa abrir el codigo la ve. Sirve para que el panel se pueda ensenar, no
      para proteger nada.
 
    El dia que se rellene SUPABASE en almacen.js, esta constante deja de hacer
@@ -1172,6 +1246,8 @@ function aplicarRuolo() {
   $('#accessi').hidden = !(gen && CONECTADO);
   $('#sito').hidden = !gen;
   if (gen) cargarSito();
+  $('#stat').hidden = !CONECTADO;
+  if (CONECTADO) cargarStat();
 
   if (CONECTADO && YO.email) {
     var q = $('#quien');
@@ -1268,6 +1344,7 @@ function pintarLista() {
     var sedi = r[0];
     ACCESSI = r[1];
     SEDI_CARGADAS = sedi || [];
+    if (CONECTADO && esGenerale()) statOpciones();
     if (esGenerale() && CONECTADO) pintarAccessi();
 
     /* El responsable de una sede solo ve la suya. La base de datos le
@@ -3202,6 +3279,209 @@ $('#f-cambio').addEventListener('submit', function (e) {
 
 $('#salir2').addEventListener('click', function () {
   ALMACEN.salir().then(function () { location.reload(); });
+});
+
+/* --- statistiche -----------------------------------------------------------
+   Los numeros los suma la base (ALMACEN.statistiche) y aqui solo se dibujan.
+   Que ve cada uno lo deciden las reglas de la base: aunque alguien cambiase
+   este codigo, el responsable de una iglesia no recibiria las de otra. */
+var STAT = { giorni: 30, dove: '', turno: 0 };
+var STAT_FONTI = {
+  diretto: 'Diretto (link, WhatsApp, preferiti)', google: 'Google', facebook: 'Facebook',
+  instagram: 'Instagram', interno: 'Da un\'altra pagina del sito', altro: 'Altri siti'
+};
+var STAT_LINGUE = { it: 'Italiano', es: 'Spagnolo', en: 'Inglese' };
+var STAT_DISP = { mobile: 'Telefono o tablet', pc: 'Computer' };
+
+function statIso(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function statDia(s) { var p = String(s).split('-').map(Number); return new Date(p[0], p[1] - 1, p[2] || 1); }
+function statNum(n) { return Number(n || 0).toLocaleString('it-IT'); }
+
+function statOpciones() {
+  var sel = $('#stat-dove');
+  if (!esGenerale()) { sel.hidden = true; return; }
+  var antes = STAT.dove, vistas = {}, lista = [];
+  SEDI_CARGADAS.concat(window.SEDI_BASE || []).forEach(function (s) {
+    if (s && s.id && !vistas[s.id]) { vistas[s.id] = 1; lista.push(s); }
+  });
+  lista.sort(function (a, b) { return String(a.citta).localeCompare(String(b.citta), 'it'); });
+  sel.innerHTML = '';
+  [['', 'Tutto il sito'], ['generale', 'Pagina principale del gruppo']]
+    .concat(lista.map(function (s) { return [s.id, 'Chiesa di ' + s.citta]; }))
+    .forEach(function (o) {
+      var e = document.createElement('option'); e.value = o[0]; e.textContent = o[1]; sel.appendChild(e);
+    });
+  sel.value = antes;
+  if (sel.value !== antes) { sel.value = ''; STAT.dove = ''; }
+  sel.hidden = false;
+}
+
+function cargarStat() {
+  if (!CONECTADO || !YO) return;
+  statOpciones();
+  var turno = ++STAT.turno, hoy = new Date(), desde;
+  desde = STAT.giorni === 365
+    ? new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1)
+    : new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate() - (STAT.giorni - 1));
+  $('#err-stat').textContent = '';
+  $('#stat-graf').innerHTML = '<div class="stat-vacio">Un attimo…</div>';
+  var pagina = esGenerale() ? (STAT.dove || null) : (YO.sede || null);
+  ALMACEN.statistiche(statIso(desde), pagina).then(function (d) {
+    if (turno === STAT.turno) pintarStat(d || {}, desde);
+  }).catch(function (x) {
+    if (turno !== STAT.turno) return;
+    $('#stat-graf').innerHTML = ''; $('#stat-cifre').innerHTML = ''; $('#stat-parti').innerHTML = '';
+    $('#err-stat').textContent = /statistiche|function|schema|404/i.test(x.message || '')
+      ? 'Le statistiche non sono ancora attive: manca un passo nella banca dati.'
+      : 'Non sono riuscito a leggere le statistiche: ' + x.message;
+  });
+}
+
+function pintarStat(d, desde) {
+  var oggi = d.oggi ? statDia(d.oggi) : new Date();
+  var porDia = {}, total = 0;
+  (d.giorni || []).forEach(function (r) { porDia[String(r.g).slice(0, 10)] = r.n; total += r.n; });
+  var mensual = STAT.giorni === 365;
+
+  /* Las barras: un dia cada una, o un mes en "12 mesi". Los dias sin visitas
+     salen como hueco, no se saltan: si no, el grafico mentiria. */
+  var cubos = [], f = new Date(desde.getTime());
+  var fmtD = new Intl.DateTimeFormat('it-IT', { weekday: 'short', day: 'numeric', month: 'short' });
+  var fmtC = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'short' });
+  var fmtM = new Intl.DateTimeFormat('it-IT', { month: 'short', year: '2-digit' });
+  var fmtML = new Intl.DateTimeFormat('it-IT', { month: 'long', year: 'numeric' });
+  if (mensual) {
+    while (f <= oggi) {
+      var n = 0, m = f.getMonth(), g = new Date(f.getTime());
+      while (g.getMonth() === m && g <= oggi) { n += porDia[statIso(g)] || 0; g.setDate(g.getDate() + 1); }
+      cubos.push({ n: n, corto: fmtM.format(f), largo: fmtML.format(f) });
+      f = new Date(f.getFullYear(), f.getMonth() + 1, 1);
+    }
+  } else {
+    while (f <= oggi) {
+      cubos.push({ n: porDia[statIso(f)] || 0, corto: fmtC.format(f), largo: fmtD.format(f) });
+      f.setDate(f.getDate() + 1);
+    }
+  }
+
+  var dias = Math.max(1, Math.round((oggi - desde) / 86400000) + 1);
+  var media = total / dias;
+  var disp = d.disp || {};
+  var movil = total ? Math.round(100 * (disp.mobile || 0) / total) : 0;
+  var cifras = [
+    [statNum(total), mensual ? 'Visite in 12 mesi' : 'Visite in ' + STAT.giorni + ' giorni'],
+    [statNum(porDia[statIso(oggi)] || 0), 'Oggi'],
+    [media >= 10 ? statNum(Math.round(media)) : media.toLocaleString('it-IT', { maximumFractionDigits: 1 }), 'Media al giorno'],
+    [total ? movil + '%' : '—', 'Dal telefono']
+  ];
+  var c = $('#stat-cifre'); c.innerHTML = '';
+  cifras.forEach(function (x) {
+    var e = document.createElement('div'); e.className = 'stat-cifra';
+    var b = document.createElement('b'); b.textContent = x[0];
+    var s = document.createElement('span'); s.textContent = x[1];
+    e.appendChild(b); e.appendChild(s); c.appendChild(e);
+  });
+
+  var graf = $('#stat-graf'), partes = $('#stat-parti');
+  graf.innerHTML = ''; partes.innerHTML = '';
+  if (!total) {
+    graf.innerHTML = '<div class="stat-vacio">Ancora nessuna visita in questo periodo. Il contatore conta da quando è stato attivato.</div>';
+    return;
+  }
+
+  var tope = Math.max.apply(null, cubos.map(function (x) { return x.n; })) || 1;
+  var tit = document.createElement('p'); tit.className = 'tit';
+  tit.textContent = mensual ? 'Visite per mese' : 'Visite per giorno';
+  graf.appendChild(tit);
+  var barras = document.createElement('div'); barras.className = 'stat-barras';
+  barras.setAttribute('role', 'img');
+  barras.setAttribute('aria-label', tit.textContent + ': il massimo è ' + statNum(tope) + '. I numeri sono nella tabella qui sotto.');
+  var linea = document.createElement('div'); linea.className = 'tope';
+  linea.innerHTML = '<span></span>'; linea.firstChild.textContent = statNum(tope);
+  barras.appendChild(linea);
+  cubos.forEach(function (x, i) {
+    var col = document.createElement('div'); col.className = 'stat-col' + (x.n ? '' : ' cero');
+    col.setAttribute('data-i', i);
+    var bar = document.createElement('i');
+    bar.style.height = (x.n ? Math.max(2, 100 * x.n / tope) : 0) + '%';
+    col.appendChild(bar); barras.appendChild(col);
+  });
+  graf.appendChild(barras);
+
+  var eje = document.createElement('div'); eje.className = 'stat-eje';
+  var marcas = cubos.length > 2 ? [0, Math.floor((cubos.length - 1) / 2), cubos.length - 1] : cubos.map(function (_, i) { return i; });
+  marcas.forEach(function (i) { var s = document.createElement('span'); s.textContent = cubos[i].corto; eje.appendChild(s); });
+  graf.appendChild(eje);
+
+  /* El numero de cada barra al pasar el dedo o el raton por encima. */
+  var tip = document.createElement('div'); tip.className = 'stat-tip'; tip.hidden = true;
+  graf.appendChild(tip);
+  function ensena(col) {
+    barras.querySelectorAll('.stat-col.ver').forEach(function (e) { e.classList.remove('ver'); });
+    if (!col) { tip.hidden = true; return; }
+    var x = cubos[+col.getAttribute('data-i')];
+    col.classList.add('ver');
+    tip.innerHTML = '';
+    tip.appendChild(document.createTextNode(x.largo + ': '));
+    var b = document.createElement('b'); b.textContent = statNum(x.n); tip.appendChild(b);
+    tip.appendChild(document.createTextNode(x.n === 1 ? ' visita' : ' visite'));
+    tip.hidden = false;
+    var alto = barras.clientHeight * (x.n / tope);
+    var izq = barras.offsetLeft + col.offsetLeft + col.offsetWidth / 2;
+    var ancho = tip.offsetWidth, max = graf.clientWidth;
+    tip.style.left = Math.min(max - ancho / 2, Math.max(ancho / 2, izq)) + 'px';
+    tip.style.top = (barras.offsetTop + barras.clientHeight - alto - 8) + 'px';
+  }
+  barras.addEventListener('pointerover', function (e) { ensena(e.target.closest('.stat-col')); });
+  barras.addEventListener('click', function (e) { ensena(e.target.closest('.stat-col')); });
+  barras.addEventListener('pointerleave', function (e) { if (e.pointerType === 'mouse') ensena(null); });
+
+  /* Los mismos numeros en una tabla, para quien no ve bien el grafico. */
+  var det = document.createElement('details'); det.className = 'stat-tabla';
+  det.innerHTML = '<summary>Vedi i numeri</summary><table><thead><tr><th></th><th>Visite</th></tr></thead><tbody></tbody></table>';
+  var tb = det.querySelector('tbody');
+  cubos.slice().reverse().forEach(function (x) {
+    var tr = document.createElement('tr'), a = document.createElement('td'), b = document.createElement('td');
+    a.textContent = x.largo; b.textContent = statNum(x.n); tr.appendChild(a); tr.appendChild(b); tb.appendChild(tr);
+  });
+  graf.appendChild(det);
+
+  function parte(titulo, datos, nombres) {
+    var claves = Object.keys(datos || {}).filter(function (k) { return datos[k] > 0; });
+    if (!claves.length) return;
+    claves.sort(function (a, b) { return datos[b] - datos[a]; });
+    var sum = claves.reduce(function (s, k) { return s + datos[k]; }, 0);
+    var mx = datos[claves[0]];
+    var e = document.createElement('div'); e.className = 'stat-parte';
+    var h = document.createElement('h3'); h.textContent = titulo; e.appendChild(h);
+    claves.forEach(function (k) {
+      var fila = document.createElement('div'); fila.className = 'stat-fila';
+      var et = document.createElement('span'); et.textContent = nombres(k);
+      var n = document.createElement('span'); n.className = 'n'; n.textContent = statNum(datos[k]);
+      var pc = document.createElement('small'); pc.textContent = Math.round(100 * datos[k] / sum) + '%'; n.appendChild(pc);
+      var bar = document.createElement('div'); bar.className = 'bar';
+      var i = document.createElement('i'); i.style.width = (100 * datos[k] / mx) + '%'; bar.appendChild(i);
+      fila.appendChild(et); fila.appendChild(n); fila.appendChild(bar); e.appendChild(fila);
+    });
+    partes.appendChild(e);
+  }
+  if (esGenerale() && !STAT.dove) {
+    parte('Per pagina', d.pagine, function (k) { return k === 'generale' ? 'Pagina principale' : 'Chiesa di ' + nombreSede(k); });
+  }
+  parte('Da dove arrivano', d.fonti, function (k) { return STAT_FONTI[k] || k; });
+  parte('Lingua scelta', d.lingue, function (k) { return STAT_LINGUE[k] || k; });
+  parte('Con cosa entrano', d.disp, function (k) { return STAT_DISP[k] || k; });
+}
+
+$('#stat-dove').addEventListener('change', function () { STAT.dove = this.value; cargarStat(); });
+document.querySelectorAll('.stat-periodo button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    STAT.giorni = +b.getAttribute('data-giorni');
+    document.querySelectorAll('.stat-periodo button').forEach(function (o) { o.setAttribute('aria-pressed', o === b ? 'true' : 'false'); });
+    cargarStat();
+  });
 });
 </script>
 </body>
