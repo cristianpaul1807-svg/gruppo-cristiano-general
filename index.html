@@ -147,7 +147,7 @@
 }
 </script>
 
-<link rel="stylesheet" href="estilo.css?v=12">
+<link rel="stylesheet" href="estilo.css?v=13">
 </head>
 <body>
 
@@ -167,6 +167,7 @@
       <a href="#sedi" data-i18n="nav_sedi">Le comunità</a>
       <a href="#eventi" data-i18n="nav_eventi" id="nav-eventi" hidden>Eventi</a>
       <a href="#storia" data-i18n="nav_storia">Chi siamo</a>
+      <a href="#pastori" data-i18n="nav_pastori" id="nav-pastori" hidden>Pastori</a>
       <a href="#predicazioni" data-i18n="nav_pred">Predicazioni</a>
       <a href="#visione" data-i18n="nav_visione">La visione</a>
       <a href="#fede" data-i18n="nav_fede">Punti di fede</a>
@@ -366,6 +367,22 @@
     <h3 class="fondatori-h reveal" data-i18n="st_fond">Fondatori e pastori senior</h3>
     <div class="fondatori" id="fondatori"></div>
     <p class="fondatori-pie reveal" id="fondatori-pie"></p>
+  </div>
+</section>
+
+<!-- ============================================================================
+     I PASTORI — los de todas las iglesias, con su foto y unas lineas. Los pone
+     cada iglesia en su ficha del panel. Escondida mientras ninguna tenga.
+     ============================================================================ -->
+<section id="pastori" class="pastori-sec" hidden>
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <p class="eyebrow" data-i18n="pa_eyebrow">I pastori</p>
+      <h2 data-i18n="pa_h2">Chi ti accoglie.</h2>
+      <p data-i18n="pa_p">I pastori di ognuna delle nostre chiese. Se vieni per la prima volta,
+        sono loro ad accoglierti.</p>
+    </div>
+    <div id="pastori-lista"></div>
   </div>
 </section>
 

@@ -86,7 +86,10 @@ async function textos(): Promise<string[]> {
   for (const s of sedi) {
     add(s.testo); add(s.lingue);
     for (const o of s.orari || []) if (Array.isArray(o)) { add(o[0]); add(o[1]); }
-    for (const p of s.pastori || []) if (Array.isArray(p)) add(p[1]);
+    for (const p of s.pastori || []) {
+      if (Array.isArray(p)) add(p[1]);
+      else if (p && typeof p === "object") { add(p.ruolo); add(p.info); }
+    }
   }
   const g = sito[0] || {};
   for (const q of g.domande || []) { add(q.d_it); add(q.r_it); }

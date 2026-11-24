@@ -116,11 +116,33 @@ function ORARIO(o) {
   var cuando = o && o[1], auto = TR(cuando);
   return [t[0] || TR((o && o[0]) || ''), t[1] || (auto !== cuando ? auto : DIAS(cuando))];
 }
-/* El papel de un pastor: ["Nombre", "pastore giovani", {es: "...", en: "..."}]. */
-function RUOLO(p) {
-  if (!Array.isArray(p)) return '';
-  var l = LINGUA();
-  return (l !== 'it' && p[2] && p[2][l]) || TR(p[1] || '');
+/* La ficha de un pastor: foto (con su recorte), nombre, papel y unas lineas.
+   Sin foto, sus iniciales en un circulo: nunca un hueco. La usan la portada
+   (todos los pastores) y la pagina de cada iglesia (los suyos). Todo como
+   texto: lo escribe cada iglesia en el panel. */
+function TARJETA_PASTORE(p, clase) {
+  p = PASTORE(p);
+  var art = document.createElement('article');
+  art.className = 'pastore' + (clase ? ' ' + clase : '');
+  var marco = document.createElement('div'); marco.className = 'pastore-foto';
+  var src = IMAGEN(p.foto);
+  if (src) {
+    var im = document.createElement('img'); im.src = src; im.alt = p.nome; im.loading = 'lazy';
+    RECORTE(im, p.crop); marco.appendChild(im);
+  } else {
+    var ini = document.createElement('span'); ini.className = 'pastore-ini';
+    ini.textContent = p.nome.split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w.charAt(0); }).join('').toUpperCase();
+    marco.appendChild(ini);
+  }
+  art.appendChild(marco);
+  var cuerpo = document.createElement('div'); cuerpo.className = 'pastore-corpo';
+  var h = document.createElement('h3'); h.textContent = p.nome; cuerpo.appendChild(h);
+  var r = LOC(p, 'ruolo');
+  if (r) { var rr = document.createElement('p'); rr.className = 'pastore-ruolo'; rr.textContent = r; cuerpo.appendChild(rr); }
+  var inf = LOC(p, 'info');
+  if (inf) { var ii = document.createElement('div'); ii.className = 'pastore-info'; BLOQUES(ii, inf); cuerpo.appendChild(ii); }
+  art.appendChild(cuerpo);
+  return art;
 }
 /* Una fecha "2026-12-14" escrita en el idioma de la pagina. */
 function FECHA(g, opc) {
@@ -840,6 +862,7 @@ function MAPA_DE(sede) {
         /* Los eventos dicen de que iglesia son: con la lista nueva, las
            creadas desde el panel tambien tienen nombre. */
         if (window.__dibujarEventi) window.__dibujarEventi();
+        if (window.__dibujarPastori) window.__dibujarPastori();
       }
     });
   }
@@ -1006,8 +1029,10 @@ function MAPA_DE(sede) {
         a.className = 'fondatore reveal ' + (i % 2 ? 'der d2' : 'izq d1');
         var src = IMAGEN(f.foto);
         if (src) {
-          var im = document.createElement('img'); im.className = 'fondatore-foto';
-          im.src = src; im.alt = f.nome || ''; im.loading = 'lazy'; a.appendChild(im);
+          var mf = document.createElement('div'); mf.className = 'fondatore-foto';
+          var im = document.createElement('img');
+          im.src = src; im.alt = f.nome || ''; im.loading = 'lazy';
+          RECORTE(im, f.crop); mf.appendChild(im); a.appendChild(mf);
         }
         var h = document.createElement('h4'); h.textContent = f.nome || ''; a.appendChild(h);
         var cuerpo = document.createElement('div'); BLOQUES(cuerpo, en(f, 't')); a.appendChild(cuerpo);
@@ -1167,6 +1192,44 @@ function MAPA_DE(sede) {
 
   window.__dibujarEventi = pintar;
   ALMACEN.leerEventi(YO || null).then(function (l) { lista = l || []; pintar(); });
+})();
+
+/* ============================================================================
+   LOS PASTORES DE TODAS LAS IGLESIAS — en la portada, por iglesia y en el
+   orden de las fichas. Los pone cada iglesia en su ficha del panel; aqui
+   salen solos. Escondida si ninguna tiene pastores.
+   ============================================================================ */
+(function () {
+  var sec = document.getElementById('pastori'), cont = document.getElementById('pastori-lista');
+  if (!sec || !cont) return;
+  var nav = document.getElementById('nav-pastori');
+  function pintar() {
+    cont.textContent = '';
+    var hay = 0;
+    SEDI.filter(function (s) { return s.publicada !== false; }).forEach(function (s) {
+      var lista = (Array.isArray(s.pastori) ? s.pastori : []).map(PASTORE).filter(function (p) { return p.nome; });
+      if (!lista.length) return;
+      var g = document.createElement('div'); g.className = 'pastori-chiesa';
+      var cab = document.createElement('div'); cab.className = 'pastori-cab reveal izq';
+      var h = document.createElement('h3'); h.textContent = 'Gruppo Cristiano ' + s.citta; cab.appendChild(h);
+      if (PAGINA(s)) {
+        var a = document.createElement('a'); a.href = PAGINA(s);
+        a.textContent = TEXTO('sd_ver', 'Vedi la chiesa') + ' →'; cab.appendChild(a);
+      }
+      g.appendChild(cab);
+      var grid = document.createElement('div'); grid.className = 'pastori-grid';
+      lista.forEach(function (p, i) {
+        var t = TARJETA_PASTORE(p); t.classList.add('reveal', 'zoom', 'd' + Math.min(i % 4 + 1, 4));
+        grid.appendChild(t); hay++;
+      });
+      g.appendChild(grid); cont.appendChild(g);
+    });
+    sec.hidden = !hay;
+    if (nav) nav.hidden = !hay;
+    if (observarReveal) observarReveal(cont);
+  }
+  window.__dibujarPastori = pintar;
+  pintar();
 })();
 
 /* ============================================================================
@@ -1386,6 +1449,8 @@ var I18N = {
     dn_copia: "Copiar el IBAN", dn_copiato: "Copiado ✓", dn_copia_c: "Copiar",
     sp_pastori_alt: "Los pastores de la iglesia de",
     foot_trad: "Algunos textos se traducen automáticamente del italiano.",
+    nav_pastori: "Pastores", pa_eyebrow: "Los pastores", pa_h2: "Quién te recibe.",
+    pa_p: "Los pastores de cada una de nuestras iglesias. Si vienes por primera vez, son ellos quienes te reciben.",
     banda: "Prototipo Digitatex · contenidos por confirmar"
   },
   en: {
@@ -1473,6 +1538,8 @@ var I18N = {
     dn_copia: "Copy the IBAN", dn_copiato: "Copied ✓", dn_copia_c: "Copy",
     sp_pastori_alt: "The pastors of the church in",
     foot_trad: "Some texts are translated automatically from Italian.",
+    nav_pastori: "Pastors", pa_eyebrow: "Our pastors", pa_h2: "Who will welcome you.",
+    pa_p: "The pastors of each of our churches. If you come for the first time, they are the ones who will welcome you.",
     banda: "Digitatex prototype · content to be confirmed"
   }
 };
@@ -1517,7 +1584,7 @@ function aplicarIdioma(lang) {
    con el diccionario cargado. */
 function RIDISEGNA() {
   ['__dibujarSedi', '__dibujarFede', '__dibujarFaq', '__dibujarContenidos', '__dibujarSede',
-   '__dibujarGaleria', '__dibujarEventi', '__dibujarDona'].forEach(function (k) {
+   '__dibujarGaleria', '__dibujarEventi', '__dibujarDona', '__dibujarPastori'].forEach(function (k) {
     if (window[k]) window[k]();
   });
 }

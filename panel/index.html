@@ -276,6 +276,31 @@ a.btn{text-decoration:none;}
 [data-vista="en"] [data-l]:not([data-l="en"]){display:none !important;}
 .faq-item .lado{grid-template-columns:1fr !important;}
 
+/* --- pastores y recorte de fotos -------------------------------------------- */
+.past-lista{display:grid;gap:12px;}
+.past-item{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:start;padding:12px;
+  border:1px solid var(--line);border-radius:6px;background:var(--ink-3);}
+@media (max-width:520px){ .past-item{grid-template-columns:1fr;} .past-item .rec,.past-item .past-sin{max-width:200px;} }
+.past-item input[type=text],.past-item textarea{width:100%;padding:9px 11px;background:var(--ink-2);color:var(--bone);
+  border:1px solid var(--line-strong);border-radius:4px;font:400 14px/1.5 'Inter',sans-serif;margin-bottom:8px;}
+.past-item textarea{min-height:70px;resize:vertical;}
+.past-item .nome{font-size:16px;}
+.past-item .gal-acc{display:flex;gap:6px;flex-wrap:wrap;}
+.past-sin{aspect-ratio:4/5;border-radius:8px;border:1px dashed var(--line-strong);display:grid;place-items:center;
+  font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--stone);text-align:center;padding:8px;}
+.rec{display:grid;gap:6px;}
+.rec-marco{position:relative;width:100%;overflow:hidden;border-radius:8px;background:#000;touch-action:none;
+  cursor:grab;user-select:none;-webkit-user-select:none;}
+.rec-marco:active{cursor:grabbing;}
+.rec-marco.redondo{border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px #d4a843;}
+.rec-marco img{width:100%;height:100%;display:block;pointer-events:none;user-select:none;-webkit-user-drag:none;}
+.rec-pista{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);font-size:10px;white-space:nowrap;
+  background:rgba(0,0,0,.6);color:#fff;padding:2px 7px;border-radius:999px;pointer-events:none;}
+.rec-marco.redondo .rec-pista{bottom:10px;}
+.rec-zoom{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--stone);}
+.rec-zoom input{flex:1;accent-color:var(--blu);}
+.fund-foto .rec{width:120px;}
+
 /* --- capas ----------------------------------------------------------------- */
 .capa{display:none;position:fixed;inset:0;z-index:45;background:rgba(5,7,10,0.72);
   overflow-y:auto;padding:clamp(14px,6vh,70px) 14px;}
@@ -757,7 +782,7 @@ a.btn{text-decoration:none;}
     <h2 id="titulo-hoja">Nuova chiesa</h2>
     <p>I campi con il trattino restano vuoti e nella pagina escono come «da confermare».
       Basta scrivere in italiano: lo spagnolo e l'inglese si traducono da soli. Se vuoi
-      correggere la traduzione della descrizione, degli orari o dei ruoli dei pastori, tocca
+      correggere la traduzione della descrizione, degli orari o dei pastori, tocca
       «Español» o «English» qui sotto e scrivi la tua.</p>
     <div class="lingue-tab" data-tabs></div>
 
@@ -835,27 +860,22 @@ a.btn{text-decoration:none;}
           placeholder="gruppocristiano@gmail.com">
       </div>
 
-      <div class="campo" data-l="it">
-        <label for="pastori">Pastori</label>
-        <textarea id="pastori" rows="3" placeholder="Daniel Lana&#10;Samuele Lorenzini (pastore giovani)"></textarea>
-        <p class="pista">Uno per riga. Se ha un ruolo, tra parentesi dopo il nome — come
-          «Samuele Lorenzini (pastore giovani)».</p>
-      </div>
-      <div class="campo" data-l="es">
-        <label for="pastori-es">Pastores — el papel en español</label>
-        <textarea id="pastori-es" rows="3" placeholder="Daniel Lana&#10;Samuele Lorenzini (pastor de jóvenes)"></textarea>
-        <p class="pista">Los mismos nombres y en el mismo orden que en italiano: aquí solo cambia
-          el papel entre paréntesis. Sin paréntesis, sale el italiano.</p>
-      </div>
-      <div class="campo" data-l="en">
-        <label for="pastori-en">Pastors — the role in English</label>
-        <textarea id="pastori-en" rows="3" placeholder="Daniel Lana&#10;Samuele Lorenzini (youth pastor)"></textarea>
-        <p class="pista">Same names, same order as in Italian: only the role in brackets changes.
-          Without brackets, the Italian one is shown.</p>
+      <!-- LOS PASTORES: una ficha por pastor, con su foto (que se recorta aqui
+           mismo), nombre, papel y unas lineas. Salen en la pagina de esta
+           iglesia y, con los de las demas, en la portada. -->
+      <div class="campo">
+        <label>Pastori</label>
+        <div class="past-lista" id="pastori-lista"></div>
+        <button class="btn mini" type="button" id="mas-pastore" style="justify-self:start;margin-top:4px">+ Aggiungi pastore</button>
+        <p class="pista">Per ognuno: foto, nome, ruolo e due righe di presentazione. Escono nella
+          pagina di questa chiesa e, insieme a quelli delle altre chiese, nella pagina principale.
+          La foto si sistema qui: trascinala col dito e usa lo zoom finché il viso sta bene nel
+          riquadro. Come la vedi qui, così esce sul sito.</p>
+        <p class="error" id="err-past" role="alert"></p>
       </div>
 
       <div class="campo">
-        <label>Foto dei pastori</label>
+        <label>Foto di gruppo dei pastori <span style="text-transform:none;letter-spacing:0">(facoltativa)</span></label>
         <div class="subida pastori" id="sub-foto_pastori">
           <div class="subida-previa"><img alt="" hidden><span>Nessuna foto</span></div>
           <div class="subida-acc">
@@ -864,8 +884,8 @@ a.btn{text-decoration:none;}
           </div>
         </div>
         <input type="hidden" id="foto_pastori">
-        <p class="pista">Esce sopra i nomi dei pastori, nella pagina della chiesa. Una foto
-          insieme, sorridenti, va benissimo.</p>
+        <p class="pista">Facoltativa: una foto di tutti insieme, che esce sopra le schede dei
+          pastori nella pagina della chiesa.</p>
       </div>
 
       <div class="campo">
@@ -1363,6 +1383,120 @@ function vistaLingua(caja, l) {
 }
 function vistaItaliano(sel) { vistaLingua(document.querySelector(sel), 'it'); }
 
+/* --- el recorte de una foto ------------------------------------------------
+   El marco tiene la MISMA forma que en la web (4:5 para los pastores, un
+   circulo para los fundadores) y la foto se pinta con la misma funcion
+   (RECORTE, en almacen.js): lo que se ve aqui es lo que sale. Se arrastra con
+   el dedo o el raton y el zoom va con la barra. */
+function editorRecorte(obj, opc, alCambiar) {
+  opc = opc || {};
+  obj.crop = LIMPIA_RECORTE(obj.crop);
+  var caja = document.createElement('div'); caja.className = 'rec';
+  var marco = document.createElement('div'); marco.className = 'rec-marco' + (opc.redondo ? ' redondo' : '');
+  marco.style.aspectRatio = opc.aspecto || '4 / 5';
+  var img = document.createElement('img'); img.src = obj.foto; img.alt = ''; img.draggable = false;
+  marco.appendChild(img);
+  var pista = document.createElement('span'); pista.className = 'rec-pista'; pista.textContent = '✥ trascina';
+  marco.appendChild(pista);
+  RECORTE(img, obj.crop);
+  var ini = null;
+  function poner() { obj.crop = LIMPIA_RECORTE(obj.crop); RECORTE(img, obj.crop); alCambiar(); }
+  marco.addEventListener('pointerdown', function (e) {
+    ini = { px: e.clientX, py: e.clientY, x: obj.crop.x, y: obj.crop.y };
+    try { marco.setPointerCapture(e.pointerId); } catch (x) {}
+    e.preventDefault();
+  });
+  marco.addEventListener('pointermove', function (e) {
+    if (!ini) return;
+    var z = obj.crop.z;
+    obj.crop.x = ini.x - (e.clientX - ini.px) / marco.clientWidth * 100 / z;
+    obj.crop.y = ini.y - (e.clientY - ini.py) / marco.clientHeight * 100 / z;
+    poner();
+  });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (ev) {
+    marco.addEventListener(ev, function () { ini = null; });
+  });
+  var fz = document.createElement('label'); fz.className = 'rec-zoom';
+  fz.appendChild(document.createTextNode('Zoom'));
+  var zoom = document.createElement('input'); zoom.type = 'range'; zoom.min = '1'; zoom.max = '3'; zoom.step = '0.01';
+  zoom.value = obj.crop.z;
+  zoom.addEventListener('input', function () { obj.crop.z = parseFloat(zoom.value); poner(); });
+  fz.appendChild(zoom);
+  caja.appendChild(marco); caja.appendChild(fz);
+  return caja;
+}
+
+/* --- los pastores de la iglesia (en su ficha) --------------------------------
+   Una ficha por pastor. La foto se sube al elegirla (a <iglesia>/pastori/) y
+   se recorta aqui mismo; las que se quedan sin usar se borran al guardar. */
+var PAST = [], PAST_TOPE = 8;
+function pintarPastori() {
+  var cont = $('#pastori-lista'); cont.textContent = '';
+  PAST.forEach(function (p, i) {
+    var it = document.createElement('div'); it.className = 'past-item';
+    var izq = document.createElement('div');
+    if (p.foto) izq.appendChild(editorRecorte(p, { aspecto: '4 / 5' }, function () {}));
+    else { var sin = document.createElement('div'); sin.className = 'past-sin'; sin.textContent = 'Senza foto'; izq.appendChild(sin); }
+    var accF = document.createElement('div'); accF.className = 'gal-acc'; accF.style.marginTop = '8px';
+    var lb = document.createElement('label'); lb.className = 'btn mini'; lb.style.cursor = 'pointer';
+    lb.textContent = p.foto ? 'Cambia foto' : 'Scegli foto';
+    var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/jpeg,image/png,image/webp'; inp.hidden = true;
+    lb.appendChild(inp); accF.appendChild(lb);
+    inp.addEventListener('change', function () {
+      var file = inp.files && inp.files[0]; inp.value = '';
+      if (!file) return;
+      var err = $('#err-past'); err.textContent = '';
+      if (!editando || !editando.id) { err.textContent = 'Salva prima la scheda di questa chiesa nuova, poi riaprila e aggiungi le foto dei pastori.'; return; }
+      lb.textContent = 'Carico…';
+      achicar(file, 1000, 'copertina').then(function (blob) {
+        return ALMACEN.subirImagen(editando.id, 'pastori/p', blob);
+      }).then(function (url) {
+        p.foto = url; p.crop = { x: 50, y: 40, z: 1 }; pintarPastori();
+      }).catch(function (e) { err.textContent = 'La foto non si è caricata: ' + e.message; pintarPastori(); });
+    });
+    if (p.foto) {
+      var tq = document.createElement('button'); tq.type = 'button'; tq.className = 'btn mini peligro'; tq.textContent = 'Togli';
+      tq.addEventListener('click', function () { p.foto = ''; pintarPastori(); });
+      accF.appendChild(tq);
+    }
+    izq.appendChild(accF);
+    var der = document.createElement('div');
+    function campo(k, tipo, ph, max, l) {
+      var e = document.createElement(tipo === 'area' ? 'textarea' : 'input');
+      if (tipo !== 'area') e.type = 'text';
+      if (k === 'nome') e.className = 'nome';
+      if (l) e.setAttribute('data-l', l);
+      e.maxLength = max; e.placeholder = ph; e.value = p[k] || '';
+      e.addEventListener('input', function () { p[k] = e.value; });
+      der.appendChild(e);
+    }
+    campo('nome', 'text', 'Nome e cognome', 120);
+    campo('ruolo', 'text', 'Ruolo (es. pastore, pastore giovani)', 80, 'it');
+    campo('ruolo_es', 'text', 'Cargo en español (facoltativo)', 80, 'es');
+    campo('ruolo_en', 'text', 'Role in English (optional)', 80, 'en');
+    campo('info', 'area', 'Due righe su di lui o lei (facoltativo)', 600, 'it');
+    campo('info_es', 'area', 'Presentación en español (facoltativa)', 600, 'es');
+    campo('info_en', 'area', 'Short introduction in English (optional)', 600, 'en');
+    var acc = document.createElement('div'); acc.className = 'gal-acc';
+    function b(txt, clase, fn, off) {
+      var x = document.createElement('button'); x.type = 'button'; x.className = 'btn mini' + (clase ? ' ' + clase : '');
+      x.textContent = txt; x.disabled = !!off; x.addEventListener('click', fn); acc.appendChild(x);
+    }
+    b('↑', '', function () { var x = PAST[i]; PAST[i] = PAST[i - 1]; PAST[i - 1] = x; pintarPastori(); }, i === 0);
+    b('↓', '', function () { var x = PAST[i]; PAST[i] = PAST[i + 1]; PAST[i + 1] = x; pintarPastori(); }, i === PAST.length - 1);
+    b('Togli pastore', 'peligro', function () { if (!confirm('Tolgo ' + (p.nome || 'questo pastore') + '?')) return; PAST.splice(i, 1); pintarPastori(); });
+    der.appendChild(acc);
+    it.appendChild(izq); it.appendChild(der);
+    cont.appendChild(it);
+  });
+  $('#mas-pastore').hidden = PAST.length >= PAST_TOPE;
+}
+$('#mas-pastore').addEventListener('click', function () {
+  PAST.push(PASTORE({})); pintarPastori();
+  var ins = $('#pastori-lista').querySelectorAll('input.nome');
+  if (ins.length) ins[ins.length - 1].focus();
+});
+
 /* --- editor --------------------------------------------------------------- */
 /* Un horario: que y cuando en italiano, y si quieren, en espanol y en ingles
    (cada pareja se ve en su pestaña). */
@@ -1457,9 +1591,9 @@ function abrirEditor(sede) {
   ponerDona('dn', editando.donazioni);
   $('#whatsapp').value = editando.whatsapp || '';
   $('#email').value = editando.email || '';
-  $('#pastori').value = pastoriATexto(editando.pastori);
-  $('#pastori-es').value = pastoriATexto(editando.pastori, 'es');
-  $('#pastori-en').value = pastoriATexto(editando.pastori, 'en');
+  PAST = (editando.pastori || []).map(function (p) { return JSON.parse(JSON.stringify(PASTORE(p))); });
+  $('#err-past').textContent = '';
+  pintarPastori();
   var soc = editando.social || {};
   $('#soc-instagram').value = soc.instagram || '';
   $('#soc-facebook').value = soc.facebook || '';
@@ -2316,10 +2450,8 @@ var abrirSto = editorCapa('sto', 'storia', function () { return window.STORIA_BA
     s.fondatori.forEach(function (f, i) {
       var it = document.createElement('div'); it.className = 'faq-item';
       var ff = document.createElement('div'); ff.className = 'fund-foto';
-      var circ = document.createElement('div'); circ.className = 'circ';
-      if (f.foto) { var im = document.createElement('img'); im.src = f.foto; im.alt = ''; circ.appendChild(im); }
-      else circ.textContent = 'Senza foto';
-      ff.appendChild(circ);
+      if (f.foto) ff.appendChild(editorRecorte(f, { aspecto: '1 / 1', redondo: true }, marcar));
+      else { var circ = document.createElement('div'); circ.className = 'circ'; circ.textContent = 'Senza foto'; ff.appendChild(circ); }
       var lb = document.createElement('label'); lb.className = 'btn mini'; lb.textContent = f.foto ? 'Cambia foto' : 'Scegli foto';
       var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/jpeg,image/png,image/webp'; inp.hidden = true;
       lb.appendChild(inp); ff.appendChild(lb);
@@ -2330,7 +2462,7 @@ var abrirSto = editorCapa('sto', 'storia', function () { return window.STORIA_BA
         lb.textContent = 'Carico…';
         achicar(file, 800, 'copertina').then(function (blob) {
           return ALMACEN.subirImagen('generale', 'fondatori/foto', blob);
-        }).then(function (url) { f.foto = url; marcar(); repintar(); })
+        }).then(function (url) { f.foto = url; f.crop = { x: 50, y: 40, z: 1 }; marcar(); repintar(); })
           .catch(function (e) { $('#err-sto').textContent = 'La foto non si è caricata: ' + e.message; repintar(); });
       });
       if (f.foto) {
@@ -2375,37 +2507,6 @@ $('#sito-sto').addEventListener('click', abrirSto);
    Nunca se repite: si ya hay una "parma", la siguiente es "parma-2". Y no
    puede llamarse como una carpeta de la web: una iglesia llamada "panel"
    taparia el panel. */
-/* --- los pastores: de la lista al cuadro de texto y vuelta ----------------
-   El formato es el que usaron ellos en su documento: un nombre por linea, y
-   el papel entre parentesis si lo tiene. "Samuele Lorenzini (pastore
-   giovani)" -> ['Samuele Lorenzini', 'pastore giovani']. */
-function pastoriATexto(lista, l) {
-  return (Array.isArray(lista) ? lista : []).map(function (p) {
-    var n = Array.isArray(p) ? p[0] : p, r = Array.isArray(p) ? p[1] : '';
-    if (l) r = (Array.isArray(p) && p[2] && p[2][l]) || '';
-    return r ? n + ' (' + r + ')' : n;
-  }).join('\n');
-}
-/* El papel en espanol y en ingles va por ORDEN: la tercera linea de la
-   pestaña Español es el tercer pastor. Se guarda como tercer elemento:
-   ["Samuele Lorenzini", "pastore giovani", {"es": "pastor de jóvenes"}]. */
-function pastoriConRuoli(lista, tes, ten) {
-  var es = textoAPastori(tes), en = textoAPastori(ten);
-  return lista.map(function (p, i) {
-    var t = {};
-    if (es[i] && es[i][1]) t.es = es[i][1];
-    if (en[i] && en[i][1]) t.en = en[i][1];
-    return Object.keys(t).length ? [p[0], p[1], t] : p;
-  });
-}
-function textoAPastori(t) {
-  return String(t || '').split('\n').map(function (l) { return l.trim(); })
-    .filter(Boolean).map(function (l) {
-      var m = /^(.*?)\s*\((.*)\)\s*$/.exec(l);
-      return m ? [m[1].trim(), m[2].trim()] : [l, ''];
-    });
-}
-
 /* 'generale' tambien: es la carpeta de fotos del general en el almacen, y una
    iglesia con ese id subiria sus fotos dentro de la suya. */
 var RESERVADOS = ['panel', 'media', 'herramientas', 'sede', 'index', 'estilo', 'app',
@@ -2537,6 +2638,8 @@ $('#f-sede').addEventListener('submit', function (e) {
     return;
   }
 
+  var sinNombre = PAST.findIndex(function (p) { return !String(p.nome || '').trim() && (p.foto || p.ruolo || p.info); });
+  if (sinNombre >= 0) { vistaItaliano('#f-sede'); $('#err-sede').textContent = 'Al pastore ' + (sinNombre + 1) + ' manca il nome.'; return; }
   var dona = leerDona('dn'), errDona = malaDona(dona);
   if (errDona) { $('#err-sede').textContent = errDona; return; }
 
@@ -2562,7 +2665,7 @@ $('#f-sede').addEventListener('submit', function (e) {
     copertina: $('#copertina').value.trim(),
     whatsapp: $('#whatsapp').value.trim(),
     email: correo,
-    pastori: pastoriConRuoli(textoAPastori($('#pastori').value), $('#pastori-es').value, $('#pastori-en').value),
+    pastori: PAST.filter(function (p) { return String(p.nome || '').trim(); }),
     foto_pastori: $('#foto_pastori').value.trim(),
     donazioni: dona,
     social: social,
@@ -2590,6 +2693,8 @@ $('#f-sede').addEventListener('submit', function (e) {
     if (hayFotos || TIPOS_FOTO.some(function (t) { return viejas[t] !== sede[t]; })) {
       ALMACEN.limpiarCarpeta(sede.id, [sede.copertina, sede.logo, sede.foto_pastori]);
     }
+    /* las fotos de pastores que ya no usa nadie (cambiadas o quitadas), fuera */
+    ALMACEN.limpiarSubcarpeta(sede.id, 'pastori', (sede.pastori || []).map(function (p) { return p.foto; }));
     cerrarEditor(); pintarLista();
     avisar(eraNueva ? 'Chiesa creata. La sua pagina: /' + sede.id + '/' : 'Scheda salvata.');
   }).catch(function (err) {

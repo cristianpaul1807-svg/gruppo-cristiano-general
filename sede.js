@@ -215,16 +215,8 @@
     if (lp) {
       lp.textContent = '';
       (Array.isArray(s.pastori) ? s.pastori : []).forEach(function (p) {
-        var nombre = Array.isArray(p) ? p[0] : p;
-        var papel = Array.isArray(p) ? (window.RUOLO ? RUOLO(p) : p[1]) : '';
-        if (!nombre) return;
-        var li = document.createElement('li');
-        li.textContent = nombre;
-        if (papel) {
-          var r = document.createElement('span'); r.textContent = papel;
-          li.appendChild(r);
-        }
-        lp.appendChild(li);
+        if (!window.TARJETA_PASTORE || !PASTORE(p).nome) return;
+        lp.appendChild(TARJETA_PASTORE(p, 'fila'));
       });
       /* La foto de los pastores, si la ha subido la iglesia. */
       var fp = $('#sp-pastori-foto'), urlFp = imagen(s.foto_pastori);

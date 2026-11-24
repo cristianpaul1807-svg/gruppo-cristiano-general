@@ -33,6 +33,45 @@ var SUPABASE = {
   key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmbXJxYm5udmxtbnJmYnNlb25yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxODAzNTQsImV4cCI6MjExMDc1NjM1NH0.b1Zn5xpkgnYDf2PuueiT-pcwrBuW6RUZJP0OwErJ1jo'
 };
 
+/* ============================================================================
+   EL RECORTE DE UNA FOTO — lo ajustan en el panel (arrastrar y zoom) y se
+   pinta igual en el panel y en la web. Se guarda como {x, y, z}: el punto de
+   la foto que queda en el centro de la vista (x, y en %) y el zoom (z, de 1
+   a 3). La foto llena su marco (object-fit: cover) y se amplia alrededor de
+   ese punto: asi lo que se ve en el panel es exactamente lo que sale.
+   ============================================================================ */
+function LIMPIA_RECORTE(c) {
+  c = (c && typeof c === 'object') ? c : {};
+  function n(v, d, a, b) { v = parseFloat(v); return isFinite(v) ? Math.min(b, Math.max(a, v)) : d; }
+  return { x: Math.round(n(c.x, 50, 0, 100) * 10) / 10, y: Math.round(n(c.y, 50, 0, 100) * 10) / 10,
+           z: Math.round(n(c.z, 1, 1, 3) * 100) / 100 };
+}
+function RECORTE(img, c) {
+  c = LIMPIA_RECORTE(c);
+  img.style.objectFit = 'cover';
+  img.style.objectPosition = c.x + '% ' + c.y + '%';
+  img.style.transformOrigin = c.x + '% ' + c.y + '%';
+  img.style.transform = c.z > 1 ? 'scale(' + c.z + ')' : '';
+}
+
+/* ============================================================================
+   UN PASTOR. Antes eran ["Nombre", "papel", {es, en}]; ahora cada uno es una
+   ficha con su foto y su presentacion. Esto entiende las dos formas, para que
+   las iglesias que todavia tienen la vieja sigan saliendo bien.
+   ============================================================================ */
+function PASTORE(p) {
+  if (Array.isArray(p)) {
+    var t = (p[2] && typeof p[2] === 'object') ? p[2] : {};
+    return { nome: p[0] || '', ruolo: p[1] || '', ruolo_es: t.es || '', ruolo_en: t.en || '',
+             info: '', info_es: '', info_en: '', foto: '', crop: LIMPIA_RECORTE() };
+  }
+  if (typeof p === 'string') return PASTORE([p, '']);
+  p = p || {};
+  return { nome: p.nome || '', ruolo: p.ruolo || '', ruolo_es: p.ruolo_es || '', ruolo_en: p.ruolo_en || '',
+           info: p.info || '', info_es: p.info_es || '', info_en: p.info_en || '',
+           foto: p.foto || '', crop: LIMPIA_RECORTE(p.crop) };
+}
+
 var ALMACEN = (function () {
   'use strict';
 
@@ -115,7 +154,7 @@ var ALMACEN = (function () {
       copertina: s.copertina || '',
       foto_pastori: s.foto_pastori || '',
       donazioni: pulisciDon(s.donazioni),
-      pastori: Array.isArray(s.pastori) ? s.pastori : [],
+      pastori: pulisciPastori(s.pastori, s.id),
       social: (s.social && typeof s.social === 'object') ? s.social : {},
       lat: num(s.lat),
       lon: num(s.lon),
@@ -164,6 +203,20 @@ var ALMACEN = (function () {
     return d.indexOf('39') === 0 && d.length === 12
       ? '+39 ' + d.slice(2, 5) + ' ' + d.slice(5, 8) + ' ' + d.slice(8)
       : '+' + d;
+  }
+
+  /* Los pastores, limpios: tope de 8 por iglesia, textos con tope de largo, y
+     la foto solo si es de la carpeta de ESA iglesia en nuestro almacen. */
+  function pulisciPastori(lista, id) {
+    function c(v, n) { return String(v || '').trim().slice(0, n); }
+    var pre = SUPABASE.url + '/storage/v1/object/public/media/' + id + '/pastori/';
+    return (Array.isArray(lista) ? lista : []).slice(0, 8).map(PASTORE).map(function (p) {
+      var foto = String(p.foto || '');
+      if (conBase ? foto.indexOf(pre) !== 0 : !/^data:image\//.test(foto)) foto = '';
+      return { nome: c(p.nome, 120), ruolo: c(p.ruolo, 80), ruolo_es: c(p.ruolo_es, 80), ruolo_en: c(p.ruolo_en, 80),
+               info: c(p.info, 600), info_es: c(p.info_es, 600), info_en: c(p.info_en, 600),
+               foto: foto, crop: LIMPIA_RECORTE(p.crop) };
+    }).filter(function (p) { return p.nome; });
   }
 
   /* LAS DONACIONES: un enlace de PayPal y/o los datos de la transferencia.
@@ -256,7 +309,8 @@ var ALMACEN = (function () {
         fondatori: (Array.isArray(s.fondatori) ? s.fondatori : []).slice(0, 6).map(function (f) {
           var foto = String(f.foto || '');
           if (conBase ? foto.indexOf(pre) !== 0 : !/^data:image\//.test(foto)) foto = '';
-          return { nome: c(f.nome, 120), foto: foto, t_it: c(f.t_it, 3000), t_es: c(f.t_es, 3000), t_en: c(f.t_en, 3000) };
+          return { nome: c(f.nome, 120), foto: foto, crop: LIMPIA_RECORTE(f.crop),
+            t_it: c(f.t_it, 3000), t_es: c(f.t_es, 3000), t_en: c(f.t_en, 3000) };
         }).filter(function (f) { return f.nome; }),
         pie_it: c(s.pie_it, 1000), pie_es: c(s.pie_es, 1000), pie_en: c(s.pie_en, 1000)
       };
