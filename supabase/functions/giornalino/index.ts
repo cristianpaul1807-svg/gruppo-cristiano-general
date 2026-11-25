@@ -90,7 +90,7 @@ const T: Record<string, Record<string, string>> = {
   it: {
     conf_ogg: "Conferma la tua iscrizione al giornalino",
     conf_h: "Manca solo un passo",
-    conf_p: "Hai chiesto di ricevere per email il giornalino del Gruppo Cristiano. Per confermare, tocca il bottone qui sotto.",
+    conf_p: "Hai chiesto di ricevere per email il giornalino e gli avvisi degli eventi del Gruppo Cristiano. Per confermare, tocca il bottone qui sotto.",
     conf_btn: "Confermo l'iscrizione",
     conf_no: "Se non sei stato tu, ignora questa email: senza conferma non ti scriveremo più.",
     num_ogg: "Il nuovo giornalino del Gruppo Cristiano",
@@ -109,7 +109,7 @@ const T: Record<string, Record<string, string>> = {
   es: {
     conf_ogg: "Confirma tu suscripción al giornalino",
     conf_h: "Solo falta un paso",
-    conf_p: "Has pedido recibir por email el giornalino del Gruppo Cristiano. Para confirmar, toca el botón de abajo.",
+    conf_p: "Has pedido recibir por email el giornalino y los avisos de eventos del Gruppo Cristiano. Para confirmar, toca el botón de abajo.",
     conf_btn: "Confirmo la suscripción",
     conf_no: "Si no has sido tú, ignora este email: sin confirmación no te volveremos a escribir.",
     num_ogg: "El nuevo giornalino del Gruppo Cristiano",
@@ -128,7 +128,7 @@ const T: Record<string, Record<string, string>> = {
   en: {
     conf_ogg: "Confirm your subscription to the newsletter",
     conf_h: "Just one more step",
-    conf_p: "You asked to receive the Gruppo Cristiano newsletter by email. To confirm, tap the button below.",
+    conf_p: "You asked to receive the Gruppo Cristiano newsletter and event alerts by email. To confirm, tap the button below.",
     conf_btn: "Confirm my subscription",
     conf_no: "If it wasn't you, just ignore this email: without confirmation we won't write to you again.",
     num_ogg: "The new Gruppo Cristiano newsletter",

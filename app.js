@@ -1251,10 +1251,25 @@ function MAPA_DE(sede) {
   if (!sec || !window.ALMACEN || !ALMACEN.leerGiornalini) return;
   var nav = document.getElementById('nav-gio'), numeros = [];
   function fecha(g) { return FECHA(g.data, { day: 'numeric', month: 'long', year: 'numeric' }); }
+  /* La seccion se ve SIEMPRE, por el formulario: quien se apunta recibe
+     tambien los avisos de eventos, aunque todavia no haya ningun numero.
+     Sin numeros se esconde solo la parte del numero (portada, fecha,
+     botones) y el formulario queda solo, centrado. */
   function pintar() {
     var g = numeros[0];
-    sec.hidden = !g; if (nav) nav.hidden = !g;
-    if (!g) return;
+    sec.hidden = false; if (nav) nav.hidden = false;
+    sec.classList.toggle('senza-numero', !g);
+    ['gio-cop', 'gio-data', 'gio-acc'].forEach(function (id) { var e = document.getElementById(id); if (e) e.hidden = !g; });
+    document.getElementById('gio-email').placeholder = TEXTO('gi_email', 'La tua email');
+    var subT = sec.querySelector('.sub');
+    if (!g) {
+      document.getElementById('gio-titolo').textContent = TEXTO('gi_vuoto_h', 'Resta aggiornato');
+      if (subT) subT.textContent = TEXTO('gi_vuoto_p', 'Iscriviti e ti avvisiamo per email dei nuovi eventi delle nostre chiese e di ogni numero del giornalino.');
+      document.getElementById('gio-arch-bloque').hidden = true;
+      if (observarReveal) observarReveal(sec);
+      return;
+    }
+    if (subT) subT.textContent = TEXTO('gi_p', 'Il giornalino delle nostre chiese: notizie, testimonianze e appuntamenti.');
     var pdf = SEGURO(g.pdf), cop = IMAGEN(g.copertina);
     var a = document.getElementById('gio-cop'); a.textContent = ''; a.href = pdf;
     if (cop) { var im = document.createElement('img'); im.src = cop; im.alt = g.titolo; im.loading = 'lazy'; a.appendChild(im); }
@@ -1277,7 +1292,9 @@ function MAPA_DE(sede) {
     if (observarReveal) observarReveal(sec);
   }
   window.__dibujarGiornalino = pintar;
-  ALMACEN.leerGiornalini().then(function (l) { numeros = l || []; pintar(); avisoUrl(); });
+  pintar();
+  ALMACEN.leerGiornalini().then(function (l) { numeros = l || []; }, function () { numeros = []; })
+    .then(function () { pintar(); avisoUrl(); });
 
   /* Al volver del enlace del correo (confirmar o darse de baja). */
   function avisoUrl() {
@@ -1530,10 +1547,10 @@ var I18N = {
     foot_trad: "Algunos textos se traducen automáticamente del italiano.",
     nav_gio: "Giornalino", gi_eyebrow: "El giornalino", gi_p: "El periódico de nuestras iglesias: noticias, testimonios y citas.",
     gi_leggi: "Leer el giornalino", gi_scarica: "Descargar el PDF", gi_iscr_h: "Recíbelo por email",
-    gi_iscr_p: "Te enviamos cada número nuevo en cuanto sale. Nada más.", gi_email: "Tu email", gi_btn: "Suscribirme",
-    gi_privacy: "Acepto que mi email se use solo para enviarme el giornalino. Puedo darme de baja cuando quiera con el enlace al final de cada email.",
+    gi_iscr_p: "Te enviamos cada número nuevo en cuanto sale y los avisos de los nuevos eventos de nuestras iglesias. Nada más.", gi_vuoto_h: "Mantente al día", gi_vuoto_p: "Suscríbete y te avisamos por email de los nuevos eventos de nuestras iglesias y de cada número del giornalino.", gi_email: "Tu email", gi_btn: "Suscribirme",
+    gi_privacy: "Acepto que mi email se use solo para enviarme el giornalino y los avisos de los eventos. Puedo darme de baja cuando quiera con el enlace al final de cada email.",
     gi_info_h: "Información de privacidad",
-    gi_info: "Responsable: Gruppo Cristiano. Usamos tu email solo para enviarte el giornalino y no se lo damos a nadie. Los emails salen a través del servicio Resend y los datos se guardan en Supabase, nuestros proveedores técnicos. Lo conservamos hasta que te des de baja: puedes hacerlo en cualquier momento con el enlace al final de cada email, o escribiéndonos.",
+    gi_info: "Responsable: Gruppo Cristiano. Usamos tu email solo para enviarte el giornalino y los avisos de los eventos de nuestras iglesias, y no se lo damos a nadie. Los emails salen a través del servicio Resend y los datos se guardan en Supabase, nuestros proveedores técnicos. Lo conservamos hasta que te des de baja: puedes hacerlo en cualquier momento con el enlace al final de cada email, o escribiéndonos.",
     gi_prec: "Números anteriores", gi_inviata: "¡Hecho! Te hemos enviado un email: abre el enlace que hay dentro para confirmar.",
     gi_gia: "Ya estás suscrito: recibirás el próximo número.", gi_err_email: "El email no parece correcto.",
     gi_err_priv: "Para suscribirte hace falta marcar la casilla de arriba.", gi_err: "Ahora mismo no podemos suscribirte. Inténtalo más tarde.",
@@ -1630,10 +1647,10 @@ var I18N = {
     foot_trad: "Some texts are translated automatically from Italian.",
     nav_gio: "Newsletter", gi_eyebrow: "The newsletter", gi_p: "The newsletter of our churches: news, testimonies and events.",
     gi_leggi: "Read the newsletter", gi_scarica: "Download the PDF", gi_iscr_h: "Get it by email",
-    gi_iscr_p: "We send you every new issue as soon as it comes out. Nothing else.", gi_email: "Your email", gi_btn: "Subscribe",
-    gi_privacy: "I agree that my email is used only to send me the newsletter. I can unsubscribe whenever I want with the link at the bottom of every email.",
+    gi_iscr_p: "We send you every new issue as soon as it comes out and alerts about new events at our churches. Nothing else.", gi_vuoto_h: "Stay in the loop", gi_vuoto_p: "Subscribe and we will email you about new events at our churches and every new issue of the newsletter.", gi_email: "Your email", gi_btn: "Subscribe",
+    gi_privacy: "I agree that my email is used only to send me the newsletter and event alerts. I can unsubscribe whenever I want with the link at the bottom of every email.",
     gi_info_h: "Privacy notice",
-    gi_info: "Data controller: Gruppo Cristiano. We use your email only to send you the newsletter and never share it. Emails are sent through the Resend service and data is stored on Supabase, our technical providers. We keep it until you unsubscribe: you can do so at any time with the link at the bottom of every email, or by writing to us.",
+    gi_info: "Data controller: Gruppo Cristiano. We use your email only to send you the newsletter and alerts about events at our churches, and never share it. Emails are sent through the Resend service and data is stored on Supabase, our technical providers. We keep it until you unsubscribe: you can do so at any time with the link at the bottom of every email, or by writing to us.",
     gi_prec: "Past issues", gi_inviata: "Done! We have sent you an email: open the link inside to confirm.",
     gi_gia: "You are already subscribed: you will receive the next issue.", gi_err_email: "The email doesn't look right.",
     gi_err_priv: "To subscribe, please tick the box above.", gi_err: "We can't subscribe you right now. Please try again later.",

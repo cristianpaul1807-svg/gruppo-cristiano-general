@@ -688,6 +688,9 @@ a.ev-chi:hover{text-decoration:underline;text-underline-offset:3px;}
    ============================================================================ */
 .gio-sec{background:var(--blanco);border-top:1px solid var(--linea);}
 .gio{display:grid;grid-template-columns:minmax(0,340px) 1fr;gap:clamp(28px,5vw,64px);align-items:start;}
+/* sin ningun numero subido: solo el formulario, centrado */
+.gio-sec.senza-numero .gio{grid-template-columns:1fr;max-width:680px;}
+.gio [hidden]{display:none !important;}
 @media (max-width:820px){ .gio{grid-template-columns:1fr;} .gio-cop{max-width:300px;margin-inline:auto;} }
 .gio-cop{display:block;border-radius:10px;overflow:hidden;box-shadow:0 2px 4px rgba(16,32,63,.08),0 24px 50px -20px rgba(16,32,63,.45);
   background:var(--crema);transform:rotate(-1.5deg);transition:transform .3s;}

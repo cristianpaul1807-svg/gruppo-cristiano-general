@@ -172,7 +172,7 @@
       <a href="#visione" data-i18n="nav_visione">La visione</a>
       <a href="#fede" data-i18n="nav_fede">Punti di fede</a>
       <a href="#domande" data-i18n="nav_domande">Domande</a>
-      <a href="#giornalino" data-i18n="nav_gio" id="nav-gio" hidden>Giornalino</a>
+      <a href="#giornalino" data-i18n="nav_gio" id="nav-gio">Giornalino</a>
       <a href="#dona" data-i18n="nav_dona" id="nav-dona" hidden>Dona</a>
     </div>
     <div class="langsw">
@@ -411,35 +411,36 @@
 <!-- ============================================================================
      IL GIORNALINO — el periodico de las iglesias en PDF: el ultimo numero con
      su portada, los anteriores, y apuntarse para recibirlo por email. Lo sube
-     el general desde su panel. Escondida mientras no haya ningun numero.
+     el general desde su panel. El formulario para apuntarse esta SIEMPRE: los
+     suscritos reciben tambien los avisos de eventos, aunque no haya numeros.
      ============================================================================ -->
-<section id="giornalino" class="gio-sec" hidden>
+<section id="giornalino" class="gio-sec senza-numero">
   <div class="wrap gio">
     <a class="gio-cop reveal izq" id="gio-cop" target="_blank" rel="noopener"></a>
     <div class="reveal der">
       <p class="eyebrow" data-i18n="gi_eyebrow">Il giornalino</p>
-      <h2 id="gio-titolo"></h2>
+      <h2 id="gio-titolo">Resta aggiornato</h2>
       <p class="gio-data" id="gio-data"></p>
       <p class="sub" data-i18n="gi_p">Il giornalino delle nostre chiese: notizie, testimonianze e
         appuntamenti.</p>
-      <div class="acciones">
+      <div class="acciones" id="gio-acc">
         <a class="btn oro" id="gio-leggi" target="_blank" rel="noopener" data-i18n="gi_leggi">Leggi il giornalino</a>
         <a class="btn" id="gio-scarica" download data-i18n="gi_scarica">Scarica il PDF</a>
       </div>
 
       <form class="gio-iscr" id="gio-form" novalidate>
         <h3 data-i18n="gi_iscr_h">Ricevilo per email</h3>
-        <p data-i18n="gi_iscr_p">Ti mandiamo ogni nuovo numero appena esce. Nient'altro.</p>
+        <p data-i18n="gi_iscr_p">Ti mandiamo ogni nuovo numero appena esce e gli avvisi dei nuovi eventi delle nostre chiese. Nient'altro.</p>
         <div class="gio-riga">
           <input type="email" id="gio-email" autocomplete="email" required>
           <button class="btn piena" type="submit" id="gio-btn" data-i18n="gi_btn">Iscriviti</button>
         </div>
         <label class="gio-priv"><input type="checkbox" id="gio-ok">
-          <span data-i18n="gi_privacy">Accetto che la mia email venga usata solo per mandarmi il giornalino.
+          <span data-i18n="gi_privacy">Accetto che la mia email venga usata solo per mandarmi il giornalino e gli avvisi degli eventi.
             Posso cancellarmi quando voglio con il link in fondo a ogni email.</span></label>
         <details class="gio-info"><summary data-i18n="gi_info_h">Informativa privacy</summary>
           <p data-i18n="gi_info">Titolare: Gruppo Cristiano. Usiamo la tua email solo per mandarti il
-            giornalino e non la diamo a nessuno. Le email partono tramite il servizio Resend e i dati sono
+            giornalino e gli avvisi degli eventi delle nostre chiese, e non la diamo a nessuno. Le email partono tramite il servizio Resend e i dati sono
             conservati su Supabase, i nostri fornitori tecnici. La conserviamo finché non ti cancelli: lo
             puoi fare in ogni momento con il link in fondo a ogni email, o scrivendoci.</p>
         </details>
