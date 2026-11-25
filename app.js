@@ -1223,9 +1223,12 @@ function MAPA_DE(sede) {
         a.textContent = TEXTO('sd_ver', 'Vedi la chiesa') + ' →'; cab.appendChild(a);
       }
       g.appendChild(cab);
-      var grid = document.createElement('div'); grid.className = 'pastori-grid';
+      /* La misma tarjeta horizontal que en la pagina de cada iglesia (foto a
+         un lado, texto al otro), un poco mas grande: la vertical estrecha
+         dejaba las presentaciones largas en una columna de cuatro palabras. */
+      var grid = document.createElement('div'); grid.className = 'pastori-grid filas';
       lista.forEach(function (p, i) {
-        var t = TARJETA_PASTORE(p); t.classList.add('reveal', 'zoom', 'd' + Math.min(i % 4 + 1, 4));
+        var t = TARJETA_PASTORE(p, 'fila ampia'); t.classList.add('reveal', 'zoom', 'd' + Math.min(i % 4 + 1, 4));
         grid.appendChild(t); hay++;
       });
       g.appendChild(grid); cont.appendChild(g);
@@ -1430,14 +1433,14 @@ function DONAZIONI(cont, d) {
    llega de fuera y no habla ninguno de los otros dos.
 
    Por que los dos, y esta vez no es una suposicion mia: el grupo se llama
-   "Gruppo Cristiano Latino Americano" en su propio documento de vision, y
+   "Gruppo Cristiano" en su propio documento de vision, y
    ellos mismos dicen "persone di diverse nazioni". Un horario que no se
    entiende es un horario que no sirve.
    ============================================================================ */
 var I18N = {
   es: {
-    meta_title: "Gruppo Cristiano Latino Americano — Iglesias en Italia",
-    meta_desc: "Gruppo Cristiano Latino Americano: iglesias evangélicas en Italia. Nuestras sedes, los horarios de las reuniones y cómo llegar. Italiano, español e inglés.",
+    meta_title: "Gruppo Cristiano — Iglesias en Italia",
+    meta_desc: "Gruppo Cristiano: iglesias evangélicas en Italia. Nuestras sedes, los horarios de las reuniones y cómo llegar. Italiano, español e inglés.",
     nav_sedi: "Las comunidades", nav_storia: "Quiénes somos", nav_visione: "La visión", nav_fede: "Puntos de fe", nav_domande: "Preguntas",
     hero_h1: "Una única familia de comunidades cristianas.",
     hero_p: "«Creemos que este mundo lleno de problemas y sufrimientos necesita una esperanza verdadera.»",
@@ -1482,7 +1485,7 @@ var I18N = {
     sp_altre_h: "Las demás iglesias del grupo",
     sp_altre_p: "El mismo grupo, la misma fe, otra ciudad.",
     sp_chi_h: "Quiénes somos", gal_eyebrow: "Galería", gal_h2: "La vida del grupo.", sp_gal_h2: "La vida de la comunidad.",
-    sp_chi_p: "Esta iglesia forma parte del Gruppo Cristiano Latino Americano. La visión, los puntos de fe y la historia son los del grupo entero.",
+    sp_chi_p: "Esta iglesia forma parte del Gruppo Cristiano. La visión, los puntos de fe y la historia son los del grupo entero.",
     sp_chi_btn: "La visión del grupo",
     sp_nf_h: "Esta iglesia no está",
     sp_nf_p: "Esta dirección no corresponde a ninguna iglesia del grupo. Aquí abajo están todas las que hay.",
@@ -1541,8 +1544,8 @@ var I18N = {
     banda: "Prototipo Digitatex · contenidos por confirmar"
   },
   en: {
-    meta_title: "Gruppo Cristiano Latino Americano — Churches in Italy",
-    meta_desc: "Gruppo Cristiano Latino Americano: evangelical churches in Italy. Our churches, meeting times and how to get there. Italian, Spanish and English.",
+    meta_title: "Gruppo Cristiano — Churches in Italy",
+    meta_desc: "Gruppo Cristiano: evangelical churches in Italy. Our churches, meeting times and how to get there. Italian, Spanish and English.",
     nav_sedi: "Communities", nav_storia: "About us", nav_visione: "Our vision", nav_fede: "Statement of faith", nav_domande: "Questions",
     hero_h1: "One family of Christian communities.",
     hero_p: "«We believe that this world, so full of problems and suffering, needs a true hope.»",
@@ -1584,7 +1587,7 @@ var I18N = {
     sp_altre_h: "The other churches of the group",
     sp_altre_p: "The same group, the same faith, another city.",
     sp_chi_h: "About us", gal_eyebrow: "Gallery", gal_h2: "Life in the group.", sp_gal_h2: "Life in the community.",
-    sp_chi_p: "This church is part of the Gruppo Cristiano Latino Americano. The vision, the statement of faith and the history are those of the whole group.",
+    sp_chi_p: "This church is part of the Gruppo Cristiano. The vision, the statement of faith and the history are those of the whole group.",
     sp_chi_btn: "The group's vision",
     sp_nf_h: "This church isn't here",
     sp_nf_p: "This address doesn't match any church of the group. All of them are listed below.",

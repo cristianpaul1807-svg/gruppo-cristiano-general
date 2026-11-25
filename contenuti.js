@@ -31,11 +31,11 @@ var VISIONE_BASE = {
     },
     {
       "t_it": "Formare",
-      "p_it": "Il Gruppo Cristiano Latino Americano mette a disposizione di ogni credente:\n- discepolato — corsi basici e avanzati\n- studi biblici\n- coinvolgimento in diverse aree ministeriali",
+      "p_it": "Il Gruppo Cristiano mette a disposizione di ogni credente:\n- discepolato — corsi basici e avanzati\n- studi biblici\n- coinvolgimento in diverse aree ministeriali",
       "t_es": "Formar",
-      "p_es": "El Gruppo Cristiano Latino Americano pone a disposición de cada creyente:\n- discipulado — cursos básicos y avanzados\n- estudios bíblicos\n- participación en distintas áreas ministeriales",
+      "p_es": "El Gruppo Cristiano pone a disposición de cada creyente:\n- discipulado — cursos básicos y avanzados\n- estudios bíblicos\n- participación en distintas áreas ministeriales",
       "t_en": "Train",
-      "p_en": "The Gruppo Cristiano Latino Americano offers every believer:\n- discipleship — basic and advanced courses\n- Bible studies\n- involvement in different areas of ministry"
+      "p_en": "The Gruppo Cristiano offers every believer:\n- discipleship — basic and advanced courses\n- Bible studies\n- involvement in different areas of ministry"
     },
     {
       "t_it": "Fondare chiese",

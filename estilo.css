@@ -664,7 +664,14 @@ a.ev-chi:hover{text-decoration:underline;text-underline-offset:3px;}
 .pastore.fila .pastore-foto{border-radius:10px;}
 .pastore.fila .pastore-ini{font-size:30px;}
 .pastore.fila .pastore-corpo{padding:2px 4px 4px 0;}
+.pastori-grid.filas{grid-template-columns:repeat(auto-fill,minmax(min(100%,460px),1fr));align-items:start;}
+.pastore.fila.ampia{grid-template-columns:150px 1fr;gap:22px;padding:16px;border-radius:18px;}
+.pastore.fila.ampia .pastore-foto{border-radius:12px;}
+.pastore.fila.ampia .pastore-ini{font-size:40px;}
+.pastore.fila.ampia .pastore-corpo h3{font-size:22px;}
 @media (max-width:560px){ .pastori-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  .pastori-grid.filas{grid-template-columns:1fr;} .pastore.fila.ampia{grid-template-columns:104px 1fr;gap:14px;padding:12px;}
+  .pastore.fila.ampia .pastore-corpo h3{font-size:19px;}
   .pastore-corpo{padding:12px 12px 16px;} .pastore-corpo h3{font-size:18px;} .pastore-info{font-size:13.5px;} }
 
 /* Los eventos de TODO el grupo (retiros, convenciones...) destacan en la

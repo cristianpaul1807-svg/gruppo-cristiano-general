@@ -90,7 +90,7 @@ function jsonld(s) {
     name: 'Gruppo Cristiano ' + s.citta,
     parentOrganization: {
       '@type': 'Church',
-      name: 'Gruppo Cristiano Latino Americano',
+      name: 'Gruppo Cristiano',
       url: DOMINIO + '/'
     },
     url: DOMINIO + '/' + s.id + '/'
@@ -143,8 +143,7 @@ function pagina(plantilla, s, elPie) {
   if (s.testo) desc = s.testo;
   else if (dir) desc = 'Gruppo Cristiano ' + s.citta + ', chiesa evangelica in ' + s.via
     + ', ' + s.cap + '. ' + primera + 'Orari degli incontri e come arrivare.';
-  else desc = 'Gruppo Cristiano ' + s.citta + ', una delle chiese del Gruppo Cristiano '
-    + 'Latino Americano in Italia.';
+  else desc = 'Gruppo Cristiano ' + s.citta + ', una delle chiese del Gruppo Cristiano in Italia.';
 
   /* El mismo titulo y la misma descripcion en espanol. Van dentro de la
      pagina porque el cambio de idioma pasa sin recargar, y sin esto la
@@ -154,15 +153,13 @@ function pagina(plantilla, s, elPie) {
   if (s.testo) descEs = s.testo;
   else if (dir) descEs = 'Gruppo Cristiano ' + s.citta + ', iglesia evangélica en ' + s.via
     + ', ' + s.cap + '. ' + primera + 'Horarios de las reuniones y cómo llegar.';
-  else descEs = 'Gruppo Cristiano ' + s.citta + ', una de las iglesias del Gruppo Cristiano '
-    + 'Latino Americano en Italia.';
+  else descEs = 'Gruppo Cristiano ' + s.citta + ', una de las iglesias del Gruppo Cristiano en Italia.';
   /* Y en ingles. */
   const tituloEn = 'Gruppo Cristiano ' + s.citta + ' — Evangelical church in ' + s.citta;
   let descEn;
   if (dir) descEn = 'Gruppo Cristiano ' + s.citta + ', evangelical church at ' + s.via
     + ', ' + s.cap + '. Meeting times and how to get there.';
-  else descEn = 'Gruppo Cristiano ' + s.citta + ', one of the churches of the Gruppo Cristiano '
-    + 'Latino Americano in Italy.';
+  else descEn = 'Gruppo Cristiano ' + s.citta + ', one of the churches of the Gruppo Cristiano in Italy.';
   const meta = JSON.stringify({
     it: { t: titulo, d: desc },
     es: { t: tituloEs, d: descEs },
@@ -265,14 +262,14 @@ const comodin = plantilla.replace(/\{\{([A-Z_]+)\}\}/g, function (todo, clave) {
     ID: '',                     // vacio: lo pone el script del principio del body
     CITTA: '',
     VIA_HTML: '',
-    TITOLO: 'Gruppo Cristiano Latino Americano',
+    TITOLO: 'Gruppo Cristiano',
     OG_TITOLO: 'Gruppo Cristiano',
-    DESC: 'Una delle chiese del Gruppo Cristiano Latino Americano in Italia.',
+    DESC: 'Una delle chiese del Gruppo Cristiano in Italia.',
     URL: DOMINIO + '/',
     OG_IMG: DOMINIO + '/media/logo-ufficiale.png',
     JSONLD: JSON.stringify({
       '@context': 'https://schema.org', '@type': 'Church',
-      name: 'Gruppo Cristiano Latino Americano', url: DOMINIO + '/'
+      name: 'Gruppo Cristiano', url: DOMINIO + '/'
     }, null, 2),
     META: 'null',               // lo rellena sede.js cuando sabe que iglesia es
     FOOTER: elPie
